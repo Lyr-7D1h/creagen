@@ -67,4 +67,4 @@ for (let i = 0; i < ITERATIONS; i++) {
   }
 }
 
-container.appendChild(s.html());
+load(s.html());
