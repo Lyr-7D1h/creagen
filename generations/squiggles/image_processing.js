@@ -16,6 +16,5 @@ image.onload = () => {
   const s = svg.svg({ width: image.width, height: image.height });
   const p = s.path();
   p.moveTo(0, 5).lineTo(10, 5);
-  s.path();
   load(s.html());
 };
