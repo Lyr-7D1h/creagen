@@ -5,19 +5,17 @@ const img = await image.image(
 const pixels = img.pixels();
 
 const s = svg.svg({ width: img.width(), height: img.height() });
-let bh = img.height() / 20;
-let bw = img.width() / 35;
-for (let y = 0; y <= img.height(); y += bh) {
-  for (let x = 0; x <= img.width(); x += bw) {
-    const o = y * img.width()
-    console.log(o)
-    s.rect(bw,bh, {
+let bh = Math.round(img.height() / 80);
+let bw = Math.round(img.width() / 120);
+for (let y = 0; y < img.height(); y += bh) {
+  for (let x = 0; x < img.width(); x += bw) {
+    const c = img.get(x, y);
+    s.rect(bw, bh, {
       x,
       y,
-      fill: `rgb(${pixels[o+x]}, ${pixels[o+x+1]}, ${pixels[o + x+2]})`,
+      fill: `rgb(${c[0]}, ${c[1]}, ${c[2]})`,
     });
   }
 }
 
 load(s);
-console.log(pixels);
