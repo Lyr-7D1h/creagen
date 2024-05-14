@@ -5,10 +5,9 @@ const img = await image.image(
 const WIDTH = img.width();
 const HEIGHT = img.height();
 
-const SPACING = 12;
-const RESOLUTION = 8;
-
-const SAMPLING_BOX = 12;
+// the size used for sampling each part, each sampling box is 2*SPACING
+const SPACING = 6;
+// const RESOLUTION = 8;
 
 const s = svg.svg({ width: WIDTH, height: HEIGHT });
 
@@ -16,21 +15,17 @@ let spreads = [];
 let points = [];
 for (let x = SPACING; x < WIDTH; x += 2 * SPACING) {
   for (let y = SPACING; y < HEIGHT; y += 2 * SPACING) {
+    console.log(x, x - SPACING);
     const pixels = img
-      .get(
-        x - SAMPLING_BOX,
-        y - SAMPLING_BOX,
-        x + SAMPLING_BOX,
-        y + SAMPLING_BOX
-      )
+      .get(x - SPACING, y - SPACING, 2 * SPACING, 2 * SPACING)
       .map(([r, g, b]) => (r + g + b) / 3);
-    const spread = lin.narray(pixels).spread();
+    const spread = lin.ndarray(pixels).average();
     points.push([x, y]);
     spreads.push(spread);
   }
 }
 
-const lspreads = lin.narray(spreads);
+const lspreads = lin.ndarray(spreads);
 const minspread = lspreads.min();
 const maxspread = lspreads.max();
 for (let i = 0; i < lspreads.dim(); i++) {
@@ -39,11 +34,12 @@ for (let i = 0; i < lspreads.dim(); i++) {
   s.rect(SPACING * 2, SPACING * 2, {
     x: x - SPACING,
     y: y - SPACING,
-    fillOpacity: spread,
+    fillOpacity: 1 - spread,
   });
   if (0.5 < spread) {
-    s.circle(2, { cx: x, cy: y });
+    // s.circle(2, { cx: x, cy: y });
   }
 }
 
+load(img);
 load(s);
