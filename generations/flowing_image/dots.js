@@ -7,7 +7,6 @@ const HEIGHT = img.height();
 
 // the size used for sampling each part, each sampling box is 2*SPACING
 const SPACING = 6;
-// const RESOLUTION = 8;
 
 const s = svg.svg({ width: WIDTH, height: HEIGHT });
 
@@ -15,11 +14,17 @@ let spreads = [];
 let points = [];
 for (let x = SPACING; x < WIDTH; x += 2 * SPACING) {
   for (let y = SPACING; y < HEIGHT; y += 2 * SPACING) {
-    console.log(x, x - SPACING);
-    const pixels = img
-      .get(x - SPACING, y - SPACING, 2 * SPACING, 2 * SPACING)
-      .map(([r, g, b]) => (r + g + b) / 3);
-    const spread = lin.ndarray(pixels).average();
+    const pixels = [];
+    img.get(x - SPACING, y - SPACING, 2 * SPACING, 2 * SPACING).map((n) =>
+      n.forEach((v, i) => {
+        if (i % 4 === 0) {
+          const a = (n[i] + n[i + 1] + n[i + 2]) / 3;
+          pixels.push(a);
+        }
+      })
+    );
+
+    const spread = lin.ndarray(pixels).spread();
     points.push([x, y]);
     spreads.push(spread);
   }
@@ -28,18 +33,60 @@ for (let x = SPACING; x < WIDTH; x += 2 * SPACING) {
 const lspreads = lin.ndarray(spreads);
 const minspread = lspreads.min();
 const maxspread = lspreads.max();
-for (let i = 0; i < lspreads.dim(); i++) {
-  let spread = (lspreads[i] - minspread) / (maxspread - minspread);
+// normalize array to values of 0 to 1
+spreads = spreads.map((s) => (s - minspread) / (maxspread - minspread));
+
+const p = s.path({ fill: "none", stroke: "black", strokeWidth: 2 });
+
+const field_w = WIDTH / (SPACING * 2);
+const field_h = HEIGHT / (SPACING * 2);
+
+const visited = new Array(spreads.length).fill(false);
+let i = Math.round(Math.random() * spreads.length);
+const [xi, yi] = points[i];
+p.moveTo(xi, yi);
+
+console.log(field_w);
+
+for (let j = 0; j < 50; j++) {
+  let n = i + 1;
+  let max = 0;
+  for (const d of [
+    1,
+    -1,
+    -field_w - 1,
+    -field_w,
+    -field_w + 1,
+    field_w - 1,
+    field_w,
+    field_w + 1,
+  ]) {
+    const v = spreads[i + d];
+    if (typeof v !== "undefined") {
+      if (v > max && !visited[i + d]) {
+        max = v;
+        n = i + d;
+      }
+    }
+    visited[i + d] = true;
+  }
+  const [xn, yn] = points[n];
+  p.lineTo(xn, yn);
+  visited[i] = true;
+  i = n;
+}
+
+for (let i = 0; i < lspreads.length; i++) {
+  let spread = spreads[i];
   let [x, y] = points[i];
+  const c = spread * 255;
   s.rect(SPACING * 2, SPACING * 2, {
     x: x - SPACING,
     y: y - SPACING,
-    fillOpacity: 1 - spread,
+    fillOpacity: 0.3,
+    fill: `rgb(${c}, ${c}, ${c})`,
   });
-  if (0.5 < spread) {
-    // s.circle(2, { cx: x, cy: y });
-  }
 }
 
-load(img);
 load(s);
+load(img);
