@@ -12,8 +12,8 @@ const s = svg.svg({ width: WIDTH, height: HEIGHT });
 
 let spreads = [];
 let points = [];
-for (let x = SPACING; x < WIDTH; x += 2 * SPACING) {
-  for (let y = SPACING; y < HEIGHT; y += 2 * SPACING) {
+for (let y = SPACING; y < HEIGHT; y += 2 * SPACING) {
+  for (let x = SPACING; x < WIDTH; x += 2 * SPACING) {
     const pixels = [];
     img.get(x - SPACING, y - SPACING, 2 * SPACING, 2 * SPACING).map((n) =>
       n.forEach((v, i) => {
@@ -42,16 +42,16 @@ const field_w = WIDTH / (SPACING * 2);
 const field_h = HEIGHT / (SPACING * 2);
 
 const visited = new Array(spreads.length).fill(false);
+const boundry = new Array(spreads.length).fill(false);
 let i = Math.round(Math.random() * spreads.length);
+let n = i;
 const [xi, yi] = points[i];
-p.moveTo(xi, yi);
 
-console.log(field_w);
-
-for (let j = 0; j < 50; j++) {
-  let n = i + 1;
-  let max = 0;
-  for (const d of [
+let line = [];
+let prev_neighbors = [];
+for (let j = 0; j < 100; j++) {
+  let max = -1;
+  let neighbors = [
     1,
     -1,
     -field_w - 1,
@@ -60,22 +60,55 @@ for (let j = 0; j < 50; j++) {
     field_w - 1,
     field_w,
     field_w + 1,
-  ]) {
-    const v = spreads[i + d];
+  ];
+  neighbors = neighbors
+    .map((d) => i + d)
+    .filter(
+      (n) =>
+        n >= 0 &&
+        n < spreads.length &&
+        Math.abs((i % field_w) - (n % field_w)) <= 1 &&
+        !visited[n]
+    );
+  for (n of prev_neighbors) {
+    if (!(n in neighbors)) {
+      console.log(n);
+      visited[n] = true;
+    }
+  }
+
+  for (const ne of neighbors) {
+    const v = spreads[ne];
     if (typeof v !== "undefined") {
-      if (v > max && !visited[i + d]) {
+      if (v > max && !visited[ne]) {
         max = v;
-        n = i + d;
+        n = ne;
       }
     }
-    visited[i + d] = true;
   }
-  const [xn, yn] = points[n];
-  p.lineTo(xn, yn);
   visited[i] = true;
+  line.push(i);
+  if (i === n) {
+    console.log(max);
+    console.log("BREAK");
+    break;
+  }
   i = n;
+  prev_neighbors = neighbors;
 }
 
+let [x, y] = points[line[0]];
+p.moveTo(x, y);
+for (let i = 2; i < line.length; i += 2) {
+  let [x, y] = points[line[i]];
+  let [dx, dy] = points[line[i - 1]];
+  // console.log(x, y, dx, dy)
+  p.qCurve(dx, dy, x, y);
+  p.lineTo(x, y);
+  line[i - 2];
+}
+
+// debug cubes
 for (let i = 0; i < lspreads.length; i++) {
   let spread = spreads[i];
   let [x, y] = points[i];
@@ -84,7 +117,7 @@ for (let i = 0; i < lspreads.length; i++) {
     x: x - SPACING,
     y: y - SPACING,
     fillOpacity: 0.3,
-    fill: `rgb(${c}, ${c}, ${c})`,
+    fill: `rgb(${visited[i] ? 255 : c}, ${c}, ${c})`,
   });
 }
 
