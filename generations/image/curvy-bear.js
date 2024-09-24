@@ -1,4 +1,4 @@
-// d7d151172be17dd9e0b1d1c9868db806622798baa168f242627077e57c5d0348302e302e313a313732373034303332333435363a5b2267656e61727440302e302e33225d
+// 07b8eba8c57f5c831c43306984718fb8acf38f6ba269115c99944495ee099280302e302e313a313732373133313430373433393a5b2267656e61727440302e302e33225d
 import { image, svg, color, vec, random, xorshift } from 'genart'
 
 // const bear = await image(
@@ -10,21 +10,37 @@ const bear = await image(
 
 const s = svg({ width: bear.width(), height: bear.height() })
 
-const gridSize = 8
+const a = vec(1, 2, 3, 4, 5, 6, 7, 8, 9)
+console.log(a.chunk(2))
+
+const gridSize = 10
 const rowLength = Math.floor((s.width() - gridSize) / gridSize)
 const columnLength = Math.floor((s.height() - gridSize) / gridSize)
 const field = []
 // calculate spread for each color pixel
 for (let y = 0; y < s.height() - gridSize; y += gridSize) {
   for (let x = 0; x < s.width() - gridSize; x += gridSize) {
-    let pixels = bear.get(x, y, gridSize, gridSize)
-    const a = vec(pixels.flatMap((a) => [...a.filter((_, i) => i % 4 > 0)]))
+    let pixels = bear.get(x, y, gridSize, gridSize).flatMap((p) => [...p])
+    let [r, g, b] = [0, 0, 0]
+    length = pixels.length / 4
+    for (let i = 0; i < length; i += 4) {
+      r += pixels[i]
+      g += pixels[i + 1]
+      b += pixels[i + 2]
+    }
+    console.log(r, g, b)
+    r /= length
+    g /= length
+    b /= length
+    console.log(r, g, b)
     // const value = a.average()
-    const value = (a.spread2() * 17) / 1000
+    // const value = (a.spread2() * 17) / 1000
 
     // field.push(a.spread2())
-    field.push(value)
-    const c = color(value, value, value)
+    // console.log(acolor)
+    // field.push(value)
+    // const [r, g, b] = acolor
+    const c = color(r, g, b)
     // console.log(a.spread())
     s.rect(gridSize, gridSize, { x, y, fill: c.hex() })
   }
@@ -71,7 +87,7 @@ for (let j = 0; j < 30; j++) {
 
   const value = (v) => {
     const i = v.x + v.y * rowLength
-    if (i > field.length) throw Error('out of bounds')
+    // if (i > field.length) throw Error('out of bounds')
     return field[i]
   }
   const coords = (r) => {
