@@ -1,50 +1,66 @@
-import { Canvas, vec, random, Vector, Color, rng } from 'genart'
+import { Canvas, vec, Color, rng } from 'genart'
 
 const canvas = Canvas.create()
 const rand = rng()
 
-const snake = vec(50, 50)
-// pixels per millisecond
-let speed = 50 / 1000
-let direction = 1
-
-let angleSpeed = 0.1
-// direction of angle -1 for left, 1 for right, 0 for straightforward
-let angleDirection = 1
-
-function drw() {
-  canvas.circle(snake, 20)
+let body = []
+for (let i = 0; i < 20; i++) {
+  body.push(vec(50, 50))
 }
+let jointDistance = 20
+// Velocity vector in polar coordinates
+// [angle, velocity]
+let velocity = vec(0, 50 / 1000)
+let maxVelocity = 200 / 1000
+let angularVelocity = (1 / 4) * Math.PI
+let acceleration = 0.0001
 
-let prev = Date.now()
-draw(() => {
+const bounds = [
+  [0, canvas.width],
+  [0, canvas.height],
+]
+
+draw((dt) => {
   canvas.clear()
 
+  // change direction
   if (rand.random() > 0.95) {
-    angleDirection = rand.integer(-1, 1)
+    angularVelocity = (rand.integer(-1, 1) * 2) / 1000
+  }
+  if (rand.random() > 0.95) {
+    acceleration = rand.integer(-1, 1) * 0.0001
   }
 
-  // change direction
-  direction += angleDirection * angleSpeed
+  velocity[0] += angularVelocity * dt
+  velocity[1] += acceleration * dt
+  if (Math.abs(velocity[1]) > maxVelocity) {
+    velocity[1] = Math.sign(velocity[1]) * velocity[1]
+  }
 
   // calculate how much to move into direction
-  const now = Date.now()
-  const diff = now - prev
-  prev = now
-  const d = vec(Math.cos(direction), Math.sin(direction))
-    .clone()
-    .mul(diff * speed)
-  snake.add(d).wraparound([
-    [0, canvas.width],
-    [0, canvas.height],
-  ])
+  const [angle, v] = velocity
+  const d = vec(dt * v * Math.cos(angle), dt * v * Math.sin(angle))
+
+  body[0].add(d).wraparound(bounds as any)
+  for (let i = 1; i < body.length; i++) {
+    let prev = body[i - 1]
+    let cur = body[i]
+    const dist = Math.sqrt(prev.dist2(cur))
+    const diff = dist - jointDistance
+    if (diff > 0) {
+      const d = prev.clone().sub(cur).norm().mul(diff)
+      cur.add(d).wraparound(bounds as any)
+    }
+  }
 
   // draw
-  canvas.circle(snake, 2, {
-    fill: Color.create(200, 0, 200),
-    stroke: Color.BLACK,
-  })
-  // drw()
+  for (const p of body) {
+    canvas.circle(p, 20, {
+      fill: Color.BLACK,
+      stroke: Color.BLACK,
+      strokeWidth: 2,
+    })
+  }
 
   canvas.load()
 })
