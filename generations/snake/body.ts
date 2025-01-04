@@ -1,4 +1,4 @@
-import { Canvas, vec, Color, Random, Math } from 'genart'
+import { Canvas, vec, Random, Math } from 'genart'
 
 const POINT_DISTANCE = 50
 const BODY_LENGTH = 20
