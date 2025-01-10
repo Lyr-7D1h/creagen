@@ -24,7 +24,6 @@ await image.loadPixels()
 const colored = image.clone()
 image.edgeDetection()
 
-
 const CLUSTER_COUNT = 4
 // const INCLUDE_STARTING_POINTS = true
 const MIN_LUMINANCE = 240
@@ -44,7 +43,11 @@ const rng = Random.xorshift()
 // const rng = xorshift()
 // let s = Svg.create({ width: WIDTH, height: HEIGHT })
 
-const canvas = Canvas.create({ width: WIDTH, height: HEIGHT, renderMode: 'svg' })
+const canvas = Canvas.create({
+  width: WIDTH,
+  height: HEIGHT,
+  renderMode: 'svg',
+})
 
 // generate n random points based on luminance
 let points: Vector<2>[] = []
@@ -65,14 +68,12 @@ for (const p of points) {
   canvas.circle(p, 4)
 }
 
-
 function updatePoints() {
   let vor = Voronoi.create(points, [0, 0, WIDTH, HEIGHT])
   vor.weightedStippling((x, y) => {
     return image.get(x, y).luminance()
   }, INTERPOLATION_STEP)
 }
-
 
 const means = new KMeans(colors, CLUSTER_COUNT)
 const clusters = means.clusters()
@@ -99,7 +100,10 @@ for (const centroid of means.centroids()) {
 //   // color(160, 82, 45)
 // ]
 
-let groupedPoints: Vector<2>[][] = Array.from(new Array(CLUSTER_COUNT), () => [])
+let groupedPoints: Vector<2>[][] = Array.from(
+  new Array(CLUSTER_COUNT),
+  () => []
+)
 for (let i = 0; i < 1; i++) {
   // updatePoints()
   for (let i = 0; i < points.length; i++) {
@@ -110,11 +114,7 @@ for (let i = 0; i < 1; i++) {
   }
 }
 let i = 0
-const c = [
-  Color.RED,
-  Color.GREEN,
-  Color.BLUE,
-]
+const c = [Color.RED, Color.GREEN, Color.BLUE]
 // for (const group of groupedPoints) {
 //   for (const p of group) {
 //     canvas.circle(p, 1, { fill: c[i], stroke: c[i] })
@@ -168,7 +168,6 @@ function drawLine(group: number) {
 
     // canvas.path({ smooth: true, stroke: COLORS[group] }).add(linePoints)
   }
-
 }
 
 for (let i = 0; i < groupedPoints.length; i++) {
@@ -178,4 +177,3 @@ for (let i = 0; i < groupedPoints.length; i++) {
 load(canvas)
 load(image)
 load(colored)
-
