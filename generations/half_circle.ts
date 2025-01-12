@@ -1,4 +1,4 @@
-import { Generator } from '../generator'
+import { Generator } from '../genart-editor/src/generator'
 import { beta } from '../random'
 import { circle, path } from '../svg'
 
@@ -31,7 +31,7 @@ while (true) {
         d !== 0 &&
         visited[i].length < 6 &&
         !visited[i].includes(a) &&
-        d < 350 ** 2,
+        d < 350 ** 2
     )
     .sort((a, b) => a[0] > b[0])[0]
 

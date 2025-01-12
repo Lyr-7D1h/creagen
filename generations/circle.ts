@@ -1,4 +1,4 @@
-import { Generator } from '../generator'
+import { Generator } from '../genart-editor/src/generator'
 import { path } from '../svg'
 
 const gen = new Generator({ width: '1000px', height: '1000px' })
@@ -25,7 +25,7 @@ while (true) {
         d !== 0 &&
         visited[i].length < 4 &&
         !visited[i].includes(a) &&
-        d < 400 ** 2,
+        d < 400 ** 2
     )
     .sort((a, b) => a[0] > b[0])[0]
 
