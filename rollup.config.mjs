@@ -23,7 +23,7 @@ export default [
   {
     input: 'dist/types/index.d.ts',
     output: {
-      name: '@lyr_7d1h/creagen',
+      name: 'creagen',
       file: 'dist/creagen.d.ts',
       format: 'es',
     },
