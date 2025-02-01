@@ -1,5 +1,14 @@
 # Creagen
 
+A general purpose library meant for creative coding.
+
+This library tailors more to experienced programmers with a focus on good function semantics and reuse of code and concepts.
+
+> [!CAUTION]
+> This is a highly experimental library and is very sensitive to future changes
+> I implement a lot of algorithms here myself as a learning experience so don't expect
+> the smoothest of performance.
+
 # Build
 
 ```sh
