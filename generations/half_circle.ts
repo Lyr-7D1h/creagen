@@ -1,4 +1,4 @@
-import { Generator } from '../genart-editor/src/generator'
+import { Generator } from '../creagen-editor/src/generator'
 import { beta } from '../random'
 import { circle, path } from '../svg'
 

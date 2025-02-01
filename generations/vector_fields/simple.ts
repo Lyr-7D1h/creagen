@@ -1,4 +1,4 @@
-import { Vector, vec, Svg, simplex } from 'genart'
+import { Vector, vec, Svg, simplex } from 'creagen'
 
 const WIDTH = 1000
 const HEIGHT = 1000

@@ -1,4 +1,4 @@
-import { Canvas, vec, Random, Math } from 'genart'
+import { Canvas, vec, Random, Math } from 'creagen'
 
 const POINT_DISTANCE = 50
 const BODY_LENGTH = 20

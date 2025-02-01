@@ -10,7 +10,7 @@ import {
   color,
   Color,
   Random,
-} from 'genart'
+} from 'creagen'
 
 // https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf
 // https://www.youtube.com/watch?v=Bxdt6T_1qgc

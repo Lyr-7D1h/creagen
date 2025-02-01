@@ -1,4 +1,4 @@
-import { Generator } from '../genart-editor/src/generator'
+import { Generator } from '../creagen-editor/src/generator'
 import { path } from '../svg'
 
 const gen = new Generator({ width: '1000px', height: '1000px' })

@@ -1,4 +1,4 @@
-import { Math, Canvas, vec, Color, rng, Vector } from 'genart'
+import { Math, Canvas, vec, Color, rng, Vector } from 'creagen'
 
 const canvas = Canvas.create()
 const rand = rng()
