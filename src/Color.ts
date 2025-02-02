@@ -59,8 +59,9 @@ export class Color extends Vector<4> {
     return this
   }
 
+  static override create(grey: number, a?: number): Color
   static override create(r: number, g: number, b: number, a?: number): Color
-  static override create(color: number[] | Uint8ClampedArray): Color
+  static override create(color: number[] | Uint8ClampedArray | number): Color
   static override create(
     r: number | number[] | Uint8ClampedArray,
     g?: number,
@@ -97,22 +98,31 @@ export class Color extends Vector<4> {
         throw Error('has to be an integer')
       }
     }
-    let values: [number, number, number, number]
+    // using grey as a number
+    if (
+      typeof r === 'number' &&
+      typeof b === 'undefined' &&
+      typeof g === 'undefined'
+    ) {
+      super([r, r, r, a ?? 255])
+      return
+    }
+
     if (r instanceof Uint8ClampedArray || Array.isArray(r)) {
       if (r.length === 3) {
-        values = [...r, 255] as [number, number, number, number]
+        super([...r, 255] as [number, number, number, number])
+        return
       } else if (r.length === 4) {
-        values = r as [number, number, number, number]
-      } else {
-        throw Error(`invalid length ${r.length} for color given`)
+        super(r as [number, number, number, number])
+        return
       }
-    } else {
-      if (typeof g === 'undefined' || typeof b === 'undefined') {
-        throw Error('Color has to have 3 or 4 elements')
-      }
-      values = [r, g, b, a ?? 255]
+      throw Error(`invalid length ${r.length} for color given`)
     }
-    super(values)
+
+    if (typeof g === 'undefined' || typeof b === 'undefined') {
+      throw Error('Color has to have 3 or 4 elements')
+    }
+    super([r, g, b, a ?? 255])
   }
 
   get r() {

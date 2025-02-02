@@ -1,3 +1,4 @@
+import { Color } from '../Color'
 import { Bounds, Vector } from '../Vector'
 import { Circle } from './Circle'
 import { GeometricOptions, Geometry } from './Geometry'
@@ -6,16 +7,11 @@ import { Rectangle, RectangleOptions } from './Rectangle'
 
 export type GeometryChild = Rectangle | Circle
 export interface CanvasOptions {
-  width?: number
-  height?: number
   renderMode?: 'canvas' | 'svg'
 }
 
 const defaultValues = {
-  width: window.innerWidth,
-  height: window.innerHeight,
   renderMode: 'canvas' as 'canvas' | 'svg',
-  fill: 'none',
 }
 
 export class Canvas {
@@ -26,25 +22,29 @@ export class Canvas {
   width: number
   height: number
 
-  static create(options?: CanvasOptions) {
-    return new Canvas(options)
+  static create(width?: number, height?: number, options?: CanvasOptions) {
+    return new Canvas(width, height, options)
   }
 
-  private constructor(options?: CanvasOptions) {
+  private constructor(
+    width?: number,
+    height?: number,
+    options?: CanvasOptions,
+  ) {
     options = options ? { ...defaultValues, ...options } : defaultValues
-    this.width = options.width
-    this.height = options.height
+    this.width = width ?? window.innerWidth
+    this.height = height ?? window.innerHeight
     if (options.renderMode === 'svg') {
       this.element = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'svg',
       )
-      this.element.setAttribute('width', options.width.toString())
-      this.element.setAttribute('height', options.height.toString())
+      this.element.setAttribute('width', this.width.toString())
+      this.element.setAttribute('height', this.height.toString())
     } else {
       this.element = document.createElement('canvas')
-      this.element.setAttribute('width', options.width.toString())
-      this.element.setAttribute('height', options.height.toString())
+      this.element.setAttribute('width', this.width.toString())
+      this.element.setAttribute('height', this.height.toString())
       this.ctx = this.element.getContext('2d')
     }
     this.children = []
@@ -59,6 +59,10 @@ export class Canvas {
   private add(child: Geometry) {
     if (this.ctx) child._canvas(this.ctx)
     this.children.push(child)
+  }
+
+  background(color: Color) {
+    this.rect(0, 0, this.width, this.height, { fill: color })
   }
 
   circle(position: Vector<2>, radius: number, options?: GeometricOptions)
