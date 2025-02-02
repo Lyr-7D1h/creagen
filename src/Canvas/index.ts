@@ -56,6 +56,11 @@ export class Canvas {
     if (this.ctx) this.ctx.clearRect(0, 0, this.width, this.height)
   }
 
+  private add(child: Geometry) {
+    if (this.ctx) child._canvas(this.ctx)
+    this.children.push(child)
+  }
+
   circle(position: Vector<2>, radius: number, options?: GeometricOptions)
   circle(x: number, y: number, radius: number, options?: GeometricOptions)
   circle(
@@ -65,7 +70,7 @@ export class Canvas {
     options?: GeometricOptions,
   ) {
     const circle = new Circle(x, y, radius, options)
-    this.children.push(circle)
+    this.add(circle)
     return circle
   }
 
@@ -90,13 +95,13 @@ export class Canvas {
     x5?: RectangleOptions,
   ): Rectangle {
     const rect = new Rectangle(x1, x2, x3, x4, x5)
-    this.children.push(rect)
+    this.add(rect)
     return rect
   }
 
   path(options?: PathOptions) {
     const path = new Path(options)
-    this.children.push(path)
+    this.add(path)
     return path
   }
 
@@ -104,16 +109,12 @@ export class Canvas {
     const line = new Path()
     line.add(x1)
     line.add(x2)
-    this.children.push(line)
+    this.add(line)
     return line
   }
 
   load() {
-    if (this.ctx) {
-      for (const c of this.children) {
-        c._canvas(this.ctx)
-      }
-    } else {
+    if (!this.ctx) {
       for (const c of this.children) {
         this.element.appendChild(c._svg())
       }

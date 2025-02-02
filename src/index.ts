@@ -1,5 +1,7 @@
 export * as Math from './math'
 export * as graph from './graph'
+export { load, LoadableObject } from './load'
+export { draw, DrawFn } from './draw'
 // export * as lin from './lin'
 export { Canvas } from './Canvas'
 export { Random } from './Random/index'

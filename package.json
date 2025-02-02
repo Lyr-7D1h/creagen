@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "Lyr",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
