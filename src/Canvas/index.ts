@@ -62,7 +62,7 @@ export class Canvas {
   }
 
   background(color: Color) {
-    this.rect(0, 0, this.width, this.height, { fill: color })
+    this.rect(0, 0, this.width, this.height, { fill: color, strokeWidth: 0 })
   }
 
   circle(position: Vector<2>, radius: number, options?: GeometricOptions)

@@ -43,7 +43,7 @@ export class Rectangle extends Geometry<RectangleOptions> {
     x2: number,
     x3: number,
     x4?: number | RectangleOptions,
-    x5: RectangleOptions = defaultRectangleOptions,
+    x5?: RectangleOptions,
   ) {
     super()
     if (typeof x1 !== 'number') {
@@ -51,14 +51,21 @@ export class Rectangle extends Geometry<RectangleOptions> {
       this.y = x1.y
       this.width = x2
       this.height = x3
-      this.options = (x4 as RectangleOptions) ?? defaultRectangleOptions
+      this.options =
+        typeof x4 !== 'undefined'
+          ? { ...defaultGeometricOptions, ...(x4 as RectangleOptions) }
+          : defaultRectangleOptions
     } else {
       this.x = x1
       this.y = x2
       this.width = x3
       this.height = x4 as number
-      this.options = x5 ?? defaultRectangleOptions
+      this.options =
+        typeof x5 !== 'undefined'
+          ? { ...defaultGeometricOptions, ...(x5 as RectangleOptions) }
+          : defaultRectangleOptions
     }
+    console.log(this.options)
   }
 
   _svg() {
