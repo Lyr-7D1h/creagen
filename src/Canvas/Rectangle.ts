@@ -65,7 +65,6 @@ export class Rectangle extends Geometry<RectangleOptions> {
           ? { ...defaultGeometricOptions, ...(x5 as RectangleOptions) }
           : defaultRectangleOptions
     }
-    console.log(this.options)
   }
 
   _svg() {
