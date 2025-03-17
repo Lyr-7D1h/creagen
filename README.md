@@ -18,11 +18,14 @@ npm run build
 
 # Roadmap
 
-## Library:
-
 - Reduce svg size (https://www.svgviewer.dev/)
 - Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
 - Gcode support
+- GPU accelerated tensors (https://www.tensorflow.org/js/guide/platform_environment)
+  - When webgpu is supported on all major devices (https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
+  - WebGPU has compute shaders which WebGL does not have 
+  - https://github.com/tensorflow/tfjs/tree/master/tfjs-backend-webgpu
+
 
 # Resources
 **Library**
