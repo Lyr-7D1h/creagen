@@ -36,6 +36,10 @@ export class Vector<N extends number> extends Array<number> {
     }
   }
 
+  static empty<N extends number>(length: N) {
+    return new Vector<N>(...Array(length).fill(0))
+  }
+
   static create<N extends number>(
     ...items: [number[] & { length: N }] | (number[] & { length: N })
   ) {
