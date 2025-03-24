@@ -36,6 +36,16 @@ export class Vector<N extends number> extends Array<number> {
     }
   }
 
+  /** Generate a evenly spaced vector */
+  static linSpace<N extends number>(start: number, end: number, count: number) {
+    return new Vector<N>(
+      ...Array.from(
+        { length: count },
+        (_, i) => start + (end - start) * (i / (count - 1)),
+      ),
+    )
+  }
+
   static empty<N extends number>(length: N) {
     return new Vector<N>(...Array(length).fill(0))
   }
