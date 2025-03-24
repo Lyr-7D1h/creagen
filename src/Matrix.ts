@@ -1,3 +1,4 @@
+import { Math } from '..'
 import { Vector } from './Vector'
 
 export function matrix() {}
@@ -8,7 +9,25 @@ export class Matrix<R extends number, C extends number> {
   public readonly cols: C
   private elements: number[]
 
-  static create() {}
+  static identity<R extends number>(size: R) {
+    const m = new Matrix<R, R>(new Array(size * size).fill(0), size, size)
+    for (let i = 0; i < size; i++) {
+      m.elements[i * size + i] = 1
+    }
+    return m
+  }
+
+  static empty<R extends number, C extends number>(rows: R, cols: C) {
+    return new Matrix<R, C>(new Array(rows * cols).fill(0), rows, cols)
+  }
+
+  static create<R extends number, C extends number>(
+    elements: number[],
+    rows: R,
+    cols: C,
+  ) {
+    return new Matrix<R, C>(elements, rows, cols)
+  }
 
   constructor(elements: number[], rows: R, cols: C)
   constructor(...rows: (number[] & { length: C })[] & { length: R })
@@ -32,6 +51,12 @@ export class Matrix<R extends number, C extends number> {
 
     if (this.elements.length !== this.rows * this.cols)
       throw new Error(`Elements must equal ${this.rows * this.cols}`)
+    if (this.elements.length === 0)
+      throw new Error('Matrix must have at least one element')
+  }
+
+  get length() {
+    return this.elements.length
   }
 
   /** Return a copy of the row vector */
@@ -48,7 +73,16 @@ export class Matrix<R extends number, C extends number> {
   }
 
   set(row: number, col: number, value: number): void {
-    this.elements[row][col] = value
+    this.elements[row * this.cols + col] = value
+  }
+
+  *col(col: number): Generator<number, this> {
+    let i = 0
+    while (i < this.rows) {
+      yield this.get(i, col)
+      i++
+    }
+    return this
   }
 
   clone(): Matrix<R, C> {
@@ -68,16 +102,85 @@ export class Matrix<R extends number, C extends number> {
       )
     }
 
-    let det = 0
+    // PERF: calculate only diagonals of U instead of L, U, P
+    // PERF: implement Bareiss Algorithm for integer only matrices which is division free
+    return this.lup()[1].diag()
+  }
 
-    if (this.rows === 2) {
-      det =
-        this.elements[0] * this.elements[3] -
-        this.elements[1] * this.elements[2]
-      return det
+  /** Multiply diagonal of matrix */
+  diag(): number {
+    let res = 1
+    for (let i = 0; i < this.rows; i++) {
+      res *= this.elements[i * this.cols + i]
+    }
+    return res
+  }
+
+  swapRows(i: number, j: number) {
+    if (i === j) return this
+    for (let col = 0; col < this.cols; col++) {
+      const temp = this.get(i, col)
+      this.set(i, col, this.get(j, col))
+      this.set(j, col, temp)
+    }
+    return this
+  }
+
+  roundToDec(decimal: number) {
+    for (let i = 0; i < this.length; i++) {
+      this.elements[i] = Math.roundToDec(this.elements[i], decimal)
+    }
+    return this
+  }
+
+  /**
+   * [LU factorization with partial pivoting](https://en.wikipedia.org/wiki/LU_decomposition#LU_factorization_with_partial_pivoting)
+   *
+   * Returns [L, U, P] such that PA = LU
+   * */
+  lup(): [Matrix<R, R>, Matrix<R, R>, Matrix<R, R>] {
+    if ((this.rows as number) !== (this.cols as number)) {
+      throw new Error('Matrix must be square')
     }
 
-    throw Error('unimplemented')
+    const n = this.rows
+    const L = Matrix.identity(n)
+    const U = this.clone() as unknown as Matrix<R, R>
+    const P = Matrix.identity(n)
+
+    for (let pivot = 0; pivot < this.cols; pivot++) {
+      let max = 0
+      let maxIndex = pivot
+      for (let col = pivot; col < this.rows; col++) {
+        const value = Math.abs(this.get(col, pivot))
+        if (value > max) {
+          max = value
+          maxIndex = col
+        }
+      }
+
+      // if no absolute value is greater than 0 skip since there is no pivot
+      if (max === 0) {
+        continue
+      }
+
+      // put row with biggest pivot on top for numerical stability
+      if (maxIndex !== pivot) {
+        this.swapRows(pivot, maxIndex)
+        P.swapRows(pivot, maxIndex)
+      }
+
+      // set the scalar factor in L
+      for (let i = pivot + 1; i < this.rows; i++) {
+        const factor = U.get(i, pivot) / U.get(pivot, pivot)
+        L.set(i, pivot, factor)
+        for (let j = pivot; j < this.cols; j++) {
+          U.set(i, j, U.get(i, j) - factor * U.get(pivot, j))
+        }
+      }
+    }
+
+    return [L, U, P]
   }
 
   /** Create a string representation of this matrix */
