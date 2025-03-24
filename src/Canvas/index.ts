@@ -57,7 +57,6 @@ export class Canvas {
   }
 
   private add(child: Geometry) {
-    if (this.ctx) child._canvas(this.ctx)
     this.children.push(child)
   }
 
@@ -118,10 +117,16 @@ export class Canvas {
   }
 
   load() {
+    // if svg
     if (!this.ctx) {
       for (const c of this.children) {
         this.element.appendChild(c._svg())
       }
+      return
+    }
+
+    for (const c of this.children) {
+      c._canvas(this.ctx)
     }
   }
 

@@ -220,7 +220,6 @@ export class Path extends Geometry<PathOptions> {
           }
           i += 2
         }
-        // console.log(JSON.stringify(queue))
         // should be in the end of queue now
         console.assert(queue.length - 1 === i)
       } else {
@@ -231,7 +230,6 @@ export class Path extends Geometry<PathOptions> {
         }
         i = -1
       }
-      // console.log(outsideSegment)
 
       // if intersection and next point are the same, remove the intersection
       // if (intersection.equals(queue[1])) queue.shift()
@@ -288,13 +286,11 @@ export class Path extends Geometry<PathOptions> {
     }
 
     if (this.options.smooth) {
-      // console.log('segments', segments)
       // TODO: fix in case of wrap around
       let path = ''
       for (const segment of segments) {
         if (segment.length < 3) {
-          console.warn('Need atleast 3 points to create a smooth path')
-          // TODO: put back: throw Error('Need atleast 3 points to create a smooth path')
+          throw Error('Need atleast 3 points to create a smooth path')
         }
 
         path += `M${this.points[0][0]} ${this.points[0][1]}`
