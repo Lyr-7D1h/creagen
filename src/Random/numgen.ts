@@ -1,3 +1,4 @@
+import { Math } from '..'
 // TODO: implement same distributions https://jstat.github.io/distributions.html
 
 /**
@@ -23,6 +24,12 @@ export class RandomNumberGenerator {
       return Math.round(this.randomFn() * x1)
     }
     return x1 + Math.round(this.randomFn() * (x2 - x1))
+  }
+
+  float(stop: number): number
+  float(start: number, stop: number): number
+  float(x1: number, x2?: number) {
+    return this.randomFn() * Math.diff(x1, x2) + x1
   }
 
   /** Get a random number between 0 and 1 */

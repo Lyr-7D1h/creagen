@@ -5,16 +5,16 @@ import { CREAGEN_PRECISION } from './constants'
 /**
  * Return the greatest common divisor
  */
-export function gcd(a: number, b: number) {
-  if (b === 0) return a
-  return gcd(b, a % b)
+export function gcd(x: number, y: number) {
+  if (y === 0) return x
+  return gcd(y, x % y)
 }
 
 /**
  * Proper modulo that also handles negative cases
  */
-export function mod(n: number, m: number) {
-  return ((n % m) + m) % m
+export function mod(x: number, y: number) {
+  return ((x % y) + y) % y
 }
 
 /**
@@ -25,6 +25,15 @@ export function roundToDec(n: number, dec?: number) {
     return n
   }
   return parseFloat(n.toFixed(dec ?? CREAGEN_PRECISION))
+}
+
+/**
+ * Get the absolute difference between two numbers
+ * @param x First number
+ * @param y Second number
+ */
+export function diff(x: number, y: number) {
+  return Math.abs(x - y)
 }
 
 // FROM es2015.core

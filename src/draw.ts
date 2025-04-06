@@ -2,6 +2,7 @@ export type DrawFn = (dt: number) => void
 
 let handle
 /** Run a draw loop that runs `fn` every 1/60 seconds */
+// TODO: add framerate
 export function draw(fn: DrawFn) {
   if (handle) cancelAnimationFrame(handle)
   let t0 = (document.timeline.currentTime as number) ?? 0

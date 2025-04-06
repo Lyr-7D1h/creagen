@@ -1,4 +1,4 @@
-import { boxMuller, RandomNumberGenerator, xorshift } from './numgen'
+import { boxMuller, RandomNumberGenerator } from './numgen'
 
 export * from './simplex'
 export * from './perlin'
@@ -6,27 +6,29 @@ export * from './numgen'
 export * from './pmf'
 export * from './cdf'
 
-const defaultRandomFn = Math.random
+const defaultRng = new RandomNumberGenerator(Math.random)
 
-export class Random {
+export class Random extends RandomNumberGenerator {
   /** generate a random number until and including `stop` */
   static integer(stop: number): number
   static integer(start: number, stop: number): number
   static integer(x1: number, x2?: number) {
-    if (typeof x2 === 'undefined') {
-      return Math.round(defaultRandomFn() * x1)
-    }
+    return defaultRng.integer(x1, x2)
+  }
 
-    return x1 + Math.round(defaultRandomFn() * (x2 - x1))
+  static float(stop: number): number
+  static float(start: number, stop: number): number
+  static float(x1: number, x2?: number) {
+    return defaultRng.float(x1, x2)
   }
 
   /** Get a random number between 0 and 1 */
   static random() {
-    return defaultRandomFn()
+    return defaultRng.random()
   }
 
   static xorshift() {
-    return new RandomNumberGenerator(xorshift())
+    return
   }
   // static random() {
   //   return new RandomNumberGenerator(Math.random)
