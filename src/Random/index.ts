@@ -1,14 +1,21 @@
-import { boxMuller, RandomNumberGenerator } from './numgen'
+import {
+  beta as betaFn,
+  boxMuller,
+  RandomFn,
+  RandomNumberGenerator,
+  UnitRandomFn,
+  xorshift,
+} from './RandomNumberGenerator'
 
 export * from './simplex'
 export * from './perlin'
-export * from './numgen'
+export * from './RandomNumberGenerator'
 export * from './pmf'
 export * from './cdf'
 
 const defaultRng = new RandomNumberGenerator(Math.random)
 
-export class Random extends RandomNumberGenerator {
+export class Random {
   /** generate a random number until and including `stop` */
   static integer(stop: number): number
   static integer(start: number, stop: number): number
@@ -27,19 +34,51 @@ export class Random extends RandomNumberGenerator {
     return defaultRng.random()
   }
 
-  static xorshift() {
-    return
+  static xorshift(seed?: number) {
+    return new RandomNumberGenerator(xorshift(seed))
   }
-  // static random() {
-  //   return new RandomNumberGenerator(Math.random)
-  // }
+
+  /** https://en.wikipedia.org/wiki/Beta_distribution */
+  static beta(alpha: number, beta: number, uniformGenerator?: UnitRandomFn) {
+    return new RandomNumberGenerator(betaFn(alpha, beta, uniformGenerator))
+  }
+
+  /** Normally distributed Random Number Generator using [Box Muller](https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform) */
   static boxMuller(
     mean: number,
     deviation: number,
-    uniformGenerator?: () => number,
+    uniformGenerator?: UnitRandomFn,
   ) {
     return new RandomNumberGenerator(
       boxMuller(mean, deviation, uniformGenerator),
     )
+  }
+
+  /** Normally distributed Random Number Generator using [Box Muller](https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform) */
+  static normal(
+    mean: number,
+    deviation: number,
+    uniformGenerator?: UnitRandomFn,
+  ): RandomFn {
+    return boxMuller(mean, deviation, uniformGenerator)
+  }
+
+  /** Exponentially distributed random number https://en.wikipedia.org/wiki/Exponential_distribution */
+  static exponential(
+    lambda: number,
+    uniformGenerator?: UnitRandomFn,
+  ): RandomFn {
+    return () => {
+      const u = uniformGenerator ? uniformGenerator() : Math.random()
+      return -Math.log(u) / lambda
+    }
+  }
+
+  /** Exponentially distributed random number https://en.wikipedia.org/wiki/Exponential_distribution bounded to never exceed 1*/
+  static truncatedExponential(lambda: number, uniformGenerator?: RandomFn) {
+    return () => {
+      const u = uniformGenerator ? uniformGenerator() : Math.random()
+      return -Math.log(1 - u * (1 - Math.exp(-lambda))) / lambda
+    }
   }
 }

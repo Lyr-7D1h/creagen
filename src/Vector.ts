@@ -37,8 +37,8 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   /** Generate a evenly spaced vector */
-  static linSpace<N extends number>(start: number, end: number, count: number) {
-    return new Vector<N>(
+  static linSpace(start: number, end: number, count: number) {
+    return new Vector<1>(
       ...Array.from(
         { length: count },
         (_, i) => start + (end - start) * (i / (count - 1)),
@@ -107,6 +107,10 @@ export class Vector<N extends number> extends Array<number> {
       dist += (this[i]! - v[i]!) ** 2
     }
     return dist
+  }
+
+  dist(v: Vector<N>) {
+    return Math.sqrt(this.dist2(v))
   }
 
   /** mutable mapping oftor values */
@@ -202,17 +206,27 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
-  mul(s: number) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] *= s
+  /** Scale vector */
+  mul(s: number)
+  /** Multiply each value */
+  mul(x: number, y: number)
+  /** Multiply each value */
+  mul(...multipliers: FixedArray<number, N>)
+  /** Multiple/scale vector */
+  mul(...multipliers: number[]) {
+    if (multipliers.length === 1) {
+      const s = multipliers[0]
+      for (let i = 0; i < this.length; i++) {
+        this[i] *= s
+      }
+      return this
     }
-    return this
-  }
 
-  div(s: number) {
     for (let i = 0; i < this.length; i++) {
-      this[i] /= s
+      if (multipliers[i] === undefined) break
+      this[i] *= multipliers[i]!
     }
+
     return this
   }
 
@@ -293,6 +307,39 @@ export class Vector<N extends number> extends Array<number> {
       }
     }
     return true
+  }
+
+  /**
+   * Rotate the vector around its zero point
+   * @param theta - the angle to rotate in radians
+   * */
+  rotate(theta: number) {
+    if (this.length != 2) throw new Error('Only 2d rotation are supported')
+    if (theta === -Math.PI / 2) {
+      this.rotateLeft()
+    } else if (theta === Math.PI / 2) {
+      this.rotateRight()
+    } else {
+      this[0] *= Math.cos(theta) + this[1] * Math.sin(theta)
+      this[1] *= -Math.sin(theta) + this[0] * Math.cos(theta)
+    }
+    return this
+  }
+
+  rotateLeft() {
+    if (this.length != 2) throw new Error('Only 2d rotation are supported')
+    const x = this[0]
+    this[0] = -this[1]
+    this[1] = x
+    return this
+  }
+
+  rotateRight() {
+    if (this.length != 2) throw new Error('Only 2d rotation are supported')
+    const x = this[0]
+    this[0] = this[1]
+    this[1] = -x
+    return this
   }
 
   /** if a number is above or below a limit it correct it so it is within the boundary limits */

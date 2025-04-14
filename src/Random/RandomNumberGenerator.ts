@@ -4,15 +4,18 @@ import { Math } from '..'
 /**
  * A random() function, must return a number in the interval [0,1), just like Math.random().
  */
+export type UnitRandomFn = () => number
+
+/** A random number generator function */
 export type RandomFn = () => number
 
-export function rng(randomFn?: RandomFn) {
+export function rng(randomFn?: UnitRandomFn) {
   return new RandomNumberGenerator(randomFn ?? Math.random)
 }
 
 export class RandomNumberGenerator {
-  private readonly randomFn: RandomFn
-  constructor(random: RandomFn) {
+  private readonly randomFn: UnitRandomFn
+  constructor(random: UnitRandomFn) {
     this.randomFn = random
   }
 
@@ -41,7 +44,7 @@ export class RandomNumberGenerator {
 /** TODO: https://en.wikipedia.org/wiki/Linear_congruential_generator */
 // export function lcg(): number {}
 
-export function xorshift(seed?: number): RandomFn {
+export function xorshift(seed?: number): UnitRandomFn {
   let SEED = seed ?? 2463534242
   return () => {
     SEED ^= SEED << 13
@@ -56,9 +59,11 @@ export function beta(
   alpha: number,
   beta: number,
   uniformGenerator?: () => number,
-): number {
-  const u = uniformGenerator ? uniformGenerator() : Math.random()
-  return u ** (1 / alpha) / (u ** (1 / alpha) + (1 - u) ** (1 / beta))
+): UnitRandomFn {
+  return () => {
+    const u = uniformGenerator ? uniformGenerator() : Math.random()
+    return u ** (1 / alpha) / (u ** (1 / alpha) + (1 - u) ** (1 / beta))
+  }
 }
 
 /** Normally distributed Random Number Generator (https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform) */
@@ -80,35 +85,3 @@ export function boxMuller(
     return z0
   }
 }
-
-/** Usefull for generating samples from normal distributions (https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform) */
-// let cache: number[] = []
-// export function boxMuller(
-//   mean: number,
-//   deviation: number,
-//   uniformGenerator: () => number,
-// ): number {
-//   if (cache.length === 0) {
-//     cache = boxMullerGen(mean, deviation, uniformGenerator)
-//   }
-//   return cache.pop()!
-// }
-// function boxMullerGen(
-//   mean: number,
-//   deviation: number,
-//   uniformGenerator: () => number,
-// ): [number, number] {
-//   let u1 = uniformGenerator()
-//   const u2 = uniformGenerator()
-
-//   while (u1 === 0) {
-//     u1 = uniformGenerator()
-//   }
-
-//   const twopi = 2 * Math.PI
-//   const mag = deviation * Math.sqrt(-2.0 * Math.log(u1))
-//   const z0 = mag * Math.cos(twopi * u2) + mean
-//   const z1 = mag * Math.cos(twopi * u2) + mean
-
-//   return [z0, z1]
-// }

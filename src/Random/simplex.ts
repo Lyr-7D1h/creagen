@@ -27,7 +27,7 @@ Better rank ordering method by Stefan Gustavson in 2012.
  SOFTWARE.
  */
 
-import { type RandomFn } from '.'
+import { type UnitRandomFn } from '.'
 
 const F2 = 0.5 * (Math.sqrt(3.0) - 1.0)
 const G2 = (3.0 - Math.sqrt(3.0)) / 6.0
@@ -79,7 +79,7 @@ let noise2d: NoiseFunction2D | undefined
 
 let randomFn = Math.random
 
-export function simplexSeed(random: RandomFn) {
+export function simplexSeed(random: UnitRandomFn) {
   randomFn = random
   noise2d = noise3d = noise4d = undefined
 }
@@ -90,8 +90,8 @@ export function simplex(x: number, y: number, z: number, w: number): number
 export function simplex(
   x: number,
   y: number,
-  z?: number | RandomFn,
-  w?: number | RandomFn,
+  z?: number | UnitRandomFn,
+  w?: number | UnitRandomFn,
 ): number {
   if (typeof z === 'number') {
     if (typeof w === 'number') {
@@ -125,7 +125,7 @@ type NoiseFunction2D = (x: number, y: number) => number
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction2D}
  */
-function createNoise2D(random: RandomFn = Math.random): NoiseFunction2D {
+function createNoise2D(random: UnitRandomFn = Math.random): NoiseFunction2D {
   const perm = buildPermutationTable(random)
   // precalculating this yields a little ~3% performance improvement.
   const permGrad2x = new Float64Array(perm).map((v) => grad2[(v % 12) * 2]!)
@@ -215,7 +215,7 @@ type NoiseFunction3D = (x: number, y: number, z: number) => number
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction3D}
  */
-function createNoise3D(random: RandomFn = Math.random): NoiseFunction3D {
+function createNoise3D(random: UnitRandomFn = Math.random): NoiseFunction3D {
   const perm = buildPermutationTable(random)
   // precalculating these seems to yield a speedup of over 15%
   const permGrad3x = new Float64Array(perm).map((v) => grad3[(v % 12) * 3]!)
@@ -372,7 +372,7 @@ type NoiseFunction4D = (x: number, y: number, z: number, w: number) => number
  * @param random the random function that will be used to build the permutation table
  * @returns {NoiseFunction4D}
  */
-function createNoise4D(random: RandomFn = Math.random): NoiseFunction4D {
+function createNoise4D(random: UnitRandomFn = Math.random): NoiseFunction4D {
   const perm = buildPermutationTable(random)
   // precalculating these leads to a ~10% speedup
   const permGrad4x = new Float64Array(perm).map((v) => grad4[(v % 32) * 4]!)
@@ -540,7 +540,7 @@ function createNoise4D(random: RandomFn = Math.random): NoiseFunction4D {
  * Do not rely on this export.
  * @private
  */
-function buildPermutationTable(random: RandomFn): Uint8Array {
+function buildPermutationTable(random: UnitRandomFn): Uint8Array {
   const tableSize = 512
   const p = new Uint8Array(tableSize)
   for (let i = 0; i < tableSize / 2; i++) {
