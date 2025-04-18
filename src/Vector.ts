@@ -50,6 +50,11 @@ export class Vector<N extends number> extends Array<number> {
     return new Vector<N>(...Array(length).fill(0))
   }
 
+  /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
+  static polar(radius: number, angle: number) {
+    return new Vector<2>(radius * Math.cos(angle), radius * Math.sin(angle))
+  }
+
   static create<N extends number>(
     ...items: [number[] & { length: N }] | (number[] & { length: N })
   ) {
@@ -307,6 +312,29 @@ export class Vector<N extends number> extends Array<number> {
       }
     }
     return true
+  }
+
+  /**
+   * Angle between x-axis and ray from origin to [x,y] from -pi to pi
+   *
+   * https://en.wikipedia.org/wiki/Atan2
+   */
+  atan2(): number {
+    if (this.length != 2) throw new Error('Only 2d atan is supported')
+    return Math.atan2(this[1]!, this[0]!)
+  }
+
+  /**
+   * Positive atan2
+   *
+   * Angle between x-axis and ray from origin to [x,y] from 0 to 2pi
+   *
+   * https://en.wikipedia.org/wiki/Atan2
+   */
+  atan2p(): number {
+    if (this.length != 2) throw new Error('Only 2d atan is supported')
+    const a = Math.atan2(this[1]!, this[0]!)
+    return a >= 0 ? a : a + 2 * Math.PI
   }
 
   /**
