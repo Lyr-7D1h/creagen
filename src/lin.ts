@@ -299,7 +299,7 @@ export interface Iterator<I extends Data> {
 export function solveTriadiagonalMatrix(
   A: [number, number, number][],
   b: number[],
-) {
+): number[] {
   const n = A.length
   for (let i = 1; i < n; i++) {
     const m = A[i][0] / A[i - 1][1]

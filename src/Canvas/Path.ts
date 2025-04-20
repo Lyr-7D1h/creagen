@@ -9,6 +9,7 @@ export const defaultPathOptions: PathOptions = {
   smooth: false,
   closed: false,
   wrapAround: null,
+  tension: 0,
 }
 
 export interface PathOptions extends GeometricOptions {
@@ -18,6 +19,8 @@ export interface PathOptions extends GeometricOptions {
   closed?: boolean
   /** Wrap the path around a certain bound */
   wrapAround?: Bounds<2> | null
+  /** Control curve tension (0.0-1.0): higher values make sharper curves */
+  tension?: number
 }
 
 export class Path extends Geometry<PathOptions> {
@@ -52,7 +55,12 @@ export class Path extends Geometry<PathOptions> {
   // Closed loop: https://www.jacos.nl/jacos_html/spline/circular/index.html, https://www.jacos.nl/jacos_html/spline/theory/theory_1.html
   // https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
   /** Calculate the control point coordinates for a given `index` */
-  private computeControlPoints(points: Vector<2>[], index: number) {
+  private computeControlPoints(
+    points: Vector<2>[],
+    index: number,
+    /** Tension, number in range [0,1] */
+    tension: number = 0,
+  ) {
     // all the knots
     const K = points
     const n = points.length - 1
@@ -70,7 +78,7 @@ export class Path extends Geometry<PathOptions> {
     //
     // In array form:
     // [0, 2 * P_(1,0), P_(1,1), K_0 + 2 * K_1]
-    A[0][0] = 0
+    // A[0][0] = 0
     A[0][1] = 2
     A[0][2] = 1
     b[0] = K[0][index] + 2 * K[1][index]
@@ -85,7 +93,7 @@ export class Path extends Geometry<PathOptions> {
 
     A[n - 1][0] = 2
     A[n - 1][1] = 7
-    A[n - 1][2] = 0
+    // A[n - 1][2] = 0
     b[n - 1] = 8 * K[n - 1][index] + K[n][index]
 
     const p1 = solveTriadiagonalMatrix(A, b)
@@ -96,7 +104,15 @@ export class Path extends Geometry<PathOptions> {
 
     p2[n - 1] = 0.5 * (K[n][index] + p1[n - 1])
 
-    return [p1, p2]
+    // linearily interpolate control points to the knots to reduce smoothness
+    const p1x = new Array(n)
+    const p2x = new Array(n)
+    for (let i = 0; i < n; i++) {
+      p1x[i] = (1 - tension) * p1[i] + tension * K[i][index]
+      p2x[i] = (1 - tension) * p2[i] + tension * K[i + 1][index]
+    }
+
+    return [p1x, p2x]
   }
 
   /** Get direction of where x,y is out of bounds compared to the boxed bounds. Returns null if inside bounds */
@@ -295,8 +311,16 @@ export class Path extends Geometry<PathOptions> {
 
         path += `M${this.points[0][0]} ${this.points[0][1]}`
 
-        const [p1x, p2x] = this.computeControlPoints(segment, 0)
-        const [p1y, p2y] = this.computeControlPoints(segment, 1)
+        const [p1x, p2x] = this.computeControlPoints(
+          segment,
+          0,
+          this.options.tension || 0,
+        )
+        const [p1y, p2y] = this.computeControlPoints(
+          segment,
+          1,
+          this.options.tension || 0,
+        )
         for (let i = 0; i < p1x.length; i++) {
           path += `C${p1x[i]} ${p1y[i]}, ${p2x[i]} ${p2y[i]}, ${this.points[i + 1][0]} ${this.points[i + 1][1]}`
         }
