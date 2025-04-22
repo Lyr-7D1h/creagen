@@ -341,6 +341,9 @@ export class Path extends Geometry<PathOptions> {
     return path
   }
 
+  /** TODO: https://github.com/xaviergonz/js-angusj-clipper */
+  // union(path: Path) {}
+
   add(points: Vector<2>[])
   add(v: Vector<2>)
   add(x: number, y: number)

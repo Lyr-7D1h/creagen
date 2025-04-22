@@ -19,6 +19,10 @@ export class Color extends Vector<4> {
     return new Color(0, 0, 0)
   }
 
+  static get WHITE() {
+    return new Color(255, 255, 255)
+  }
+
   static get RED() {
     return new Color(255, 0, 0)
   }

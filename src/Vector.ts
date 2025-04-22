@@ -211,6 +211,30 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  /** Divide vector */
+  div(s: number)
+  /** Divide each value */
+  div(x: number, y: number)
+  /** Divide each value */
+  div(...divisors: FixedArray<number, N>)
+  /** Divide/scale vector */
+  div(...divisors: number[]) {
+    if (divisors.length === 1) {
+      const s = divisors[0]
+      for (let i = 0; i < this.length; i++) {
+        this[i] /= s
+      }
+      return this
+    }
+
+    for (let i = 0; i < this.length; i++) {
+      if (divisors[i] === undefined) break
+      this[i] /= divisors[i]!
+    }
+
+    return this
+  }
+
   /** Scale vector */
   mul(s: number)
   /** Multiply each value */
