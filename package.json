@@ -12,7 +12,7 @@
     "build": "cp -f debug.ts src/constants.ts && rollup -c",
     "build:release": "cp -f release.ts src/constants.ts && rollup -c",
     "watch": "cp -f debug.ts src/constants.ts && rollup -c --watch",
-    "watch:chokidar": "chokidar 'src/**/*' -i src/constants.ts -c 'npm run build'",
+    "watch:chokidar": "npm run build && chokidar 'src/**/*' -i src/constants.ts -c 'npm run build'",
     "watch:release": "cp -f release.ts src/constants.ts && rollup -c --watch",
     "test": "vitest",
     "test:watch": "vitest --watch"
