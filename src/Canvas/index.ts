@@ -6,15 +6,25 @@ import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 
 export type GeometryChild = Rectangle | Circle
+
+/** How the code renders in the browser  */
+export enum RenderMode {
+  /** Default 2d rendering format */
+  C2D,
+  /** WebGL rendering format */
+  WebGL,
+  /** Svg rendering format */
+  Svg,
+}
 export interface CanvasOptions {
-  renderMode?: 'canvas' | 'svg'
+  renderMode?: RenderMode
 }
 
 const defaultValues = {
   renderMode: 'canvas' as 'canvas' | 'svg',
 }
 
-export class Canvas {
+export class Canvas<R extends RenderMode = RenderMode.C2D> {
   children: Geometry[]
   element: HTMLCanvasElement | SVGElement
   ctx?: CanvasRenderingContext2D
@@ -22,19 +32,27 @@ export class Canvas {
   width: number
   height: number
 
-  static create(width?: number, height?: number, options?: CanvasOptions) {
-    return new Canvas(width, height, options)
+  static create<R extends RenderMode = RenderMode.C2D>(
+    width?: number,
+    height?: number,
+    renderMode?: R,
+    canvas?: HTMLCanvasElement,
+  ) {
+    return new Canvas(width, height, renderMode, canvas)
   }
 
   private constructor(
     width?: number,
     height?: number,
-    options?: CanvasOptions,
+    renderMode?: R,
+    canvas?: HTMLCanvasElement,
   ) {
-    options = options ? { ...defaultValues, ...options } : defaultValues
+    if (renderMode === RenderMode.WebGL) throw Error('WebGL not supported yet')
+    const options = { ...defaultValues, renderMode }
     this.width = width ?? window.innerWidth
     this.height = height ?? window.innerHeight
-    if (options.renderMode === 'svg') {
+    if (options.renderMode === RenderMode.Svg) {
+      if (canvas) throw Error('Canvas cannot be passed to SVG mode')
       this.element = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'svg',
@@ -42,7 +60,7 @@ export class Canvas {
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
     } else {
-      this.element = document.createElement('canvas')
+      this.element = canvas ?? document.createElement('canvas')
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
       this.ctx = this.element.getContext('2d')
