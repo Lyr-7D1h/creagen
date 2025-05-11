@@ -35,6 +35,30 @@ export class Color extends Vector<4> {
     return new Color(0, 0, 255)
   }
 
+  static get YELLOW() {
+    return new Color(255, 255, 0)
+  }
+
+  static get CYAN() {
+    return new Color(0, 255, 255)
+  }
+
+  static get MAGENTA() {
+    return new Color(255, 0, 255)
+  }
+
+  static get ORANGE() {
+    return new Color(255, 165, 0)
+  }
+
+  static get PURPLE() {
+    return new Color(128, 0, 128)
+  }
+
+  static get PINK() {
+    return new Color(255, 192, 203)
+  }
+
   /** Check if a number is within `limits` */
   override within(bounds: Bounds<4> | []): boolean {
     for (let i = 0; i < this.length; i++) {
