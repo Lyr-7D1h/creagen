@@ -1,4 +1,4 @@
-import { Math } from '..'
+import * as Math from './math'
 import { Vector } from './Vector'
 
 export function matrix() {}

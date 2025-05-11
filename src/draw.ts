@@ -1,4 +1,4 @@
-export type DrawFn = (dt: number) => void
+export type DrawFn = (dt: number, s: number) => void
 
 let handle
 /** Run a draw loop that runs `fn` every 1/60 seconds */
@@ -13,7 +13,7 @@ export function draw(fn: DrawFn) {
     }
     const dt = t1 - t0
 
-    fn(dt)
+    fn(dt, s)
     t0 = t1
     handle = requestAnimationFrame(draw)
   }

@@ -16,10 +16,10 @@ export class Image {
     return image
   }
 
-  /** @param input url or base64 string with image data */
-  private constructor(input: string) {
+  /** @param src url or base64 string with image data */
+  private constructor(src: string) {
     this.img = new globalThis.Image()
-    this.img.src = input
+    this.img.src = src
 
     this.pixelsLoaded = false
     this.pixeldata = new Uint8ClampedArray()
@@ -109,6 +109,7 @@ export class Image {
   }
 
   html() {
+    // if custom pixeldata transform it to image
     if (this.pixeldata.length > 0) {
       const canvas = document.createElement('canvas')
       canvas.width = this.img.width

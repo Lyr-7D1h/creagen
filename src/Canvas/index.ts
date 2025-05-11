@@ -1,11 +1,13 @@
 import { Color } from '../Color'
 import { Bounds, Vector } from '../Vector'
 import { Circle } from './Circle'
+import { Image } from './Image'
 import { GeometricOptions, Geometry } from './Geometry'
 import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
+import { Arc } from './Arc'
 
-export type GeometryChild = Rectangle | Circle
+export type GeometryChild = Rectangle | Circle | Image
 
 /** How the code renders in the browser  */
 export enum RenderMode {
@@ -118,6 +120,34 @@ export class Canvas<R extends RenderMode = RenderMode.C2D> {
     const rect = new Rectangle(x1, x2, x3, x4, x5)
     this.add(rect)
     return rect
+  }
+
+  image(x: number, y: number, width: number, height: number, src: string) {
+    const image = new Image(x, y, width, height, src)
+    this.add(image)
+    return image
+  }
+
+  arc(
+    x: number,
+    y: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise?: boolean,
+    options?: GeometricOptions,
+  ) {
+    const arc = new Arc(
+      x,
+      y,
+      radius,
+      startAngle,
+      endAngle,
+      counterclockwise,
+      options,
+    )
+    this.add(arc)
+    return arc
   }
 
   path(options?: PathOptions) {
