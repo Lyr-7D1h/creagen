@@ -1,3 +1,4 @@
+import { perlin } from './perlin'
 import {
   beta as betaFn,
   boxMuller,
@@ -34,6 +35,10 @@ export class Random {
   static float(start: number, stop: number): number
   static float(x1: number, x2?: number) {
     return defaultRng.float(x1, x2)
+  }
+
+  static perlin(x: number, y: number, z: number) {
+    return perlin(x, y, z)
   }
 
   /** Get a random number between 0 and 1 */
