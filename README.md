@@ -20,6 +20,8 @@ npm run build
 
 - Reduce svg size (https://www.svgviewer.dev/)
 - Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
+- Audio input and analysis
+    - https://meyda.js.org/
 - Gcode support
 - Webassembly for cpu heavy stuff
 - 3d Graphics
