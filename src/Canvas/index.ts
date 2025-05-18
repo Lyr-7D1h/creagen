@@ -7,26 +7,45 @@ import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 import { Arc } from './Arc'
 
+export function getWidth() {
+  return Math.max(
+    document.body.scrollWidth,
+    document.documentElement.scrollWidth,
+    document.body.offsetWidth,
+    document.documentElement.offsetWidth,
+    document.documentElement.clientWidth,
+  )
+}
+
+export function getHeight() {
+  return Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight,
+    document.documentElement.clientHeight,
+  )
+}
+
 export type GeometryChild = Rectangle | Circle | Image
 
 /** How the code renders in the browser  */
 export enum RenderMode {
   /** Default 2d rendering format */
-  C2D,
+  C2D = 'c2d',
   /** WebGL rendering format */
-  WebGL,
+  WebGL = 'webgl',
   /** Svg rendering format */
-  Svg,
+  Svg = 'svg',
 }
-export interface CanvasOptions {
-  renderMode?: RenderMode
+export interface CanvasOptions<R extends RenderMode = RenderMode.C2D> {
+  width?: number
+  height?: number
+  renderMode?: R
+  canvas?: HTMLCanvasElement
 }
 
-const defaultValues = {
-  renderMode: 'canvas' as 'canvas' | 'svg',
-}
-
-export class Canvas<R extends RenderMode = RenderMode.C2D> {
+export class Canvas<R extends RenderMode> {
   children: Geometry[]
   element: HTMLCanvasElement | SVGElement
   ctx?: CanvasRenderingContext2D
@@ -34,27 +53,18 @@ export class Canvas<R extends RenderMode = RenderMode.C2D> {
   width: number
   height: number
 
-  static create<R extends RenderMode = RenderMode.C2D>(
-    width?: number,
-    height?: number,
-    renderMode?: R,
-    canvas?: HTMLCanvasElement,
-  ) {
-    return new Canvas(width, height, renderMode, canvas)
+  static create<R extends RenderMode>(opts?: CanvasOptions<R>) {
+    return new Canvas<R>(opts)
   }
 
-  private constructor(
-    width?: number,
-    height?: number,
-    renderMode?: R,
-    canvas?: HTMLCanvasElement,
-  ) {
+  private constructor(opts?: CanvasOptions<R>) {
+    const renderMode = opts?.renderMode ?? RenderMode.C2D
+    this.width = opts.width ?? getWidth()
+    this.height = opts.height ?? getHeight()
+
     if (renderMode === RenderMode.WebGL) throw Error('WebGL not supported yet')
-    const options = { ...defaultValues, renderMode }
-    this.width = width ?? window.innerWidth
-    this.height = height ?? window.innerHeight
-    if (options.renderMode === RenderMode.Svg) {
-      if (canvas) throw Error('Canvas cannot be passed to SVG mode')
+    if (renderMode === RenderMode.Svg) {
+      if (opts?.canvas) throw Error('Canvas cannot be passed to SVG mode')
       this.element = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'svg',
@@ -62,7 +72,7 @@ export class Canvas<R extends RenderMode = RenderMode.C2D> {
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
     } else {
-      this.element = canvas ?? document.createElement('canvas')
+      this.element = opts?.canvas ?? document.createElement('canvas')
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
       this.ctx = this.element.getContext('2d')
