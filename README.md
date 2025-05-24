@@ -20,8 +20,13 @@ npm run build
 
 - Reduce svg size (https://www.svgviewer.dev/)
 - Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
-- Audio input and analysis
-    - https://meyda.js.org/
+- Audio 
+    - Generation
+    - Modification
+        - Panning/gain https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
+    - Realtime analysis
+        - Common Audio Features: https://meyda.js.org/
+        - Bpm: https://www.npmjs.com/package/realtime-bpm-analyzer
 - Gcode support
 - Webassembly for cpu heavy stuff
 - 3d Graphics
