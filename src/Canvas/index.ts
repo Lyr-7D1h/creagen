@@ -59,8 +59,8 @@ export class Canvas<R extends RenderMode> {
 
   private constructor(opts?: CanvasOptions<R>) {
     const renderMode = opts?.renderMode ?? RenderMode.C2D
-    this.width = opts.width ?? getWidth()
-    this.height = opts.height ?? getHeight()
+    this.width = opts?.width ?? getWidth()
+    this.height = opts?.height ?? getHeight()
 
     if (renderMode === RenderMode.WebGL) throw Error('WebGL not supported yet')
     if (renderMode === RenderMode.Svg) {
@@ -166,8 +166,8 @@ export class Canvas<R extends RenderMode> {
     return path
   }
 
-  line(x1: Vector<2>, x2: Vector<2>) {
-    const line = new Path()
+  line(x1: Vector<2>, x2: Vector<2>, opts?: PathOptions) {
+    const line = new Path(opts)
     line.add(x1)
     line.add(x2)
     this.add(line)

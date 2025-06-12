@@ -236,13 +236,13 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   /** Scale vector */
-  mul(s: number)
+  mul(s: number): this
   /** Multiply each value */
-  mul(x: number, y: number)
+  mul(x: number, y: number): this
   /** Multiply each value */
-  mul(...multipliers: FixedArray<number, N>)
+  mul(...multipliers: FixedArray<number, N>): this
   /** Multiple/scale vector */
-  mul(...multipliers: number[]) {
+  mul(...multipliers: number[]): this {
     if (multipliers.length === 1) {
       const s = multipliers[0]
       for (let i = 0; i < this.length; i++) {
