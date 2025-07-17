@@ -39,6 +39,11 @@ export class RandomNumberGenerator {
   random() {
     return this.randomFn()
   }
+
+  bool(p: number = 0.5) {
+    if (p < 0 || p > 1) throw Error('Requires a float between 0 and 1')
+    return this.random() < p
+  }
 }
 
 /** TODO: https://en.wikipedia.org/wiki/Linear_congruential_generator */

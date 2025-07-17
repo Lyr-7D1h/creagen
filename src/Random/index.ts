@@ -46,6 +46,10 @@ export class Random {
     return defaultRng.random()
   }
 
+  static bool(p: number = 0.5) {
+    return defaultRng.bool(p)
+  }
+
   static xorshift(seed?: number) {
     return new RandomNumberGenerator(xorshift(seed))
   }
