@@ -1,6 +1,6 @@
-function range(start: number, stop?: number)
-function range(stop: number)
-function* range(x1: number, x2?: number) {
+function range(start: number, stop?: number): Generator<number>
+function range(stop: number): Generator<number>
+function* range(x1: number, x2?: number): Generator<number> {
   const stop = typeof x2 === 'undefined' ? x1 : x2
   const start = typeof x2 === 'undefined' ? 0 : x1
   for (let i = start; i < stop; i++) {
