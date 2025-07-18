@@ -1,4 +1,5 @@
 import { CREAGEN_ASSERTS } from './constants'
+import { Random } from './Random'
 import { Bounds, Vector } from './Vector'
 
 export class Color extends Vector<4> {
@@ -59,8 +60,16 @@ export class Color extends Vector<4> {
     return new Color(255, 192, 203)
   }
 
+  static random() {
+    return new Color(
+      Random.integer(0, 255),
+      Random.integer(0, 255),
+      Random.integer(0, 255),
+    )
+  }
+
   /** Check if a number is within `limits` */
-  override within(bounds: Bounds<4> | []): boolean {
+  override within(bounds: Bounds<4>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
       if (this[i]! < start || this[i]! > stop) {
@@ -151,6 +160,17 @@ export class Color extends Vector<4> {
       throw Error('Color has to have 3 or 4 elements')
     }
     super([r, g, b, a ?? 255])
+    this.withinBoundsCheck()
+  }
+
+  private withinBoundsCheck() {
+    for (const v of this) {
+      if (v < 0 || v > 255 || !Number.isInteger(v)) {
+        throw Error(
+          'Invalid color all values should be integers between 0 and 255',
+        )
+      }
+    }
   }
 
   get r() {
@@ -187,10 +207,10 @@ export class Color extends Vector<4> {
 
   mix(color: Color) {
     return new Color(
-      (this.r + color.r) / 2,
-      (this.g + color.g) / 2,
-      (this.b + color.b) / 2,
-      (this.a + color.a) / 2,
+      Math.round((this.r + color.r) / 2),
+      Math.round((this.g + color.g) / 2),
+      Math.round((this.b + color.b) / 2),
+      Math.round((this.a + color.a) / 2),
     )
   }
 
@@ -213,9 +233,16 @@ export class Color extends Vector<4> {
   }
 
   override add(color: Color) {
-    this.r += color.r
-    this.g += color.g
-    this.b += color.b
+    const n = Color.create(
+      color.r + this.r,
+      color.g + this.g,
+      color.b + this.b,
+      color.a + this.a,
+    )
+    this.r = n.r
+    this.g = n.g
+    this.b = n.b
+    this.a = n.a
     return this
   }
 
