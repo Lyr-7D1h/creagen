@@ -234,10 +234,10 @@ export class Color extends Vector<4> {
 
   override add(color: Color) {
     const n = Color.create(
-      color.r + this.r,
-      color.g + this.g,
-      color.b + this.b,
-      color.a + this.a,
+      Math.min(color.r + this.r, 255),
+      Math.min(color.g + this.g, 255),
+      Math.min(color.b + this.b, 255),
+      Math.min(color.a + this.a, 255),
     )
     this.r = n.r
     this.g = n.g
