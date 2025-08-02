@@ -178,6 +178,21 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  /** Randomize the order of the elements inside of the vector  */
+  randomSort(): this {
+    const current = this.clone()
+    const visited = new Array(this.length).fill(false)
+    let i = 0
+    while (i < this.length) {
+      const r = Math.floor(Math.random() * length)
+      if (visited[r]) continue
+      visited[r] = true
+      this[i] = current[r]
+      i++
+    }
+    return this
+  }
+
   /** Compare two vectors for equality */
   equals(v: Vector<N>) {
     for (let i = 0; i < this.length; i++) {

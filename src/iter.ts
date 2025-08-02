@@ -36,9 +36,34 @@ function reduce<T, U>(
   return acc
 }
 
+// TODO: add test to verify randomness is enough
+// const c = new Array(7).fill(0)
+// for (const _ of Iter.range(1000000)) {
+//   let i = 0;
+//   const r = [...Iter.randomize([0, 1, 2, 3, 4, 5, 6], 7)][0]
+
+//   c[r] += 1
+//   i++
+// }
+function randomize<T>(arr: T[], length: number)
+function* randomize<T>(iterator: Generator<T> | T[], length: number) {
+  const visited = new Array(length).fill(false)
+  const items = [...iterator]
+
+  let i = 0
+  while (i < length) {
+    const r = Math.floor(Math.random() * length)
+    if (visited[r]) continue
+    visited[r] = true
+    yield items[r]
+    i++
+  }
+}
+
 /** Utility functions for dealing with iterators and generating them */
 export const Iter = {
   range,
   findIndex,
   reduce,
+  randomize,
 }
