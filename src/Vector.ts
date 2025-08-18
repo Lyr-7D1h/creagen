@@ -432,6 +432,13 @@ export class Vector<N extends number> extends Array<number> {
     }
     return a
   }
+
+  compare(vector: Vector<N>) {
+    for (let i = 0; i < this.length; i++) {
+      if (this[i] !== vector[i]) return false
+    }
+    return true
+  }
 }
 
 export interface Vector<N extends number> {

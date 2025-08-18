@@ -1,3 +1,5 @@
+import { RandomFn, UnitRandomFn } from './Random'
+
 function range(start: number, stop?: number): Generator<number>
 function range(stop: number): Generator<number>
 function* range(x1: number, x2?: number): Generator<number> {
@@ -45,14 +47,18 @@ function reduce<T, U>(
 //   c[r] += 1
 //   i++
 // }
-function randomize<T>(arr: T[], length: number)
-function* randomize<T>(iterator: Generator<T> | T[], length: number) {
+function randomize<T>(arr: T[], length: number, randomFn?: UnitRandomFn)
+function* randomize<T>(
+  iterator: Generator<T> | T[],
+  length: number,
+  randomFn: UnitRandomFn = Math.random,
+) {
   const visited = new Array(length).fill(false)
   const items = [...iterator]
 
   let i = 0
   while (i < length) {
-    const r = Math.floor(Math.random() * length)
+    const r = Math.floor(randomFn() * length)
     if (visited[r]) continue
     visited[r] = true
     yield items[r]
