@@ -1,4 +1,4 @@
-import { RandomFn, UnitRandomFn } from './Random'
+import { UnitRandomFn } from './Random'
 
 function range(start: number, stop?: number): Generator<number>
 function range(stop: number): Generator<number>

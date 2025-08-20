@@ -461,3 +461,6 @@ export function vec<N extends number>(
 ): Vector<N> {
   return Vector.create<N>(...(items as any))
 }
+
+/** Array of direction vectors East, South, West, North */
+export const DIRECTIONS = [vec(1, 0), vec(0, -1), vec(-1, 0), vec(0, 1)]
