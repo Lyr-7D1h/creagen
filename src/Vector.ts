@@ -211,6 +211,23 @@ export class Vector<N extends number> extends Array<number> {
     return a
   }
 
+  /**
+   * Treat two vectors as a 2d matrix and get the [determinant](https://en.wikipedia.org/wiki/Determinant) between them
+   *
+   * Useful for determining the orientation between two vectors.
+   * 1. Postive determinant: `vector` is counter-clockwise oriented compared to `this`
+   *
+   * 2. Negative determinant: `vector` is clockwise oriented compared to `this`
+   *
+   * 3. Zero determinant: The determinant is singular. Both vectors are pointing in the same direction. They are scalar multiples of eachother.
+   */
+  det(vector: Vector<2>) {
+    if (this.length != 2) throw new Error('Only 2d vectors are supported')
+
+    // ad - bc
+    return this[0] * vector[1] - this[1] * vector[0]
+  }
+
   /** Apply modulo to each value */
   mod(mod: number) {
     for (let i = 0; i < this.length; i++) {
@@ -464,3 +481,18 @@ export function vec<N extends number>(
 
 /** Array of direction vectors East, South, West, North */
 export const DIRECTIONS = [vec(1, 0), vec(0, -1), vec(-1, 0), vec(0, 1)]
+
+/** Array of diagonal direction vectors South-East, South-West, North-West, North-East */
+export const DIAGONALS = [vec(1, -1), vec(-1, -1), vec(-1, 1), vec(1, 1)]
+
+/** Array of all direction vectors both `DIRECTIONS` and `DIAGONALS` starting with East going clockwise */
+export const ALL_DIRECTIONS = [
+  vec(1, 0),
+  vec(1, -1),
+  vec(0, -1),
+  vec(-1, -1),
+  vec(-1, 0),
+  vec(-1, 1),
+  vec(0, 1),
+  vec(1, 1),
+]

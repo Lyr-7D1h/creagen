@@ -1,5 +1,5 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Image as ImageData } from '../Image'
+import { Image as ImageData } from '../ImageProcessing'
 
 export interface ImageOptions extends GeometricOptions {}
 

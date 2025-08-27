@@ -1,13 +1,30 @@
-import { Delaunay } from 'd3-delaunay'
-import { vec, Vector } from './Vector'
+import { Delaunay as D3Delaunay } from 'd3-delaunay'
+import { FixedArray, vec, Vector } from './Vector'
+
+export type Delaunay = {
+  halfedges: Int32Array
+  hull: Int32Array
+  inedges: Int32Array
+  points: Int32Array
+  triangles: Int32Array
+  voronoi: (bounds: FixedArray<number, 4>) => VoronoiType
+  find: (x: number, y: number, startingIndex: number) => number
+}
+export type VoronoiType = {
+  circumcenters: Int32Array
+  vectors: Int32Array
+  delaunay: Delaunay
+  cellPolygons: () => [number, number][][]
+  cellPolygon: (i: number) => [number, number][]
+}
 
 /**
  * Get all voronoi edges for a set of points within a given bound
  * https://en.wikipedia.org/wiki/Voronoi_diagram
  */
 export class Voronoi {
-  delaunay: any
-  voronoi: any
+  delaunay: Delaunay
+  voronoi: VoronoiType
   bounds: [number, number, number, number]
   points: [number, number][] | Vector<2>[]
   stippledPoints: Vector<2>[] | undefined
@@ -28,7 +45,7 @@ export class Voronoi {
     this.stippledPoints = undefined
 
     this.bounds = bounds
-    this.delaunay = Delaunay.from(points)
+    this.delaunay = D3Delaunay.from(points)
     this.voronoi = this.delaunay.voronoi(bounds)
   }
 

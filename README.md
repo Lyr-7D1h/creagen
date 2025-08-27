@@ -49,6 +49,7 @@ Math:
 - https://mathjs.org/docs/reference/functions.html#matrix-functions
 - http://sylvester.jcoglan.com/api/vector.html#create
 - https://github.com/scijs/ndarray
+- https://github.com/tensorflow/tfjs
 
 **Reading**
 - https://en.wikipedia.org/wiki/Tessellation

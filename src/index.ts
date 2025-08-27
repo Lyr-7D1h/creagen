@@ -10,11 +10,19 @@ export { SpatialMap } from './spatialmap'
 export { KDTree } from './kdtree'
 export { QuadTree } from './quadtree'
 export { Svg } from './svg'
-export { Image } from './Image'
+export { Image } from './ImageProcessing'
 export { color, Color } from './Color'
 export { Voronoi } from './Voronoi'
 export { Motion } from './Motion'
-export { vec, Vector, Bounds, FixedArray, DIRECTIONS } from './Vector'
+export {
+  vec,
+  Vector,
+  Bounds,
+  FixedArray,
+  ALL_DIRECTIONS,
+  DIRECTIONS,
+  DIAGONALS,
+} from './Vector'
 export { matrix, Matrix } from './Matrix'
 export { SignalProcessing } from './SignalProcessing'
 export { KMeans } from './SignalProcessing/KMeans'
