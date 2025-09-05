@@ -1,30 +1,26 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Image as ImageData } from '../ImageProcessing'
+import { ImageData as ImageData } from '../ImageData'
 
 export interface ImageOptions extends GeometricOptions {}
 
 export class Image extends Geometry<ImageOptions> {
-  x: number
-  y: number
-  width: number
-  height: number
   img: ImageData
 
   constructor(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
+    public x: number,
+    public y: number,
+    public width: number,
+    public height: number,
     src: string,
     options?: ImageOptions,
   ) {
     super()
-    this.x = x
-    this.y = y
-    this.width = width
-    this.height = height
     this.img = ImageData.create(src)
     this.options = options || (defaultGeometricOptions as ImageOptions)
+  }
+
+  data() {
+    return this.img
   }
 
   _svg(): SVGCircleElement {

@@ -6,13 +6,13 @@ import { edgeDetection } from './edgeDetection'
 import { Vector } from '../Vector'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
-export class Image {
+export class ImageData {
   private img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
 
   static create(input: string) {
-    const image = new Image(input)
+    const image = new ImageData(input)
     return image
   }
 
@@ -72,7 +72,7 @@ export class Image {
   }
 
   clone() {
-    const img = new Image(this.img.src)
+    const img = new ImageData(this.img.src)
     img.pixeldata = new Uint8ClampedArray(this.pixeldata)
     img.pixelsLoaded = this.pixelsLoaded
     return img
@@ -121,7 +121,7 @@ export class Image {
       canvas.height = this.img.height
       const ctx = canvas.getContext('2d')!
       ctx.putImageData(
-        new ImageData(this.pixeldata, this.width, this.height),
+        new window.ImageData(this.pixeldata, this.width, this.height),
         0,
         0,
       )
@@ -141,7 +141,7 @@ export class Image {
     canvas.height = this.img.height
     const ctx = canvas.getContext('2d')!
     ctx.putImageData(
-      new ImageData(this.pixeldata, this.width, this.height),
+      new window.ImageData(this.pixeldata, this.width, this.height),
       0,
       0,
     )
