@@ -1,6 +1,6 @@
 import * as Math from '../math'
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Bounds, FixedArray, vec, Vector } from '../Vector'
+import { Bounds, FixedArray, vec, Vector, VectorLike } from '../Vector'
 import { solveTriadiagonalMatrix } from '../lin'
 
 export const defaultPathOptions: PathOptions = {
@@ -344,18 +344,27 @@ export class Path extends Geometry<PathOptions> {
   /** TODO: https://github.com/xaviergonz/js-angusj-clipper */
   // union(path: Path) {}
 
-  add(points: Vector<2>[])
-  add(v: Vector<2>)
+  add(points: VectorLike<2>[])
+  add(v: VectorLike<2>)
   add(x: number, y: number)
-  add(x1: Vector<2> | Vector<2>[] | number, x2?: number) {
+  add(x1: VectorLike<2> | VectorLike<2>[] | number, x2?: number) {
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.points.push(vec(x1, x2))
     }
     if (Array.isArray(x1)) {
       if (Array.isArray(x1[0])) {
-        this.points = this.points.concat(x1)
+        // Convert VectorLike to Vector instances
+        this.points = this.points.concat(
+          (x1 as VectorLike<2>[]).map((p) =>
+            p instanceof Vector ? p : vec(p[0], p[1]),
+          ),
+        )
       } else {
-        this.points.push(x1 as Vector<2>)
+        // Convert single VectorLike to Vector
+        const point = x1 as VectorLike<2>
+        this.points.push(
+          point instanceof Vector ? point : vec(point[0], point[1]),
+        )
       }
     }
     return this

@@ -16,6 +16,9 @@ type GrowToSize<
 
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
 
+/** A union type that accepts Vector<N>, FixedArray<number, N>, or readonly number arrays of length N */
+export type VectorLike<N extends number> = Vector<N> | FixedArray<number, N> | readonly number[] & { length: N }
+
 /** The bounds for a given N dimensional vector [[xmin, xmax], [ymin, ymax]] */
 export type Bounds<N extends number> = FixedArray<[number, number], N>
 

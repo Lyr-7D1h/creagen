@@ -1,5 +1,5 @@
 import { Color } from '../Color'
-import { Bounds, Vector } from '../Vector'
+import { Bounds, VectorLike } from '../Vector'
 import { Circle } from './Circle'
 import { Image } from './Image'
 import { GeometricOptions, Geometry } from './Geometry'
@@ -94,12 +94,21 @@ export class Canvas<R extends RenderMode> {
     this.rect(0, 0, this.width, this.height, { fill: color, strokeWidth: 0 })
   }
 
-  circle(position: Vector<2>, radius: number, options?: GeometricOptions)
+  // circle(position: Vector<2>, radius: number, options?: GeometricOptions)
+  // circle(x: number, y: number, radius: number, options?: GeometricOptions)
+
+  circle(position: VectorLike<2>, radius: number, options?: GeometricOptions)
   circle(x: number, y: number, radius: number, options?: GeometricOptions)
   circle(
-    x: number | Vector<2>,
+    x: number | VectorLike<2>,
     y: number,
     radius: number | GeometricOptions,
+    options?: GeometricOptions,
+  )
+  circle(
+    x: number | VectorLike<2>,
+    y: number,
+    radius?: number | GeometricOptions,
     options?: GeometricOptions,
   ) {
     const circle = new Circle(x, y, radius, options)
@@ -108,7 +117,7 @@ export class Canvas<R extends RenderMode> {
   }
 
   rect(
-    position: Vector<2>,
+    position: VectorLike<2>,
     width: number,
     height: number,
     options?: RectangleOptions,
@@ -121,7 +130,7 @@ export class Canvas<R extends RenderMode> {
     options?: RectangleOptions,
   ): Rectangle
   rect(
-    x1: Vector<2> | number,
+    x1: VectorLike<2> | number,
     x2: number,
     x3: number,
     x4?: number | RectangleOptions,
@@ -166,7 +175,7 @@ export class Canvas<R extends RenderMode> {
     return path
   }
 
-  line(x1: Vector<2>, x2: Vector<2>, opts?: PathOptions) {
+  line(x1: VectorLike<2>, x2: VectorLike<2>, opts?: PathOptions) {
     const line = new Path(opts)
     line.add(x1)
     line.add(x2)

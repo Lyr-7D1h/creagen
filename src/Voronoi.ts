@@ -29,6 +29,12 @@ export class Voronoi {
   points: [number, number][] | Vector<2>[]
   stippledPoints: Vector<2>[] | undefined
 
+  /**
+   *
+   * @param points
+   * @param bounds [xmin, ymin, xmax, ymax]
+   * @returns
+   */
   static create(
     points: [number, number][] | Vector<2>[],
     bounds: [number, number, number, number],
@@ -65,7 +71,8 @@ export class Voronoi {
    * */
   weightedStippling(
     value: (x, y) => number,
-    interpolationStep: number,
+    /** How many iterations of [Lloyd's Algorithm](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm) to use  */
+    iterations: number = 20,
   ): Vector<2>[] {
     let stippledPoints = this.stippledPoints
     // clone from original points
@@ -105,14 +112,6 @@ export class Voronoi {
       centroids[i].div(weight)
     }
 
-    for (let i = 0; i < stippledPoints.length; i++) {
-      stippledPoints[i].lerp(centroids[i], interpolationStep).round()
-    }
-
     return stippledPoints
   }
-}
-
-export interface Indexable {
-  get(x: number, y: number): any
 }

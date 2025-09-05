@@ -1,5 +1,5 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Vector } from '../Vector'
+import { VectorLike } from '../Vector'
 import { Color } from '../Color'
 
 const defaultOptions: GeometricOptions = {
@@ -12,24 +12,29 @@ export class Circle extends Geometry {
   y: number
   radius: number
 
-  constructor(position: Vector<2>, radius: number, options?: GeometricOptions)
+  constructor(
+    position: VectorLike<2>,
+    radius: number,
+    options?: GeometricOptions,
+  )
   constructor(x: number, y: number, radius: number, options?: GeometricOptions)
   constructor(
-    x: number | Vector<2>,
+    x: number | VectorLike<2>,
     y: number,
     radius: number | GeometricOptions,
     options?: GeometricOptions,
   )
   constructor(
-    x: number | Vector<2>,
+    x: number | VectorLike<2>,
     y: number,
     radius?: number | GeometricOptions,
     options?: GeometricOptions,
   ) {
     super()
     if (typeof x !== 'number' && typeof radius !== 'number') {
-      this.x = x.x
-      this.y = x.y
+      this.x = x[0]
+      this.y = x[1]
+
       this.radius = y
       this.options =
         typeof radius === 'undefined'
