@@ -258,7 +258,10 @@ export class Color extends Vector<4> {
     return this.normalize()
   }
 
-  /** Return the relative luminance value https://en.wikipedia.org/wiki/Relative_luminance */
+  /**
+   * Return the relative luminance value https://en.wikipedia.org/wiki/Relative_luminance
+   * a floating point value between 0-255
+   * */
   luminance() {
     return 0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b
   }
