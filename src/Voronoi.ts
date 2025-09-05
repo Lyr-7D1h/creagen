@@ -1,5 +1,6 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import { FixedArray, vec, Vector } from './Vector'
+import { vec, Vector } from './Vector'
+import { FixedArray } from './types'
 
 export type Delaunay = {
   halfedges: Int32Array

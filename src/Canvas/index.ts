@@ -1,11 +1,11 @@
 import { Color } from '../Color'
-import { Bounds, VectorLike } from '../Vector'
 import { Circle } from './Circle'
 import { Image } from './Image'
 import { GeometricOptions, Geometry } from './Geometry'
 import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 import { Arc } from './Arc'
+import { FlatBounds } from '../types'
 
 export function getWidth() {
   return Math.max(
@@ -97,16 +97,14 @@ export class Canvas<R extends RenderMode> {
   // circle(position: Vector<2>, radius: number, options?: GeometricOptions)
   // circle(x: number, y: number, radius: number, options?: GeometricOptions)
 
-  circle(position: VectorLike<2>, radius: number, options?: GeometricOptions)
-  circle(x: number, y: number, radius: number, options?: GeometricOptions)
   circle(
-    x: number | VectorLike<2>,
-    y: number,
-    radius: number | GeometricOptions,
+    position: ArrayLike<number>,
+    radius: number,
     options?: GeometricOptions,
   )
+  circle(x: number, y: number, radius: number, options?: GeometricOptions)
   circle(
-    x: number | VectorLike<2>,
+    x: number | ArrayLike<number>,
     y: number,
     radius?: number | GeometricOptions,
     options?: GeometricOptions,
@@ -117,7 +115,7 @@ export class Canvas<R extends RenderMode> {
   }
 
   rect(
-    position: VectorLike<2>,
+    position: ArrayLike<number>,
     width: number,
     height: number,
     options?: RectangleOptions,
@@ -130,7 +128,7 @@ export class Canvas<R extends RenderMode> {
     options?: RectangleOptions,
   ): Rectangle
   rect(
-    x1: VectorLike<2> | number,
+    x1: ArrayLike<number> | number,
     x2: number,
     x3: number,
     x4?: number | RectangleOptions,
@@ -175,7 +173,7 @@ export class Canvas<R extends RenderMode> {
     return path
   }
 
-  line(x1: VectorLike<2>, x2: VectorLike<2>, opts?: PathOptions) {
+  line(x1: ArrayLike<number>, x2: ArrayLike<number>, opts?: PathOptions) {
     const line = new Path(opts)
     line.add(x1)
     line.add(x2)
@@ -197,12 +195,9 @@ export class Canvas<R extends RenderMode> {
     }
   }
 
-  /** Returns bounds [[xmin, xmax], [ymin, ymax]] */
-  bounds(): Bounds<2> {
-    return [
-      [0, this.width],
-      [0, this.height],
-    ]
+  /** Returns bounds [xmin, xmax, ymin, ymax] */
+  bounds(): FlatBounds<2> {
+    return [0, this.width, 0, this.height]
   }
 
   html(): SVGElement | HTMLCanvasElement {

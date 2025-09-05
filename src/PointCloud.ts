@@ -1,24 +1,13 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import { FixedArray } from './Vector'
+import { FixedArray, FlatBounds } from './types'
+import { Conversion } from './Conversion'
 
-// Type-level arithmetic to multiply N by 2 using tuple manipulation
-type Tuple<
-  N extends number,
-  R extends readonly unknown[] = [],
-> = R['length'] extends N ? R : Tuple<N, readonly [...R, unknown]>
-
-type Multiply2<N extends number> = [
-  ...Tuple<N>,
-  ...Tuple<N>,
-]['length'] extends number
-  ? [...Tuple<N>, ...Tuple<N>]['length']
-  : never
-
-/** Type for flat bounds array: [min1, max1, min2, max2, ..., minN, maxN] */
-type FlatBounds<N extends number> = FixedArray<number, Multiply2<N>>
+const MAX_SAMPLING_LIMIT = 1_000_000
 
 /**
  * A set of points in N dimensional space
+ *
+ * uses a `Float64Array` internally to store points
  */
 export class PointCloud<N extends number> {
   // Cached values
@@ -30,12 +19,14 @@ export class PointCloud<N extends number> {
     amount: number,
     bounds: FlatBounds<N>, // [min1, max1, min2, max2, ...]
     dimension: N = 2 as N,
-    sampling?: (...coords: FixedArray<number, N>) => boolean,
+    /** return a number between 0-1 for the probability it gets added given a coordinate */
+    samplingDistribution?: (...coords: FixedArray<number, N>) => number,
   ) {
     const points = new Float64Array(dimension * amount)
 
-    if (typeof sampling === 'undefined') {
-      for (let i = 0; i < amount; i += dimension) {
+    if (typeof samplingDistribution === 'undefined') {
+      for (let i = 0; i < amount * dimension; i += dimension) {
+        console.log(i)
         for (let d = 0; d < dimension; d++) {
           const min = bounds[d * 2] as number
           const max = bounds[d * 2 + 1] as number
@@ -43,9 +34,9 @@ export class PointCloud<N extends number> {
         }
       }
     } else {
-      n: for (let i = 0; i < amount; i += dimension) {
+      n: for (let i = 0; i < amount * dimension; i += dimension) {
         let j = 0
-        while (j < 100000) {
+        while (j < MAX_SAMPLING_LIMIT) {
           const p = new Array(dimension) as FixedArray<number, N>
           for (let d = 0; d < dimension; d++) {
             const min = bounds[d * 2] as number
@@ -53,10 +44,11 @@ export class PointCloud<N extends number> {
             p[d] = min + Math.random() * (max - min)
           }
 
-          if (sampling(...p)) {
+          if (samplingDistribution(...p) > Math.random()) {
             points.set(p, i)
             continue n
           }
+
           j += 1
         }
         throw Error('Maximum sampling iteration exceeded')
@@ -66,22 +58,58 @@ export class PointCloud<N extends number> {
     return new PointCloud<N>(points, dimension)
   }
 
-  static create<N extends number = 2>(
-    points: FixedArray<number, N>[] | Float64Array,
+  static randomIntegerSampling<N extends number = 2>(
+    /** Amount of random points to generate */
+    amount: number,
+    bounds: FlatBounds<N>, // [min1, max1, min2, max2, ...] - bounds will be floored/ceiled to integers
     dimension: N = 2 as N,
+    /** return a number between 0-1 for the probability it gets added given a coordinate */
+    samplingDistribution?: (...coords: FixedArray<number, N>) => number,
   ) {
-    // Convert points to Float64Array if needed
-    if (!(points instanceof Float64Array)) {
-      const pointsFloat = new Float64Array(points.length * dimension)
-      for (let i = 0; i < points.length; i++) {
+    const points = new Float64Array(dimension * amount)
+
+    if (typeof samplingDistribution === 'undefined') {
+      for (let i = 0; i < amount * dimension; i += dimension) {
         for (let d = 0; d < dimension; d++) {
-          pointsFloat[i * dimension + d] = points[i][d]
+          const min = Math.ceil(bounds[d * 2] as number)
+          const max = Math.floor(bounds[d * 2 + 1] as number)
+          // Generate random integer between min and max (inclusive)
+          points[i + d] = Math.floor(Math.random() * (max - min)) + min
         }
       }
-      points = pointsFloat
+    } else {
+      n: for (let i = 0; i < amount * dimension; i += dimension) {
+        let j = 0
+        while (j < MAX_SAMPLING_LIMIT) {
+          const p = new Array(dimension) as FixedArray<number, N>
+          for (let d = 0; d < dimension; d++) {
+            const min = Math.ceil(bounds[d * 2] as number)
+            const max = Math.floor(bounds[d * 2 + 1] as number)
+            // Generate random integer between min and max (inclusive)
+            p[d] = Math.floor(Math.random() * (max - min)) + min
+          }
+
+          if (samplingDistribution(...p) > Math.random()) {
+            points.set(p, i)
+            continue n
+          }
+
+          j += 1
+        }
+        throw Error('Maximum sampling iteration exceeded')
+      }
     }
 
     return new PointCloud<N>(points, dimension)
+  }
+
+  // TODO: add method overloading FixedNumberArray<N>[], FLoat64Array
+  static create<N extends number = 2>(
+    points: ArrayLike<number> | ArrayLike<ArrayLike<number>> | Float64Array,
+    dimension: N = 2 as N,
+  ) {
+    points = Conversion.toFloat64Array(points, dimension)
+    return new PointCloud<N>(points as Float64Array, dimension)
   }
 
   private constructor(
@@ -93,9 +121,21 @@ export class PointCloud<N extends number> {
     return this.points.length / this.dimensions
   }
 
-  /**
-   * Get a specific point by index
-   */
+  private clearCache() {
+    this._delaunay = undefined
+    this._voronoi = undefined
+  }
+
+  /** Set a point at a specfic index */
+  setPoint(index: number, point: FixedArray<number, N>) {
+    if (index < 0 || index >= this.size) {
+      throw new Error(`Point index ${index} out of bounds (0-${this.size - 1})`)
+    }
+
+    this.points.set(point, index * this.dimensions)
+  }
+
+  /** Get a specific point by index */
   getPoint(index: number): FixedArray<number, N> {
     if (index < 0 || index >= this.size) {
       throw new Error(`Point index ${index} out of bounds (0-${this.size - 1})`)
@@ -124,6 +164,48 @@ export class PointCloud<N extends number> {
     return Array.from(this)
   }
 
+  /**
+   * Filters points based on a predicate function and returns a new PointCloud
+   */
+  filter(
+    predicate: (point: FixedArray<number, N>, index: number) => boolean,
+  ): PointCloud<N> {
+    const filteredPoints: FixedArray<number, N>[] = []
+
+    for (let i = 0; i < this.size; i++) {
+      const point = this.getPoint(i)
+      if (predicate(point, i)) {
+        filteredPoints.push(point)
+      }
+    }
+
+    return PointCloud.create(filteredPoints, this.dimensions)
+  }
+
+  /**
+   * Applies a transformation to each point in place (mutates the current PointCloud)
+   * Returns this for method chaining
+   */
+  transform(
+    callback: (
+      point: FixedArray<number, N>,
+      index: number,
+    ) => FixedArray<number, N>,
+  ): this {
+    for (let i = 0; i < this.size; i++) {
+      const originalPoint = this.getPoint(i)
+      const newPoint = callback(originalPoint, i)
+
+      for (let d = 0; d < this.dimensions; d++) {
+        this.points[i * this.dimensions + d] = newPoint[d]
+      }
+    }
+
+    this.clearCache()
+
+    return this
+  }
+
   delaunay(): Delaunay {
     if (this._delaunay) return this._delaunay
     this._delaunay = D3Delaunay.from(this.points)
@@ -149,63 +231,40 @@ export class PointCloud<N extends number> {
   lloyd(
     bounds: FlatBounds<2>,
     iterations: number = 1,
+    tolerance: number = 0.1,
     /**
      * Make it weighted, giving a certain bias towards a certain values
      * @returns a number between 0-1 giving the weight of that point
      * */
-    weight?: (x: number, y: number) => number,
+    weight: (x: number, y: number) => number = () => 1,
   ): Float64Array {
+    // inspiration: https://observablehq.com/@mbostock/voronoi-stippling
     if (this.dimensions !== 2) {
       throw new Error('Lloyd algorithm currently only supports 2D points')
     }
 
     const [xmin, xmax, ymin, ymax] = bounds
-    const n = this.size
-
-    // Get amount of samples to take from centroids
-    const sampleDensity = 100 // samples per unit area
-    const totalArea = (xmax - xmin) * (ymax - ymin)
-    const numSamples = Math.max(1000, Math.floor(totalArea * sampleDensity))
 
     for (let iter = 0; iter < iterations; iter++) {
-      const delaunay = this.delaunay()
+      const delaunay = D3Delaunay.from(this.points) as Delaunay
+      const vor = delaunay.voronoi([xmin, ymin, xmax, ymax])
 
-      // Calculate centroids for each Voronoi cell
-      const centroids = new Float64Array(n * 2)
-      const areas = new Float64Array(n)
-
-      for (let i = 0; i < numSamples; i++) {
-        const x = xmin + Math.random() * (xmax - xmin)
-        const y = ymin + Math.random() * (ymax - ymin)
-
-        // Find which Voronoi cell this sample point belongs to
-        const cellIndex = delaunay.find(x, y, 0)
-
-        if (cellIndex >= 0 && cellIndex < n) {
-          const w = weight ? weight(x, y) : 1
-          centroids[cellIndex * 2] += x * w
-          centroids[cellIndex * 2 + 1] += y * w
-          areas[cellIndex] += 1
-        }
+      let totalMove = 0
+      for (let i = 0; i < this.points.length; i++) {
+        const cell = vor.cellPolygon(i) as [number, number][]
+        if (!cell) continue
+        const [cx, cy] = centroidOfPolygon(cell, weight)
+        console.log(cx, cy)
+        const dx = cx - this.points[i][0]
+        const dy = cy - this.points[i][1]
+        totalMove += Math.hypot(dx, dy)
+        this.points[i][0] = cx
+        this.points[i][1] = cy
       }
 
-      // Update points to centroids (where areas > 0)
-      for (let i = 0; i < n; i++) {
-        const area = areas[i]
-        if (area > 0) {
-          const newX = centroids[i * 2] / area
-          const newY = centroids[i * 2 + 1] / area
-
-          // Clamp to bounds
-          this.points[i * 2] = Math.max(xmin, Math.min(xmax, newX))
-          this.points[i * 2 + 1] = Math.max(ymin, Math.min(ymax, newY))
-        }
-      }
-
-      // Update the triangulation after modifying points
-      if (this._delaunay) {
-        this._delaunay.update()
-      }
+      const avgMove = totalMove / this.points.length
+      console.log(avgMove)
+      if (avgMove < tolerance) return this.points
     }
 
     return this.points
@@ -228,4 +287,56 @@ export type Voronoi = {
   delaunay: Delaunay
   cellPolygons: () => [number, number][][]
   cellPolygon: (i: number) => [number, number][]
+}
+
+// Compute density-weighted centroid of a polygon region
+function centroidOfPolygon(
+  polygon: [number, number][],
+  density: (x: number, y: number) => number = () => 1,
+): FixedArray<number, 2> {
+  const minX = Math.max(0, Math.floor(Math.min(...polygon.map((p) => p[0]))))
+  const maxX = Math.min(
+    this.width - 1,
+    Math.ceil(Math.max(...polygon.map((p) => p[0]))),
+  )
+  const minY = Math.max(0, Math.floor(Math.min(...polygon.map((p) => p[1]))))
+  const maxY = Math.min(
+    this.height - 1,
+    Math.ceil(Math.max(...polygon.map((p) => p[1]))),
+  )
+
+  let sumX = 0,
+    sumY = 0,
+    sumW = 0
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (pointInPolygon(x + 0.5, y + 0.5, polygon)) {
+        const rho = density(x, y)
+        sumW += rho
+        sumX += rho * (x + 0.5)
+        sumY += rho * (y + 0.5)
+      }
+    }
+  }
+  if (sumW === 0) return [polygon[0][0], polygon[0][1]]
+  return [sumX / sumW, sumY / sumW]
+}
+
+// Ray-casting point-in-polygon
+function pointInPolygon(
+  x: number,
+  y: number,
+  poly: [number, number][],
+): boolean {
+  let inside = false
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0],
+      yi = poly[i][1]
+    const xj = poly[j][0],
+      yj = poly[j][1]
+    const intersect =
+      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 1e-9) + xi
+    if (intersect) inside = !inside
+  }
+  return inside
 }

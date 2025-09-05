@@ -1,6 +1,7 @@
 import { CREAGEN_ASSERTS } from './constants'
 import { Random } from './Random'
-import { Bounds, Vector } from './Vector'
+import { FlatBounds } from './types'
+import { Vector } from './Vector'
 
 export class Color extends Vector<4> {
   static fromHex(hex: string) {
@@ -69,7 +70,7 @@ export class Color extends Vector<4> {
   }
 
   /** Check if a number is within `limits` */
-  override within(bounds: Bounds<4>): boolean {
+  override within(bounds: FlatBounds<4>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
       if (this[i]! < start || this[i]! > stop) {
@@ -81,7 +82,7 @@ export class Color extends Vector<4> {
 
   /** if a number is above or below a limit it correct it so it is within the boundary limits */
   // added empty array union to `bounds` due to typescript bug
-  override wrapAround(bounds: Bounds<4> | []) {
+  override wrapAround(bounds: FlatBounds<4> | []) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
       const v = this[i]!

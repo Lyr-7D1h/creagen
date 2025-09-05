@@ -1,7 +1,9 @@
 import * as Math from '../math'
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Bounds, FixedArray, vec, Vector, VectorLike } from '../Vector'
+import { vec, Vector } from '../Vector'
 import { solveTriadiagonalMatrix } from '../lin'
+import { FlatBounds } from '../types'
+import { Conversion } from '../Conversion'
 
 export const defaultPathOptions: PathOptions = {
   ...defaultGeometricOptions,
@@ -18,7 +20,7 @@ export interface PathOptions extends GeometricOptions {
   /** Connect the first point with the last point */
   closed?: boolean
   /** Wrap the path around a certain bound */
-  wrapAround?: Bounds<2> | null
+  wrapAround?: FlatBounds<2> | null
   /** Control curve tension (0.0-1.0): higher values make sharper curves */
   tension?: number
 }
@@ -118,10 +120,8 @@ export class Path extends Geometry<PathOptions> {
   /** Get direction of where x,y is out of bounds compared to the boxed bounds. Returns null if inside bounds */
   private outsideBoundDirection(
     { x, y }: Vector<2>,
-    bounds: FixedArray<[number, number], 2>,
+    [xmin, xmax, ymin, ymax]: FlatBounds<2>,
   ) {
-    const [xmin, xmax] = bounds[0]
-    const [ymin, ymax] = bounds[1]
     const direction = vec(0, 0)
     if (x < xmin) {
       direction.x = -1
@@ -139,12 +139,11 @@ export class Path extends Geometry<PathOptions> {
 
   private wrapAroundPoints(
     points: Vector<2>[],
-    bounds: FixedArray<[number, number], 2>,
+    bounds: FlatBounds<2>,
     currentIndex: number = 0,
   ): Vector<2>[][] {
+    const [xmin, xmax, ymin, ymax] = bounds
     let segments = []
-    const [xmin, xmax] = bounds[0]
-    const [ymin, ymax] = bounds[1]
     const width = xmax - xmin
     const height = ymax - ymin
 
@@ -251,8 +250,10 @@ export class Path extends Geometry<PathOptions> {
       // if (intersection.equals(queue[1])) queue.shift()
 
       const outsideSegments = this.wrapAroundPoints(outsideSegment, [
-        [xmin + d.x * width, xmax + d.x * width],
-        [ymin + d.y * width, ymax + d.y * width],
+        xmin + d.x * width,
+        xmax + d.x * width,
+        ymin + d.y * width,
+        ymax + d.y * width,
       ])
 
       // console.log(outsideSegments)
@@ -273,8 +274,10 @@ export class Path extends Geometry<PathOptions> {
       if (d !== null) {
         //  if whole queue is outside bounds, wrap around on first point
         const outsideSegments = this.wrapAroundPoints(queue, [
-          [xmin + d.x * width, xmax + d.x * width],
-          [ymin + d.y * width, ymax + d.y * width],
+          xmin + d.x * width,
+          xmax + d.x * width,
+          ymin + d.y * width,
+          ymax + d.y * width,
         ])
         for (const s of outsideSegments) {
           for (const p of s) {
@@ -344,28 +347,19 @@ export class Path extends Geometry<PathOptions> {
   /** TODO: https://github.com/xaviergonz/js-angusj-clipper */
   // union(path: Path) {}
 
-  add(points: VectorLike<2>[])
-  add(v: VectorLike<2>)
+  add(points: ArrayLike<number>[])
+  add(v: ArrayLike<number>)
   add(x: number, y: number)
-  add(x1: VectorLike<2> | VectorLike<2>[] | number, x2?: number) {
+  add(
+    x1: number | ArrayLike<number> | ArrayLike<ArrayLike<number>>,
+    x2?: number,
+  ) {
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.points.push(vec(x1, x2))
-    }
-    if (Array.isArray(x1)) {
-      if (Array.isArray(x1[0])) {
-        // Convert VectorLike to Vector instances
-        this.points = this.points.concat(
-          (x1 as VectorLike<2>[]).map((p) =>
-            p instanceof Vector ? p : vec(p[0], p[1]),
-          ),
-        )
-      } else {
-        // Convert single VectorLike to Vector
-        const point = x1 as VectorLike<2>
-        this.points.push(
-          point instanceof Vector ? point : vec(point[0], point[1]),
-        )
-      }
+    } else if (Array.isArray(x1)) {
+      this.points.concat(Conversion.toVectorArray(x1, 2))
+    } else {
+      throw Error('Invalid arguments given')
     }
     return this
   }

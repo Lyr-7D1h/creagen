@@ -1,4 +1,5 @@
 import * as Math from './math'
+import { FixedArray, FlatBounds, GrowToSize } from './types'
 
 type Y<N extends number> = N extends 3
   ? number
@@ -6,21 +7,6 @@ type Y<N extends number> = N extends 3
     ? number
     : undefined
 type Z<N extends number> = N extends 3 ? number : undefined
-
-type GrowToSize<
-  T,
-  N extends number,
-  A extends T[],
-  L extends number = A['length'],
-> = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
-
-export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
-
-/** A union type that accepts Vector<N>, FixedArray<number, N>, or readonly number arrays of length N */
-export type VectorLike<N extends number> = Vector<N> | FixedArray<number, N> | readonly number[] & { length: N }
-
-/** The bounds for a given N dimensional vector [[xmin, xmax], [ymin, ymax]] */
-export type Bounds<N extends number> = FixedArray<[number, number], N>
 
 export class Vector<N extends number> extends Array<number> {
   constructor(...items: [number[] & { length: N }])
@@ -363,7 +349,7 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   /** Check if a number is within `limits` */
-  within(bounds: Bounds<N>): boolean {
+  within(bounds: FlatBounds<N>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
       if (this[i]! < start || this[i]! > stop) {
@@ -430,7 +416,7 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   /** if a number is above or below a limit it correct it so it is within the boundary limits */
-  wrapAround(bounds: Bounds<N>) {
+  wrapAround(bounds: FlatBounds<N>) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
       const v = this[i]!

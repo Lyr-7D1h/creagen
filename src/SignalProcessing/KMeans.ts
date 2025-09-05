@@ -1,4 +1,5 @@
-import { FixedArray, Vector } from '../Vector'
+import { FixedArray } from '../types'
+import { Vector } from '../Vector'
 // import skmeans from 'skmeans'
 import { kmeans } from 'ml-kmeans'
 

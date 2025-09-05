@@ -1,5 +1,5 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Vector, VectorLike } from '../Vector'
+import { Vector } from '../Vector'
 
 export const defaultRectangleOptions = {
   ...defaultGeometricOptions,
@@ -19,27 +19,7 @@ export class Rectangle extends Geometry<RectangleOptions> {
   height: number
 
   constructor(
-    position: VectorLike<2>,
-    width: number,
-    height: number,
-    options?: RectangleOptions,
-  )
-  constructor(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    options?: RectangleOptions,
-  )
-  constructor(
-    x1: VectorLike<2> | number,
-    x2: number,
-    x3: number,
-    x4?: number | RectangleOptions,
-    x5?: RectangleOptions,
-  )
-  constructor(
-    x1: VectorLike<2> | number,
+    x1: ArrayLike<number> | number,
     x2: number,
     x3: number,
     x4?: number | RectangleOptions,
