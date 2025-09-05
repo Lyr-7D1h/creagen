@@ -13,10 +13,12 @@ export { Svg } from './svg'
 export { Image } from './ImageProcessing'
 export { color, Color } from './Color'
 export { Voronoi } from './Voronoi'
+export { PointCloud } from './PointCloud'
 export { Motion } from './Motion'
 export {
   vec,
   Vector,
+  VectorLike,
   Bounds,
   FixedArray,
   ALL_DIRECTIONS,
