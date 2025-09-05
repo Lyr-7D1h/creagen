@@ -58,6 +58,11 @@ export class Image {
     return this.img.height
   }
 
+  /** Get the count of amount of pixels (rgba values) in Image */
+  get pixelCount() {
+    return this.pixels.length / 4
+  }
+
   get pixels(): Uint8ClampedArray {
     if (!this.pixelsLoaded)
       throw new Error(
@@ -168,6 +173,85 @@ export class Image {
   edgeDetection() {
     const buff = edgeDetection(this.pixels, this.width)
     this.pixeldata = buff
+    return this
+  }
+
+  greyscale() {
+    for (let i = 0; i < this.pixeldata.length; i += 4) {
+      // Calculate luminance using standard RGB to grayscale conversion
+      const grey = Math.round(
+        0.299 * this.pixeldata[i] + // Red
+          0.587 * this.pixeldata[i + 1] + // Green
+          0.114 * this.pixeldata[i + 2], // Blue
+      )
+
+      // Set RGB channels to the same grey value
+      this.pixeldata[i] = grey // Red
+      this.pixeldata[i + 1] = grey // Green
+      this.pixeldata[i + 2] = grey // Blue
+      // Alpha channel (i + 3) remains unchanged
+    }
+    return this
+  }
+
+  /**
+   * Apply contrast to image making color tend toward middle gray (128)
+   * or more towards the outer ends (0, 255)
+   *
+   * @param factor 1.0 = no change, >1.0 = increased contrast, <1.0 = decreased contrast
+   */
+  contrast(factor: number) {
+    factor = Math.max(0.1, Math.min(3.0, factor))
+
+    // Apply contrast formula: newValue = (oldValue - 128) * factor + 128
+    // This centers around middle gray (128) and scales the difference
+    for (let i = 0; i < this.pixeldata.length; i += 4) {
+      this.pixeldata[i] = Math.max(
+        0,
+        Math.min(255, (this.pixeldata[i] - 128) * factor + 128),
+      ) // Red
+      this.pixeldata[i + 1] = Math.max(
+        0,
+        Math.min(255, (this.pixeldata[i + 1] - 128) * factor + 128),
+      ) // Green
+      this.pixeldata[i + 2] = Math.max(
+        0,
+        Math.min(255, (this.pixeldata[i + 2] - 128) * factor + 128),
+      ) // Blue
+      // Alpha channel (i + 3) remains unchanged
+    }
+    return this
+  }
+
+  /**
+   * Iterate over each pixel in the image
+   * @param callback Function called for each pixel with (color, x, y, index)
+   */
+  forEach(
+    callback: (color: Color, x: number, y: number, index: number) => void,
+  ) {
+    const width = this.width
+    for (let i = 0; i < this.pixeldata.length; i += 4) {
+      const pixelIndex = i / 4
+      const x = pixelIndex % width
+      const y = Math.floor(pixelIndex / width)
+      const color = new Color(this.pixeldata.slice(i, i + 4))
+      callback(color, x, y, pixelIndex)
+    }
+    return this
+  }
+
+  /**
+   * Invert the colors of the image (negative effect)
+   * Each RGB channel is inverted: newValue = 255 - oldValue
+   */
+  invert() {
+    for (let i = 0; i < this.pixeldata.length; i += 4) {
+      this.pixeldata[i] = 255 - this.pixeldata[i] // Red
+      this.pixeldata[i + 1] = 255 - this.pixeldata[i + 1] // Green
+      this.pixeldata[i + 2] = 255 - this.pixeldata[i + 2] // Blue
+      // Alpha channel (i + 3) remains unchanged
+    }
     return this
   }
 }
