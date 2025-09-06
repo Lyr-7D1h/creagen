@@ -1,41 +1,13 @@
-import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Color } from '../Color'
-import { Conversion } from '../Conversion'
-
-const defaultOptions: GeometricOptions = {
-  ...defaultGeometricOptions,
-  fill: Color.BLACK,
-}
+import { GeometricOptions, Geometry } from './Geometry'
 
 export class Circle extends Geometry {
-  x: number
-  y: number
-  radius: number
-
   constructor(
-    x: number | ArrayLike<number>,
-    y: number,
-    radius?: number | GeometricOptions,
-    options?: GeometricOptions,
+    public x: number,
+    public y: number,
+    public radius: number,
+    opts: GeometricOptions,
   ) {
-    super()
-    if (Conversion.isArrayLike(x)) {
-      if (typeof radius === 'number') throw Error('Expected GeometricOptions')
-      const p = Conversion.toFixedNumberArray(x, 2)
-      this.x = p[0]
-      this.y = p[1]
-
-      this.radius = y
-      this.options =
-        typeof radius === 'undefined'
-          ? defaultOptions
-          : { ...defaultOptions, ...radius }
-      return
-    }
-    this.x = x as number
-    this.y = y
-    this.radius = radius as number
-    this.options = { ...defaultOptions, ...options }
+    super(opts)
   }
 
   override _svg(): SVGCircleElement {

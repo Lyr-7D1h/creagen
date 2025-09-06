@@ -1,11 +1,12 @@
 import { Color } from '../Color'
 import { Circle } from './Circle'
 import { Image } from './Image'
-import { GeometricOptions, Geometry } from './Geometry'
+import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
 import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 import { Arc } from './Arc'
 import { FlatBounds } from '../types'
+import { Conversion } from '../Conversion'
 
 export function getWidth() {
   return Math.max(
@@ -100,16 +101,32 @@ export class Canvas<R extends RenderMode> {
   circle(
     position: ArrayLike<number>,
     radius: number,
-    options?: GeometricOptions,
+    options?: Partial<GeometricOptions>,
   )
-  circle(x: number, y: number, radius: number, options?: GeometricOptions)
+  circle(
+    x: number,
+    y: number,
+    radius: number,
+    options?: Partial<GeometricOptions>,
+  )
   circle(
     x: number | ArrayLike<number>,
     y: number,
-    radius?: number | GeometricOptions,
-    options?: GeometricOptions,
+    radius?: number | Partial<GeometricOptions>,
+    options?: Partial<GeometricOptions>,
   ) {
-    const circle = new Circle(x, y, radius, options)
+    if (Conversion.isArrayLike(x)) {
+      if (typeof radius === 'number') throw Error('Expected GeometricOptions')
+      const p = Conversion.toFixedNumberArray(x, 2)
+      x = p[0]
+      y = p[1]
+
+      radius = y
+    }
+    const circle = new Circle(x, y, radius as number, {
+      ...defaultGeometricOptions,
+      ...options,
+    })
     this.add(circle)
     return circle
   }
@@ -118,29 +135,41 @@ export class Canvas<R extends RenderMode> {
     position: ArrayLike<number>,
     width: number,
     height: number,
-    options?: RectangleOptions,
+    options: Partial<RectangleOptions>,
   ): Rectangle
   rect(
     x: number,
     y: number,
     width: number,
     height: number,
-    options?: RectangleOptions,
+    options?: Partial<RectangleOptions>,
   ): Rectangle
   rect(
     x1: ArrayLike<number> | number,
     x2: number,
     x3: number,
-    x4?: number | RectangleOptions,
-    x5?: RectangleOptions,
+    x4?: number | Partial<RectangleOptions>,
+    x5?: Partial<RectangleOptions>,
   ): Rectangle {
-    const rect = new Rectangle(x1, x2, x3, x4, x5)
+    if (Conversion.isArrayLike(x1)) {
+      const p = Conversion.toFixedNumberArray(x1, 2)
+      x3 = x2
+      x4 = x3
+      x1 = p[0]
+      x2 = p[1]
+    }
+    const rect = new Rectangle(x1, x2, x3, x4 as number, {
+      ...defaultGeometricOptions,
+      ...x5,
+    })
     this.add(rect)
     return rect
   }
 
   image(x: number, y: number, width: number, height: number, src: string) {
-    const image = new Image(x, y, width, height, src)
+    const image = new Image(x, y, width, height, src, {
+      ...defaultGeometricOptions,
+    })
     this.add(image)
     return image
   }
@@ -152,29 +181,55 @@ export class Canvas<R extends RenderMode> {
     startAngle: number,
     endAngle: number,
     counterclockwise?: boolean,
-    options?: GeometricOptions,
+    options?: Partial<GeometricOptions>,
   ) {
     const arc = new Arc(
+      { ...defaultGeometricOptions, ...options },
       x,
       y,
       radius,
       startAngle,
       endAngle,
       counterclockwise,
-      options,
     )
     this.add(arc)
     return arc
   }
 
-  path(options?: PathOptions) {
-    const path = new Path(options)
+  /**
+   * A path made up of segments by sets of points with different drawing options
+   *
+   * Example:
+   * ```typescript
+   * const canvas = Canvas.create()
+   * const path = canvas.path()
+   *   .strokeWidth(2)        // First segment will have width 2
+   *   .add(0, 0).add(10, 10) // Add points to first segment
+   *   .strokeWidth(5)        // Creates new segment with width 5
+   *   .add(20, 5).add(30, 15) // Add points to second segment
+   *   .smooth(true)          // Creates new segment with smooth curves
+   *   .add(40, 10).add(50, 20) // Add points to third segment
+   * ```
+   */
+  path(options?: Partial<PathOptions>) {
+    const path = new Path({
+      ...defaultGeometricOptions,
+      fill: null,
+      closed: false,
+      wrapAround: null,
+      tension: 1,
+      ...options,
+    })
     this.add(path)
     return path
   }
 
-  line(x1: ArrayLike<number>, x2: ArrayLike<number>, opts?: PathOptions) {
-    const line = new Path(opts)
+  line(
+    x1: ArrayLike<number>,
+    x2: ArrayLike<number>,
+    opts?: Partial<PathOptions>,
+  ) {
+    const line = this.path(opts)
     line.add(x1)
     line.add(x2)
     this.add(line)

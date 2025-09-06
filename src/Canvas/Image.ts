@@ -1,4 +1,4 @@
-import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
+import { GeometricOptions, Geometry } from './Geometry'
 import { ImageData as ImageData } from '../ImageData'
 
 export interface ImageOptions extends GeometricOptions {}
@@ -12,11 +12,10 @@ export class Image extends Geometry<ImageOptions> {
     public width: number,
     public height: number,
     src: string,
-    options?: ImageOptions,
+    options: ImageOptions,
   ) {
-    super()
+    super(options)
     this.img = ImageData.create(src)
-    this.options = options || (defaultGeometricOptions as ImageOptions)
   }
 
   data() {

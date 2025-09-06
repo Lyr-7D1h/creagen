@@ -1,36 +1,16 @@
-import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
-import { Color } from '../Color'
-
-const defaultOptions: GeometricOptions = {
-  ...defaultGeometricOptions,
-  fill: Color.BLACK,
-}
+import { GeometricOptions, Geometry } from './Geometry'
 
 export class Arc extends Geometry {
-  x: number
-  y: number
-  radius: number
-  startAngle: number
-  endAngle: number
-  counterclockwise?: boolean
-
   constructor(
-    x: number,
-    y: number,
-    radius: number,
-    startAngle: number,
-    endAngle: number,
-    counterclockwise?: boolean,
-    options: GeometricOptions = defaultOptions,
+    options: GeometricOptions,
+    public x: number,
+    public y: number,
+    public radius: number,
+    public startAngle: number,
+    public endAngle: number,
+    public counterclockwise?: boolean,
   ) {
-    super()
-    this.x = x as number
-    this.y = y
-    this.radius = radius as number
-    this.startAngle = startAngle
-    this.endAngle = endAngle
-    this.counterclockwise = counterclockwise
-    this.options = { ...defaultOptions, ...options }
+    super(options)
   }
 
   override _svg(): SVGCircleElement {

@@ -7,16 +7,52 @@ export const defaultGeometricOptions: GeometricOptions = {
   strokeWidth: 1,
 }
 export interface GeometricOptions {
-  fill?: Color | null
-  fillOpacity?: number
-  stroke?: Color
-  strokeWidth?: number
+  fill: Color | null
+  fillOpacity: number
+  stroke: Color
+  strokeWidth: number
 }
 
 export abstract class Geometry<
   Opts extends GeometricOptions = GeometricOptions,
 > {
   options: Opts
+
+  constructor(opts: Opts) {
+    this.options = opts
+  }
+
+  /*
+   * Set stroke width for the path
+   */
+  strokeWidth(width: number): this {
+    this.options.strokeWidth = width
+    return this
+  }
+
+  /**
+   * Set stroke color for the path
+   */
+  stroke(color: Color): this {
+    this.options.stroke = color
+    return this
+  }
+
+  /**
+   * Set fill color for the path
+   */
+  fill(color: Color | null): this {
+    this.options.fill = color
+    return this
+  }
+
+  /**
+   * Set fill opacity for the path
+   */
+  fillOpacity(opacity: number): this {
+    this.options.fillOpacity = opacity
+    return this
+  }
 
   _applySvgOptions(element: SVGElement) {
     element.setAttribute('stroke', this.options.stroke.hex() ?? 'black')

@@ -1,79 +1,255 @@
 import * as Math from '../math'
-import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
+import { GeometricOptions, Geometry } from './Geometry'
 import { vec, Vector } from '../Vector'
 import { solveTriadiagonalMatrix } from '../lin'
 import { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
-
-export const defaultPathOptions: PathOptions = {
-  ...defaultGeometricOptions,
-  fill: null,
-  smooth: false,
-  closed: false,
-  wrapAround: null,
-  tension: 0,
-}
+import { Color } from '../Color'
 
 export interface PathOptions extends GeometricOptions {
-  /** Connect a curve (bezier spline) through all the given points */
-  smooth?: boolean
   /** Connect the first point with the last point */
-  closed?: boolean
+  closed: boolean
   /** Wrap the path around a certain bound */
-  wrapAround?: FlatBounds<2> | null
+  wrapAround: FlatBounds<2> | null
   /** Control curve tension (0.0-1.0): higher values make sharper curves */
-  tension?: number
+  tension: number
+}
+
+function isSmooth(options: PathOptions): boolean {
+  return options.tension < 1
+}
+
+interface PathSegment {
+  points: Vector<2>[]
+  options: PathOptions
 }
 
 export class Path extends Geometry<PathOptions> {
-  private points: Vector<2>[] = []
+  private _segments: PathSegment[] = []
+  /** Reference to current segment */
+  private currentPoints: Vector<2>[]
 
-  constructor(options?: PathOptions) {
-    super()
-    this.options = { ...defaultPathOptions, ...options }
+  constructor(options: PathOptions) {
+    super(options)
+    this.newSegment()
   }
 
-  _svg(): SVGPathElement {
-    const element = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'path',
+  private newSegment(): void {
+    const points = []
+    if (this.currentPoints) {
+      let pointsLength = this.currentPoints.length
+      // don't do anything if segment is empty
+      if (pointsLength === 0) return
+      // add last point from previous segment
+      points.push(this.currentPoints[pointsLength - 1])
+    }
+    this.currentPoints = []
+    this.options = { ...this.options }
+    this._segments.push({
+      points: this.currentPoints,
+      options: this.options,
+    })
+  }
+
+  /*
+   * Set stroke width for the path
+   */
+  override strokeWidth(width: number): this {
+    if (this.options.strokeWidth === width) return this
+    this.newSegment()
+    super.strokeWidth(width)
+    return this
+  }
+
+  /**
+   * Set stroke color for the path
+   */
+  override stroke(color: Color): this {
+    if (this.options.stroke === color) return this
+    this.newSegment()
+    super.stroke(color)
+    return this
+  }
+
+  /**
+   * Set fill color for the path
+   */
+  override fill(color: Color | null): this {
+    if (this.options.fill === color) return this
+    this.newSegment()
+    super.fill(color)
+    return this
+  }
+
+  /**
+   * Set fill opacity for the path
+   */
+  override fillOpacity(opacity: number): this {
+    if (this.options.fillOpacity === opacity) return this
+    this.newSegment()
+    super.fillOpacity(opacity)
+    return this
+  }
+
+  /**
+   * Set smooth option for the path
+   * @param tension Control curve tension (0.0-1.0): higher values make sharper curves, by default smooth (0)
+   */
+  smooth(tension: number = 0): this {
+    if (this.options.tension === tension) return this
+    this.newSegment()
+    this.options.tension = tension
+    return this
+  }
+
+  /**
+   * Set whether the path should be closed (connect first and last points)
+   */
+  closed(closed: boolean = true): this {
+    if (this.options.closed === closed) return this
+    this.newSegment()
+    this.options.closed = closed
+    return this
+  }
+
+  /**
+   * Set wrap around bounds for the path
+   */
+  wrapAround(bounds: FlatBounds<2> | null): this {
+    if (this.options.wrapAround === bounds) return this
+    this.newSegment()
+    this.options.wrapAround = bounds
+    return this
+  }
+
+  /** Get information about current segments (for debugging) */
+  segments(): ReadonlyArray<Readonly<PathSegment>> {
+    return this._segments
+  }
+
+  /** Get all points in the path */
+  points() {
+    return this._segments.reduce((a, c) => (a = a.concat(c.points)), [])
+  }
+
+  /** Get total number of points across all segments */
+  size(): number {
+    return this._segments.reduce(
+      (total, segment) => total + segment.points.length,
+      0,
     )
-    super._applySvgOptions(element)
-    element.setAttribute('d', svgPath(this.options, this.points))
-
-    return element
-  }
-
-  _canvas(ctx: CanvasRenderingContext2D) {
-    const path = new Path2D(svgPath(this.options, this.points))
-    ctx.beginPath()
-    this._applyCanvasOptions(ctx, path)
-    ctx.closePath()
   }
 
   /** TODO: https://github.com/xaviergonz/js-angusj-clipper */
   // union(path: Path) {}
 
-  add(points: ArrayLike<number>[])
-  add(v: ArrayLike<number>)
-  add(x: number, y: number)
+  add(points: ArrayLike<number>[]): this
+  add(v: ArrayLike<number>): this
+  add(x: number, y: number): this
   add(
     x1: number | ArrayLike<number> | ArrayLike<ArrayLike<number>>,
     x2?: number,
-  ) {
+  ): this {
     if (typeof x1 === 'number' && typeof x2 === 'number') {
-      this.points.push(vec(x1, x2))
+      this.currentPoints.push(vec(x1, x2))
     } else if (Array.isArray(x1)) {
       const vectors = Conversion.toVectorArray(x1, 2)
       if (vectors.length === 1) {
-        this.points.push(vectors[0])
+        this.currentPoints.push(vectors[0])
       } else {
-        this.points = this.points.concat(vectors)
+        this.currentPoints = this.currentPoints.concat(vectors)
       }
     } else {
       throw Error('Invalid arguments given')
     }
     return this
+  }
+
+  _svg(): SVGPathElement | SVGGElement {
+    // If all segments have the same visual options, combine them into one path
+    const hasUniformOptions = this._segments.every(
+      (segment) =>
+        segment.options.strokeWidth === this._segments[0].options.strokeWidth &&
+        segment.options.stroke === this._segments[0].options.stroke &&
+        segment.options.fill === this._segments[0].options.fill &&
+        segment.options.fillOpacity === this._segments[0].options.fillOpacity,
+    )
+
+    if (hasUniformOptions) {
+      // Single path element
+      const element = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path',
+      )
+      super._applySvgOptions(element)
+
+      let combinedPath = ''
+      for (const segment of this._segments) {
+        if (segment.points.length === 0) continue
+        const segmentPath = svgPath(segment)
+        if (segmentPath) {
+          combinedPath += (combinedPath ? ' ' : '') + segmentPath
+        }
+      }
+
+      element.setAttribute('d', combinedPath)
+      return element
+    } else {
+      // Multiple path elements in a group
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+
+      for (const segment of this._segments) {
+        if (segment.points.length === 0) continue
+
+        const pathElement = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'path',
+        )
+
+        // Apply segment-specific options
+        pathElement.setAttribute('stroke', segment.options.stroke.hex())
+        pathElement.setAttribute(
+          'fill',
+          segment.options.fill === null ? 'none' : segment.options.fill.hex(),
+        )
+        pathElement.setAttribute(
+          'fill-opacity',
+          segment.options.fillOpacity.toString(),
+        )
+        pathElement.setAttribute(
+          'stroke-width',
+          segment.options.strokeWidth.toString(),
+        )
+
+        const segmentPath = svgPath(segment)
+        if (segmentPath) {
+          pathElement.setAttribute('d', segmentPath)
+          group.appendChild(pathElement)
+        }
+      }
+
+      return group
+    }
+  }
+
+  _canvas(ctx: CanvasRenderingContext2D): void {
+    // Render each segment with its own options
+    for (const segment of this._segments) {
+      if (segment.points.length === 0) continue
+
+      const path = new Path2D(svgPath(segment))
+      ctx.beginPath()
+
+      // Apply segment-specific options
+      ctx.lineWidth = segment.options.strokeWidth
+      if (segment.options.fill) {
+        ctx.fillStyle = segment.options.fill.hex()
+        ctx.fill(path)
+      } else {
+        ctx.strokeStyle = segment.options.stroke.hex()
+        ctx.stroke(path)
+      }
+    }
   }
 }
 
@@ -88,7 +264,7 @@ function computeControlPoints(
   index: number,
   /** Tension, number in range [0,1] */
   tension: number = 0,
-) {
+): [number[], number[]] {
   // all the knots
   const K = points
   const n = points.length - 1
@@ -144,7 +320,7 @@ function computeControlPoints(
 function outsideBoundDirection(
   { x, y }: Vector<2>,
   [xmin, xmax, ymin, ymax]: FlatBounds<2>,
-) {
+): Vector<2> | null {
   const direction = vec(0, 0)
   if (x < xmin) {
     direction.x = -1
@@ -242,12 +418,12 @@ function wrapAroundPoints(
         ...queue.splice(
           i + 1,
           queue.length - i + 2,
-          options.smooth ? undefined : intersection,
+          isSmooth(options) ? undefined : intersection,
         ),
       ]
 
       // add inside point and the two outside points
-      if (options.smooth) {
+      if (isSmooth(options)) {
         if (typeof outsideSegment[currentIndex + 2] === 'undefined') {
           if (points[currentIndex - 1] !== queue[queue.length - 2]) {
             queue.splice(queue.length - 2, 0, points[currentIndex - 1])
@@ -264,7 +440,7 @@ function wrapAroundPoints(
     } else {
       // starting points are outside
       outsideSegment = queue.splice(0, i + 1, intersection)
-      if (options.smooth) {
+      if (isSmooth(options)) {
         outsideSegment.push(intersection)
       }
       i = -1
@@ -317,7 +493,7 @@ function wrapAroundPoints(
   return segments
 }
 
-function svgPath(options: PathOptions, points: Vector<2>[]) {
+function svgPath({ points, options }: PathSegment): string {
   if (points.length === 1) return ''
 
   let segments = [points]
@@ -327,7 +503,8 @@ function svgPath(options: PathOptions, points: Vector<2>[]) {
     )
   }
 
-  if (options.smooth) {
+  console.log(options.tension)
+  if (isSmooth(options)) {
     // TODO: fix in case of wrap around
     let path = ''
     for (const segment of segments) {
