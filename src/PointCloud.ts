@@ -2,6 +2,25 @@ import { Delaunay as D3Delaunay } from 'd3-delaunay'
 import { FixedArray, FlatBounds } from './types'
 import { Conversion } from './Conversion'
 
+export type Delaunay = {
+  halfedges: Int32Array
+  hull: Int32Array
+  inedges: Int32Array
+  points: Int32Array
+  triangles: Int32Array
+  voronoi: (bounds: FixedArray<number, 4>) => Voronoi
+  find: (x: number, y: number, startingIndex: number) => number
+  update: () => void
+}
+
+export type Voronoi = {
+  circumcenters: Int32Array
+  vectors: Int32Array
+  delaunay: Delaunay
+  cellPolygons: () => [number, number][][]
+  cellPolygon: (i: number) => [number, number][]
+}
+
 const MAX_SAMPLING_LIMIT = 1_000_000
 
 /**
@@ -26,7 +45,6 @@ export class PointCloud<N extends number> {
 
     if (typeof samplingDistribution === 'undefined') {
       for (let i = 0; i < amount * dimension; i += dimension) {
-        console.log(i)
         for (let d = 0; d < dimension; d++) {
           const min = bounds[d * 2] as number
           const max = bounds[d * 2 + 1] as number
@@ -229,64 +247,61 @@ export class PointCloud<N extends number> {
    * @returns The updated points array
    */
   lloyd(
+    this: PointCloud<2>,
     bounds: FlatBounds<2>,
     iterations: number = 1,
-    tolerance: number = 0.1,
+    /** When average movement per iteration is lower than this amount it will stop iterating
+     * if `undefined` it is calculated based on boundary size */
+    tolerance?: number,
     /**
      * Make it weighted, giving a certain bias towards a certain values
      * @returns a number between 0-1 giving the weight of that point
      * */
     weight: (x: number, y: number) => number = () => 1,
-  ): Float64Array {
+  ) {
     // inspiration: https://observablehq.com/@mbostock/voronoi-stippling
+    // Runtime check is now redundant due to type constraint, but keeping for safety
     if (this.dimensions !== 2) {
       throw new Error('Lloyd algorithm currently only supports 2D points')
     }
 
     const [xmin, xmax, ymin, ymax] = bounds
 
+    // Calculate adaptive tolerance based on bounds size if not provided
+    const actualTolerance =
+      tolerance ?? Math.min(xmax - xmin, ymax - ymin) * 0.001
+
     for (let iter = 0; iter < iterations; iter++) {
-      const delaunay = D3Delaunay.from(this.points) as Delaunay
+      const delaunay = new D3Delaunay(this.points) as Delaunay
+      delaunay.update()
       const vor = delaunay.voronoi([xmin, ymin, xmax, ymax])
 
       let totalMove = 0
-      for (let i = 0; i < this.points.length; i++) {
-        const cell = vor.cellPolygon(i) as [number, number][]
-        if (!cell) continue
+      for (let i = 0; i < this.size; i++) {
+        const cell = vor.cellPolygon(i)
+        if (!cell) {
+          continue
+        }
         const [cx, cy] = centroidOfPolygon(cell, weight)
-        console.log(cx, cy)
-        const dx = cx - this.points[i][0]
-        const dy = cy - this.points[i][1]
+
+        const pointIndex = i * this.dimensions
+        const currentX = this.points[pointIndex]
+        const currentY = this.points[pointIndex + 1]
+
+        const dx = cx - currentX
+        const dy = cy - currentY
         totalMove += Math.hypot(dx, dy)
-        this.points[i][0] = cx
-        this.points[i][1] = cy
+
+        this.points[pointIndex] = cx
+        this.points[pointIndex + 1] = cy
       }
 
-      const avgMove = totalMove / this.points.length
-      console.log(avgMove)
-      if (avgMove < tolerance) return this.points
+      const avgMove = totalMove / this.size
+      if (avgMove < actualTolerance) return this
     }
 
-    return this.points
+    return this
   }
-}
-
-export type Delaunay = {
-  halfedges: Int32Array
-  hull: Int32Array
-  inedges: Int32Array
-  points: Int32Array
-  triangles: Int32Array
-  voronoi: (bounds: FixedArray<number, 4>) => Voronoi
-  find: (x: number, y: number, startingIndex: number) => number
-  update: () => void
-}
-export type Voronoi = {
-  circumcenters: Int32Array
-  vectors: Int32Array
-  delaunay: Delaunay
-  cellPolygons: () => [number, number][][]
-  cellPolygon: (i: number) => [number, number][]
 }
 
 // Compute density-weighted centroid of a polygon region
@@ -294,16 +309,10 @@ function centroidOfPolygon(
   polygon: [number, number][],
   density: (x: number, y: number) => number = () => 1,
 ): FixedArray<number, 2> {
-  const minX = Math.max(0, Math.floor(Math.min(...polygon.map((p) => p[0]))))
-  const maxX = Math.min(
-    this.width - 1,
-    Math.ceil(Math.max(...polygon.map((p) => p[0]))),
-  )
-  const minY = Math.max(0, Math.floor(Math.min(...polygon.map((p) => p[1]))))
-  const maxY = Math.min(
-    this.height - 1,
-    Math.ceil(Math.max(...polygon.map((p) => p[1]))),
-  )
+  const minX = Math.floor(Math.min(...polygon.map((p) => p[0])))
+  const maxX = Math.ceil(Math.max(...polygon.map((p) => p[0])))
+  const minY = Math.floor(Math.min(...polygon.map((p) => p[1])))
+  const maxY = Math.ceil(Math.max(...polygon.map((p) => p[1])))
 
   let sumX = 0,
     sumY = 0,
