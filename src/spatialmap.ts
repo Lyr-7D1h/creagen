@@ -26,6 +26,8 @@ import { vec, Vector } from './Vector'
 
 // load(s)
 
+// TODO: Compare to quadtree  https://observablehq.com/@llb4ll/k-nearest-neighbor-search-using-d3-quadtrees
+
 /**
  * Spatial map that uses hash mapping for efficiently finding nearest neighbors
  * Inspired by https://github.com/matthias-research/pages/blob/master/tenMinutePhysics/11-hashing.html#L293
