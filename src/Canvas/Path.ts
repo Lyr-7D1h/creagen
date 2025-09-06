@@ -357,7 +357,12 @@ export class Path extends Geometry<PathOptions> {
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.points.push(vec(x1, x2))
     } else if (Array.isArray(x1)) {
-      this.points.concat(Conversion.toVectorArray(x1, 2))
+      const vectors = Conversion.toVectorArray(x1, 2)
+      if (vectors.length === 1) {
+        this.points.push(vectors[0])
+      } else {
+        this.points.concat(vectors)
+      }
     } else {
       throw Error('Invalid arguments given')
     }
