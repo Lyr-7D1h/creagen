@@ -27,7 +27,7 @@ interface PathSegment {
 export class Path extends Geometry<PathOptions> {
   private _segments: PathSegment[] = []
   /** Reference to current segment */
-  private currentPoints: Vector<2>[]
+  currentPoints: Vector<2>[]
 
   constructor(options: PathOptions) {
     super(options)
@@ -43,10 +43,10 @@ export class Path extends Geometry<PathOptions> {
       // add last point from previous segment
       points.push(this.currentPoints[pointsLength - 1])
     }
-    this.currentPoints = []
+    this.currentPoints = points
     this.options = { ...this.options }
     this._segments.push({
-      points: this.currentPoints,
+      points: points,
       options: this.options,
     })
   }
@@ -157,7 +157,7 @@ export class Path extends Geometry<PathOptions> {
       if (vectors.length === 1) {
         this.currentPoints.push(vectors[0])
       } else {
-        this.currentPoints = this.currentPoints.concat(vectors)
+        this.currentPoints.push(...vectors)
       }
     } else {
       throw Error('Invalid arguments given')
@@ -503,7 +503,6 @@ function svgPath({ points, options }: PathSegment): string {
     )
   }
 
-  console.log(options.tension)
   if (isSmooth(options)) {
     // TODO: fix in case of wrap around
     let path = ''
