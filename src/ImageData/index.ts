@@ -10,6 +10,9 @@ export class ImageData {
   private img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
+  // keep track of width and height in case you edit the pixelData
+  private _width: number = 0
+  private _height: number = 0
 
   static create(input: string) {
     const image = new ImageData(input)
@@ -44,6 +47,8 @@ export class ImageData {
           canvas.width,
           canvas.height,
         ).data
+        this._width = canvas.width
+        this._height = canvas.height
         this.pixelsLoaded = true
         resolve()
       }
@@ -51,11 +56,11 @@ export class ImageData {
   }
 
   get width() {
-    return this.img.width
+    return this.pixelsLoaded ? this._width : this.img.width
   }
 
   get height() {
-    return this.img.height
+    return this.pixelsLoaded ? this._height : this.img.height
   }
 
   /** Get the count of amount of pixels (rgba values) in Image */
@@ -73,8 +78,12 @@ export class ImageData {
 
   clone() {
     const img = new ImageData(this.img.src)
-    img.pixeldata = new Uint8ClampedArray(this.pixeldata)
-    img.pixelsLoaded = this.pixelsLoaded
+    if (this.pixelsLoaded) {
+      img.pixeldata = new Uint8ClampedArray(this.pixeldata)
+      img.pixelsLoaded = this.pixelsLoaded
+      img._width = this._width
+      img._height = this._height
+    }
     return img
   }
 
@@ -92,7 +101,7 @@ export class ImageData {
     }
 
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
-      const width = this.img.width * 4
+      const width = this.width * 4
       const r = []
       const pixels = this.pixels
       if ((x + dx) * 4 > pixels.length) {
@@ -108,7 +117,7 @@ export class ImageData {
       return r
     }
 
-    const width = this.img.width
+    const width = this.width
     const i = y * width * 4 + x * 4
     return new Color(this.pixels.slice(i, i + 4))
   }
@@ -117,14 +126,15 @@ export class ImageData {
     // if custom pixeldata transform it to image
     if (this.pixeldata.length > 0) {
       const canvas = document.createElement('canvas')
-      canvas.width = this.img.width
-      canvas.height = this.img.height
+      canvas.width = this.width
+      canvas.height = this.height
       const ctx = canvas.getContext('2d')!
-      ctx.putImageData(
-        new window.ImageData(this.pixeldata, this.width, this.height),
-        0,
-        0,
-      )
+
+      // Create ImageData from our pixel data
+      const imageData = ctx.createImageData(this.width, this.height)
+      imageData.data.set(this.pixeldata)
+
+      ctx.putImageData(imageData, 0, 0)
       this.img.src = canvas.toDataURL('image/png')
     }
     return this.img
@@ -137,14 +147,15 @@ export class ImageData {
 
   private applyCanvasFilter(type: string) {
     const canvas = document.createElement('canvas')
-    canvas.width = this.img.width
-    canvas.height = this.img.height
+    canvas.width = this.width
+    canvas.height = this.height
     const ctx = canvas.getContext('2d')!
-    ctx.putImageData(
-      new window.ImageData(this.pixeldata, this.width, this.height),
-      0,
-      0,
-    )
+
+    // Create ImageData from our pixel data
+    const imageData = ctx.createImageData(this.width, this.height)
+    imageData.data.set(this.pixeldata)
+
+    ctx.putImageData(imageData, 0, 0)
     ctx.filter = type
     this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
     return this
