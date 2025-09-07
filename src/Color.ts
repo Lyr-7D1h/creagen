@@ -1,3 +1,4 @@
+import * as Math from './math'
 import { CREAGEN_ASSERTS } from './constants'
 import { Random } from './Random'
 import { FlatBounds } from './types'
@@ -264,7 +265,10 @@ export class Color extends Vector<4> {
    * a floating point value between 0-255
    * */
   luminance() {
-    return 0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b
+    return Math.roundToDec(
+      0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b,
+      4,
+    )
   }
 
   rgb() {
