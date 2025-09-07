@@ -7,84 +7,71 @@ import { Vector } from '../Vector'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 export class ImageData {
-  private img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
-  private pixelsLoaded: boolean
-  // keep track of width and height in case you edit the pixelData
-  private _width: number = 0
-  private _height: number = 0
 
-  static create(input: string) {
-    const image = new ImageData(input)
-    return image
+  static async create(src: string) {
+    const img = new globalThis.Image()
+    img.src = src
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => {
+        resolve()
+      }
+      img.onerror = (e) => {
+        reject(`Failed to load image: ${e}`)
+      }
+    })
+    return new ImageData(img)
   }
 
   /** @param src url or base64 string with image data */
-  private constructor(src: string) {
-    this.img = new globalThis.Image()
-    this.img.src = src
+  private constructor(public img: HTMLImageElement) {
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0)
 
-    this.pixelsLoaded = false
-    this.pixeldata = new Uint8ClampedArray()
-  }
-
-  /** load pixel data using html canvas */
-  async loadPixels() {
-    if (this.pixelsLoaded) {
-      return
-    }
-    await new Promise<void>((resolve) => {
-      this.img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = this.img.width
-        canvas.height = this.img.height
-        const ctx = canvas.getContext('2d')!
-        ctx.drawImage(this.img, 0, 0)
-
-        this.pixeldata = ctx.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        ).data
-        this._width = canvas.width
-        this._height = canvas.height
-        this.pixelsLoaded = true
-        resolve()
-      }
-    })
+    this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    this.img = img
   }
 
   get width() {
-    return this.pixelsLoaded ? this._width : this.img.width
+    return this.img.width
   }
 
   get height() {
-    return this.pixelsLoaded ? this._height : this.img.height
+    return this.img.height
   }
 
   /** Get the count of amount of pixels (rgba values) in Image */
   get pixelCount() {
-    return this.pixels.length / 4
-  }
-
-  get pixels(): Uint8ClampedArray {
-    if (!this.pixelsLoaded)
-      throw new Error(
-        'pixels not loaded. use `await Image.loadPixels()` before accessing them',
-      )
-    return this.pixeldata
+    return this.pixeldata.length / 4
   }
 
   clone() {
-    const img = new ImageData(this.img.src)
-    if (this.pixelsLoaded) {
-      img.pixeldata = new Uint8ClampedArray(this.pixeldata)
-      img.pixelsLoaded = this.pixelsLoaded
-      img._width = this._width
-      img._height = this._height
-    }
-    return img
+    // Create a canvas with the current pixel data
+    const canvas = document.createElement('canvas')
+    canvas.width = this.width
+    canvas.height = this.height
+    const ctx = canvas.getContext('2d')!
+
+    // Put our pixel data onto the canvas
+    const imageData = ctx.createImageData(this.width, this.height)
+    imageData.data.set(this.pixeldata)
+    ctx.putImageData(imageData, 0, 0)
+
+    // Create new image from canvas
+    const clonedImg = new globalThis.Image()
+    clonedImg.src = canvas.toDataURL('image/png')
+    clonedImg.width = this.width
+    clonedImg.height = this.height
+
+    // Create the cloned ImageData instance
+    const cloned = Object.create(ImageData.prototype)
+    cloned.img = clonedImg
+    cloned.pixeldata = new Uint8ClampedArray(this.pixeldata) // Copy the pixel data directly
+
+    return cloned
   }
 
   get(x: number, y: number): Color
@@ -100,10 +87,17 @@ export class ImageData {
       return this.get(x.x, x.y)
     }
 
+    if (x < 0 || x >= this.width) {
+      throw Error(`x '${x}' is out of bounds`)
+    }
+    if (y < 0 || y >= this.height) {
+      throw Error(`y '${y}' is out of bounds`)
+    }
+
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
       const width = this.width * 4
       const r = []
-      const pixels = this.pixels
+      const pixels = this.pixeldata
       if ((x + dx) * 4 > pixels.length) {
         throw Error('x is out of bounds')
       }
@@ -119,7 +113,7 @@ export class ImageData {
 
     const width = this.width
     const i = y * width * 4 + x * 4
-    return new Color(this.pixels.slice(i, i + 4))
+    return new Color(this.pixeldata.slice(i, i + 4))
   }
 
   html() {
@@ -141,7 +135,7 @@ export class ImageData {
   }
 
   gaussianBlur(radius: number) {
-    gaussianBlur(this.pixels, this.width, this.height, radius)
+    gaussianBlur(this.pixeldata, this.width, this.height, radius)
     return this
   }
 
@@ -182,7 +176,7 @@ export class ImageData {
   }
 
   edgeDetection() {
-    const buff = edgeDetection(this.pixels, this.width)
+    const buff = edgeDetection(this.pixeldata, this.width)
     this.pixeldata = buff
     return this
   }

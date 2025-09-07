@@ -102,26 +102,25 @@ export class Canvas<R extends RenderMode> {
     position: ArrayLike<number>,
     radius: number,
     options?: Partial<GeometricOptions>,
-  )
+  ): Circle
   circle(
     x: number,
     y: number,
     radius: number,
     options?: Partial<GeometricOptions>,
-  )
+  ): Circle
   circle(
     x: number | ArrayLike<number>,
     y: number,
     radius?: number | Partial<GeometricOptions>,
     options?: Partial<GeometricOptions>,
-  ) {
+  ): Circle {
     if (Conversion.isArrayLike(x)) {
       if (typeof radius === 'number') throw Error('Expected GeometricOptions')
       const p = Conversion.toFixedNumberArray(x, 2)
+      radius = y
       x = p[0]
       y = p[1]
-
-      radius = y
     }
     const circle = new Circle(x, y, radius as number, {
       ...defaultGeometricOptions,
@@ -166,8 +165,14 @@ export class Canvas<R extends RenderMode> {
     return rect
   }
 
-  image(x: number, y: number, width: number, height: number, src: string) {
-    const image = new Image(x, y, width, height, src, {
+  async image(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    src: string,
+  ) {
+    const image = await Image.create(x, y, width, height, src, {
       ...defaultGeometricOptions,
     })
     this.add(image)

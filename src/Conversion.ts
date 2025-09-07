@@ -47,6 +47,13 @@ export class Conversion {
     return Array.isArray(v) && !Conversion.isTypedArray(v)
   }
 
+  static isVector<N extends number>(
+    v: ArrayLike<number>,
+    dimension: N,
+  ): v is Vector<N> {
+    return v instanceof Vector && v.length === dimension
+  }
+
   // ========== CORE CONVERSIONS ==========
 
   /**
@@ -183,6 +190,9 @@ export class Conversion {
 
     // Handle nested array: each sub-array becomes a vector
     if (Conversion.isNestedNumberArray(array)) {
+      if (this.isVector(array[0], dimension)) {
+        return array as Vector<N>[]
+      }
       const result: Vector<N>[] = []
       for (let i = 0; i < array.length; i++) {
         const row = array[i] as ArrayLike<number>

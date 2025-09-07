@@ -4,18 +4,27 @@ import { ImageData as ImageData } from '../ImageData'
 export interface ImageOptions extends GeometricOptions {}
 
 export class Image extends Geometry<ImageOptions> {
-  img: ImageData
+  static async create(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    src: string,
+    options: ImageOptions,
+  ) {
+    const img = await ImageData.create(src)
+    return await new Image(x, y, width, height, img, options)
+  }
 
-  constructor(
+  private constructor(
     public x: number,
     public y: number,
     public width: number,
     public height: number,
-    src: string,
+    private img: ImageData,
     options: ImageOptions,
   ) {
     super(options)
-    this.img = ImageData.create(src)
   }
 
   data() {
@@ -27,8 +36,12 @@ export class Image extends Geometry<ImageOptions> {
   }
 
   _canvas(ctx: CanvasRenderingContext2D) {
+    const img = this.img.html()
+    if (img.complete) {
+      throw Error('Image has not been loaded')
+    }
     ctx.save()
-    ctx.drawImage(this.img.html(), this.x, this.y, this.width, this.height)
+    ctx.drawImage(img, this.x, this.y, this.width, this.height)
     ctx.restore()
   }
 }
