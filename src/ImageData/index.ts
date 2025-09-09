@@ -76,16 +76,29 @@ export class ImageData {
 
   get(x: number, y: number): Color
   get(p: Vector<2>): Color
-  get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
+  /**
+   * Get a section of the image as `Uint8ClampedArray[]` for efficient representation
+   *
+   * Gives all pixels in between two points
+   * */
+  get(x: number, y: number, x2: number, y2: number): Uint8ClampedArray[]
+  /**
+   * Get a section of the image as `Uint8ClampedArray[]` for efficient representation
+   *
+   * Gives all pixels in between two points
+   * */
+  get(p: Vector<2>, p2: Vector<2>): Uint8ClampedArray[]
   get(
     x: number | Vector<2>,
-    y?: number,
-    dx?: number,
-    dy?: number,
+    y?: number | Vector<2>,
+    x2?: number,
+    y2?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
     if (x instanceof Vector) {
+      if (y instanceof Vector) return this.get(x.x, x.y, y.x, y.y)
       return this.get(x.x, x.y)
     }
+    y = y as number
 
     if (x < 0 || x >= this.width) {
       throw Error(`x '${x}' is out of bounds`)
@@ -94,19 +107,34 @@ export class ImageData {
       throw Error(`y '${y}' is out of bounds`)
     }
 
-    if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
+    if (typeof x2 !== 'undefined' && typeof y2 !== 'undefined') {
+      if (x2 < 0 || x2 >= this.width) {
+        throw Error(`x '${x2}' is out of bounds`)
+      }
+      if (y2 < 0 || y2 >= this.height) {
+        throw Error(`y '${y2}' is out of bounds`)
+      }
+
+      let minX = x
+      let maxX = x2
+      if (maxX < minX) {
+        minX = x2
+        maxX = x
+      }
+      let minY = y
+      let maxY = y2
+      if (maxY < minY) {
+        minY = y2
+        maxY = y
+      }
+
       const width = this.width * 4
-      const r = []
-      const pixels = this.pixeldata
-      if ((x + dx) * 4 > pixels.length) {
-        throw Error('x is out of bounds')
-      }
-      if ((y + dy) * width > pixels.length) {
-        throw Error('y is out of bounds')
-      }
-      for (let o = y * width; o < (y + dy) * width; o += width) {
-        r.push(pixels.slice(o + x * 4, o + (x + dx) * 4))
-        o += width
+      const r = new Array(maxY - minY)
+      let i = 0
+
+      for (let o = minY * width; o <= maxY * width; o += width) {
+        r[i] = this.pixeldata.slice(o + minX * 4, o + maxX * 4)
+        i++
       }
       return r
     }
