@@ -1,5 +1,6 @@
 import { GeometricOptions, Geometry } from './Geometry'
 
+export interface ArcOptions extends GeometricOptions {}
 export class Arc extends Geometry {
   constructor(
     options: GeometricOptions,

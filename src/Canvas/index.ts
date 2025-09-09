@@ -1,10 +1,10 @@
 import { Color } from '../Color'
-import { Circle } from './Circle'
-import { Image } from './Image'
-import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
+import { Circle, CircleOptions } from './Circle'
+import { Image, ImageOptions } from './Image'
+import { defaultGeometricOptions, Geometry } from './Geometry'
 import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
-import { Arc } from './Arc'
+import { Arc, ArcOptions } from './Arc'
 import { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
 
@@ -101,19 +101,19 @@ export class Canvas<R extends RenderMode> {
   circle(
     position: ArrayLike<number>,
     radius: number,
-    options?: Partial<GeometricOptions>,
+    options?: Partial<CircleOptions>,
   ): Circle
   circle(
     x: number,
     y: number,
     radius: number,
-    options?: Partial<GeometricOptions>,
+    options?: Partial<CircleOptions>,
   ): Circle
   circle(
     x: number | ArrayLike<number>,
     y: number,
-    radius?: number | Partial<GeometricOptions>,
-    options?: Partial<GeometricOptions>,
+    radius?: number | Partial<CircleOptions>,
+    options?: Partial<CircleOptions>,
   ): Circle {
     if (Conversion.isArrayLike(x)) {
       if (typeof radius === 'number') throw Error('Expected GeometricOptions')
@@ -171,9 +171,11 @@ export class Canvas<R extends RenderMode> {
     width: number,
     height: number,
     src: string,
+    imageOptions?: Partial<ImageOptions>,
   ) {
     const image = await Image.create(x, y, width, height, src, {
       ...defaultGeometricOptions,
+      ...imageOptions,
     })
     this.add(image)
     return image
@@ -186,7 +188,7 @@ export class Canvas<R extends RenderMode> {
     startAngle: number,
     endAngle: number,
     counterclockwise?: boolean,
-    options?: Partial<GeometricOptions>,
+    options?: Partial<ArcOptions>,
   ) {
     const arc = new Arc(
       { ...defaultGeometricOptions, ...options },
