@@ -21,7 +21,7 @@ export type Voronoi = {
   cellPolygon: (i: number) => [number, number][]
 }
 
-const MAX_SAMPLING_LIMIT = 1_000_000
+const MAX_SAMPLING_ITERATION_LIMIT = 1_000_000
 
 /**
  * A set of points in N dimensional space
@@ -54,7 +54,7 @@ export class PointCloud<N extends number> {
     } else {
       n: for (let i = 0; i < amount * dimension; i += dimension) {
         let j = 0
-        while (j < MAX_SAMPLING_LIMIT) {
+        while (j < MAX_SAMPLING_ITERATION_LIMIT) {
           const p = new Array(dimension) as FixedArray<number, N>
           for (let d = 0; d < dimension; d++) {
             const min = bounds[d * 2] as number
@@ -98,7 +98,7 @@ export class PointCloud<N extends number> {
     } else {
       n: for (let i = 0; i < amount * dimension; i += dimension) {
         let j = 0
-        while (j < MAX_SAMPLING_LIMIT) {
+        while (j < MAX_SAMPLING_ITERATION_LIMIT) {
           const p = new Array(dimension) as FixedArray<number, N>
           for (let d = 0; d < dimension; d++) {
             const min = Math.ceil(bounds[d * 2] as number)
