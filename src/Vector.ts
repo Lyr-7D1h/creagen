@@ -117,14 +117,6 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
-  get(i: number) {
-    return this[i]!
-  }
-
-  set(i: number, v: number) {
-    this[i] = v
-  }
-
   add(v: Vector<N>) {
     for (let i = 0; i < this.length; i++) {
       this[i] += v[i]!
@@ -147,7 +139,7 @@ export class Vector<N extends number> extends Array<number> {
 
   sub(v: Vector<N>) {
     for (let i = 0; i < this.length; i++) {
-      this[i] -= v.get(i)
+      this[i] -= v[i]
     }
     return this
   }
@@ -313,7 +305,7 @@ export class Vector<N extends number> extends Array<number> {
   mag2(): number {
     let m = 0
     for (let i = 0; i < this.length; i++) {
-      m += this.get(i) ** 2
+      m += this[i] ** 2
     }
     return m
   }
@@ -328,7 +320,7 @@ export class Vector<N extends number> extends Array<number> {
     const average = this.average()
     let spread = 0
     for (let i = 0; i < this.length; i++) {
-      spread += Math.pow(this.get(i) - average, 2)
+      spread += Math.pow(this[i] - average, 2)
     }
 
     return spread / this.length
@@ -431,10 +423,68 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  /** Clamp each dimension to stay within bounds */
+  clamp(bounds: FlatBounds<N>): this {
+    for (let i = 0; i < this.length; i++) {
+      const d = i * 2
+      const min = bounds[d]
+      const max = bounds[d + 1]
+      this[i] = Math.max(min, Math.min(max, this[i]!))
+    }
+    return this
+  }
+
+  /** Clamp each dimension to stay within min/max values */
+  clampRange(min: number, max: number): this {
+    for (let i = 0; i < this.length; i++) {
+      this[i] = Math.max(min, Math.min(max, this[i]!))
+    }
+    return this
+  }
+
+  /** Reflect off bounds when hitting them (bouncing behavior) */
+  reflect(bounds: FlatBounds<N>): this {
+    for (let i = 0; i < this.length; i++) {
+      const [min, max] = (bounds as any)[i] as [number, number]
+      const v = this[i]!
+
+      if (v < min) {
+        this[i] = min + (min - v) // Reflect below minimum
+      } else if (v > max) {
+        this[i] = max - (v - max) // Reflect above maximum
+      }
+    }
+    return this
+  }
+
+  /** Scale vector to fit within bounds while maintaining proportions */
+  fitToBounds(bounds: FlatBounds<N>): this {
+    // Find the scale factor needed for each dimension
+    let minScale = Infinity
+
+    for (let i = 0; i < this.length; i++) {
+      const [min, max] = (bounds as any)[i] as [number, number]
+      const v = this[i]!
+      const range = max - min
+
+      if (v !== 0) {
+        const scale = range / Math.abs(v)
+        minScale = Math.min(minScale, scale)
+      }
+    }
+
+    // Apply the minimum scale to maintain proportions
+    if (minScale !== Infinity) {
+      this.scale(minScale)
+    }
+
+    return this
+  }
+
   sum(): number {
     let a = 0
     for (let i = 0; i < this.length; i++) {
-      a += this.get(i)
+      a += this[i]
     }
     return a
   }
