@@ -1,6 +1,8 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
 import { FixedArray, FlatBounds } from './types'
 import { Conversion } from './Conversion'
+import { poissonDiscSampler } from './PointCloud/PoissonDiscSampler'
+import { lloydsAlgorithm } from './PointCloud/Lloyd'
 
 export type Delaunay = {
   halfedges: Int32Array
@@ -32,6 +34,22 @@ export class PointCloud<N extends number> {
   // Cached values
   _delaunay?: Delaunay
   _voronoi?: Voronoi
+
+  /**
+   * Generate a set of points where each point has a minimum distance `minimumDistance` from any other point filling up the space within `bounds`
+   *
+   * This uses a modified version of [Bridson's Algorithm](https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf)
+   * , [visualized](https://observablehq.com/@techsparx/an-improvement-on-bridsons-algorithm-for-poisson-disc-samp/2)
+   * */
+  // TODO: multiple dimensions https://dl.acm.org/doi/10.1145/1278780.1278807
+  static poissonRandomDiskSampling(
+    minimumDistance: number,
+    bounds: FlatBounds<2>,
+  ) {
+    // Create a properly sized Float64Array with the actual number of coordinates
+    const points = new Float64Array(poissonDiscSampler(minimumDistance, bounds))
+    return new PointCloud<2>(points, 2)
+  }
 
   static randomFloatSampling<N extends number = 2>(
     /** Amount of random points to generate */
@@ -254,7 +272,9 @@ export class PointCloud<N extends number> {
      * if `undefined` it is calculated based on boundary size */
     tolerance?: number,
     /**
-     * Make it weighted, giving a certain bias towards a certain values
+     * Make it weighted, giving a certain bias towards certain values,
+     * this is basically [Voronoi Weighted Stippling](https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf) when used with a random
+     * sampling technique like [Rejection Sampling](https://en.wikipedia.org/wiki/Rejection_sampling) for getting points on darker/lighter parts of an image
      * @returns a number between 0-1 giving the weight of that point
      * */
     weight: (x: number, y: number) => number = () => 1,
@@ -265,87 +285,8 @@ export class PointCloud<N extends number> {
       throw new Error('Lloyd algorithm currently only supports 2D points')
     }
 
-    const [xmin, xmax, ymin, ymax] = bounds
-
-    // Calculate adaptive tolerance based on bounds size if not provided
-    const actualTolerance =
-      tolerance ?? Math.min(xmax - xmin, ymax - ymin) * 0.001
-
-    for (let iter = 0; iter < iterations; iter++) {
-      const delaunay = new D3Delaunay(this.points) as Delaunay
-      delaunay.update()
-      const vor = delaunay.voronoi([xmin, ymin, xmax, ymax])
-
-      let totalMove = 0
-      for (let i = 0; i < this.size; i++) {
-        const cell = vor.cellPolygon(i)
-        if (!cell) {
-          continue
-        }
-        const [cx, cy] = centroidOfPolygon(cell, weight)
-
-        const pointIndex = i * this.dimensions
-        const currentX = this.points[pointIndex]
-        const currentY = this.points[pointIndex + 1]
-
-        const dx = cx - currentX
-        const dy = cy - currentY
-        totalMove += Math.hypot(dx, dy)
-
-        this.points[pointIndex] = cx
-        this.points[pointIndex + 1] = cy
-      }
-
-      const avgMove = totalMove / this.size
-      if (avgMove < actualTolerance) return this
-    }
+    lloydsAlgorithm(this.points, bounds, iterations, tolerance, weight)
 
     return this
   }
-}
-
-// Compute density-weighted centroid of a polygon region
-function centroidOfPolygon(
-  polygon: [number, number][],
-  density: (x: number, y: number) => number = () => 1,
-): FixedArray<number, 2> {
-  const minX = Math.floor(Math.min(...polygon.map((p) => p[0])))
-  const maxX = Math.ceil(Math.max(...polygon.map((p) => p[0])))
-  const minY = Math.floor(Math.min(...polygon.map((p) => p[1])))
-  const maxY = Math.ceil(Math.max(...polygon.map((p) => p[1])))
-
-  let sumX = 0,
-    sumY = 0,
-    sumW = 0
-  for (let y = minY; y <= maxY; y++) {
-    for (let x = minX; x <= maxX; x++) {
-      if (pointInPolygon(x + 0.5, y + 0.5, polygon)) {
-        const rho = density(x, y)
-        sumW += rho
-        sumX += rho * (x + 0.5)
-        sumY += rho * (y + 0.5)
-      }
-    }
-  }
-  if (sumW === 0) return [polygon[0][0], polygon[0][1]]
-  return [sumX / sumW, sumY / sumW]
-}
-
-// Ray-casting point-in-polygon
-function pointInPolygon(
-  x: number,
-  y: number,
-  poly: [number, number][],
-): boolean {
-  let inside = false
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const xi = poly[i][0],
-      yi = poly[i][1]
-    const xj = poly[j][0],
-      yj = poly[j][1]
-    const intersect =
-      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 1e-9) + xi
-    if (intersect) inside = !inside
-  }
-  return inside
 }
