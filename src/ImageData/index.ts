@@ -228,33 +228,62 @@ export class ImageData {
    * image.edgeDetection()
    *
    * // Explicitly use Sobel
-   * image.edgeDetection({ algorithm: 'sobel' })
+   * image.edgeDetection('sobel')
    *
    * // Use Canny with default parameters
-   * image.edgeDetection({ algorithm: 'canny' })
+   * image.edgeDetection('canny')
    *
    * // Use Canny with custom parameters
-   * image.edgeDetection({
-   *   algorithm: 'canny',
-   *   lowThreshold: 50,
-   *   highThreshold: 150,
-   *   gaussianFilterRadius: 1.5
-   * })
+   * image.edgeDetection('canny', 80, 90, 1)
    * ```
    */
+  edgeDetection(algorithm: 'sobel'): ImageData
   edgeDetection(
-    options: EdgeDetectionOptions = { algorithm: 'sobel' },
+    algorithm: 'canny',
+    /**
+     * A number between [0-100], given the percentille threshold for which pixel is a weak edge.
+     *
+     * A weak edge needs to be connected to
+     * @default 80
+     */
+    lowThreshold?: number,
+    /**
+     * A number between [0-100], given the percentille threshold for which pixel is a strong edge
+     * @default 90
+     * */
+    highThreshold?: number,
+    /**
+     * How big should the radius be for the gaussian filter
+     * @default 1
+     */
+    gaussianFilterRadius?: number,
+
+    /**
+     * Find all connected components and keep only those with sufficient size.
+     * Higher values remove more small noise but may eliminate thin lines.
+     * @default 8
+     */
+    minComponentSize?: number,
+  ): ImageData
+  edgeDetection()
+  edgeDetection(
+    algorithm: 'sobel' | 'canny' = 'sobel',
+    lowThreshold: number = 80,
+    highThreshold: number = 90,
+    gaussianFilterRadius: number = 1,
+
+    minComponentSize: number = 8,
   ): ImageData {
-    switch (options.algorithm) {
+    switch (algorithm) {
       case 'canny':
         this.pixeldata = cannyEdgeDetection(
           this.pixeldata,
           this.width,
           this.height,
-          options.lowThreshold ?? 80,
-          options.highThreshold ?? 90,
-          options.gaussianFilterRadius ?? 1.0,
-          options.minComponentSize ?? 8,
+          lowThreshold,
+          highThreshold,
+          gaussianFilterRadius,
+          minComponentSize,
         )
         return this
       case 'sobel':
