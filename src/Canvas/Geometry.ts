@@ -1,4 +1,5 @@
 import { Color } from '../Color'
+import { Renderable } from './Renderable'
 
 export const defaultGeometricOptions: GeometricOptions = {
   fill: null,
@@ -15,10 +16,11 @@ export interface GeometricOptions {
 
 export abstract class Geometry<
   Opts extends GeometricOptions = GeometricOptions,
-> {
+> extends Renderable {
   options: Opts
 
   constructor(opts: Opts) {
+    super()
     this.options = opts
   }
 
@@ -64,9 +66,6 @@ export abstract class Geometry<
     element.setAttribute('stroke-width', this.options.strokeWidth.toString())
   }
 
-  // TODO: make implementation detail
-  abstract _svg(): SVGElement
-
   _applyCanvasOptions(ctx: CanvasRenderingContext2D, path?: Path2D) {
     ctx.lineWidth = this.options.strokeWidth
     if (this.options.fill) {
@@ -81,6 +80,4 @@ export abstract class Geometry<
       }
     }
   }
-
-  abstract _canvas(ctx: CanvasRenderingContext2D): void
 }

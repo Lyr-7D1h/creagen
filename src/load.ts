@@ -3,9 +3,12 @@ export type LoadableObject =
   | {
       html: () => Node
     }
+  | {
+      html: () => Promise<Node>
+    }
 
 /** Load a html loadable object into #canvas-container */
-export function load(loadableObject: LoadableObject) {
+export async function load(loadableObject: LoadableObject) {
   let container = document.getElementById('canvas-container')
   if (container === null) {
     container = document.body
@@ -15,5 +18,6 @@ export function load(loadableObject: LoadableObject) {
     container.appendChild(loadableObject)
     return
   }
-  container.appendChild(loadableObject.html())
+  const html = await loadableObject.html()
+  container.appendChild(html)
 }

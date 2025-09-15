@@ -1,30 +1,18 @@
-import { GeometricOptions, Geometry } from './Geometry'
 import { ImageData as ImageData } from '../ImageData'
+import { Renderable } from './Renderable'
 
-export interface ImageOptions extends GeometricOptions {}
+export interface ImageOptions {}
 
-export class Image extends Geometry<ImageOptions> {
-  static async create(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    src: string,
-    options: ImageOptions,
-  ) {
-    const img = await ImageData.create(src)
-    return await new Image(x, y, width, height, img, options)
-  }
-
-  private constructor(
+export class Image extends Renderable {
+  constructor(
+    private img: ImageData,
     public x: number,
     public y: number,
     public width: number,
     public height: number,
-    private img: ImageData,
-    options: ImageOptions,
+    _options: ImageOptions,
   ) {
-    super(options)
+    super()
   }
 
   data() {
@@ -35,9 +23,9 @@ export class Image extends Geometry<ImageOptions> {
     throw new Error('not implemented')
   }
 
-  _canvas(ctx: CanvasRenderingContext2D) {
-    const img = this.img.html()
-    if (img.complete) {
+  async _canvas(ctx: CanvasRenderingContext2D) {
+    const img = await this.img.html()
+    if (!img.complete) {
       throw Error('Image has not been loaded')
     }
     ctx.save()

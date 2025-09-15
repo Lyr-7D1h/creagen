@@ -1,3 +1,4 @@
+import { ImageData } from '../ImageData'
 import { Color } from '../Color'
 import { Circle, CircleOptions } from './Circle'
 import { Image, ImageOptions } from './Image'
@@ -7,6 +8,7 @@ import { Rectangle, RectangleOptions } from './Rectangle'
 import { Arc, ArcOptions } from './Arc'
 import { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
+import { Renderable } from './Renderable'
 
 export function getWidth() {
   return Math.max(
@@ -47,7 +49,7 @@ export interface CanvasOptions<R extends RenderMode = RenderMode.C2D> {
 }
 
 export class Canvas<R extends RenderMode> {
-  children: Geometry[]
+  children: Renderable[]
   element: HTMLCanvasElement | SVGElement
   ctx?: CanvasRenderingContext2D
 
@@ -87,7 +89,7 @@ export class Canvas<R extends RenderMode> {
     if (this.ctx) this.ctx.clearRect(0, 0, this.width, this.height)
   }
 
-  private add(child: Geometry) {
+  private add(child: Renderable) {
     this.children.push(child)
   }
 
@@ -165,20 +167,44 @@ export class Canvas<R extends RenderMode> {
     return rect
   }
 
+  /**
+   * Create a canvas image from `src` at a location scaled to `width` and `height`
+   *
+   * @param src Image source (URL, base64, or ImageData)
+   * @param x X position (defaults to 0)
+   * @param y Y position (defaults to 0)
+   * @param width Image width (defaults to original image width)
+   * @param height Image height (defaults to original image height)
+   * @param imageOptions Additional image rendering options
+   *
+   * @example
+   * ```ts
+   * const canvas = Canvas.create()
+   * await canvas.image("data:image/png;base64,iVBORw0...", 0, 0, 200, 200)
+   * ```
+   */
   async image(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    src: string,
+    src: string | ImageData,
+    x?: number,
+    y?: number,
+    width?: number,
+    height?: number,
     imageOptions?: Partial<ImageOptions>,
   ) {
-    const image = await Image.create(x, y, width, height, src, {
-      ...defaultGeometricOptions,
-      ...imageOptions,
-    })
-    this.add(image)
-    return image
+    if (typeof src === 'string') src = await ImageData.create(src)
+    const img = new Image(
+      src,
+      x ?? 0,
+      y ?? 0,
+      width ?? src.width,
+      height ?? src.height,
+      {
+        ...defaultGeometricOptions,
+        ...imageOptions,
+      },
+    )
+    this.add(img)
+    return img
   }
 
   arc(
@@ -243,7 +269,7 @@ export class Canvas<R extends RenderMode> {
     return line
   }
 
-  load() {
+  async load() {
     // if svg
     if (!this.ctx) {
       for (const c of this.children) {
@@ -253,7 +279,7 @@ export class Canvas<R extends RenderMode> {
     }
 
     for (const c of this.children) {
-      c._canvas(this.ctx)
+      await c._canvas(this.ctx)
     }
   }
 
@@ -262,8 +288,8 @@ export class Canvas<R extends RenderMode> {
     return [0, this.width, 0, this.height]
   }
 
-  html(): SVGElement | HTMLCanvasElement {
-    this.load()
+  async html(): Promise<SVGElement | HTMLCanvasElement> {
+    await this.load()
     return this.element
   }
 }
