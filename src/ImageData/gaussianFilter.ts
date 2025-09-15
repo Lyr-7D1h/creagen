@@ -1,8 +1,3 @@
-// Calculate Gaussian blur of an image using IIR filter
-// The method is taken from Intel's white paper and code example attached to it:
-// https://software.intel.com/en-us/articles/iir-gaussian-blur-filter
-// -implementation-using-intel-advanced-vector-extensions
-
 var a0, a1, a2, a3, b1, b2, left_corner, right_corner
 
 function gaussCoef(sigma) {
@@ -209,7 +204,12 @@ function convolveRGBA(src, out, line, coeff, width, height) {
   }
 }
 
-export function gaussianBlur(
+/**
+ * Uses IIR (Infinite Impulse Response)  to approximate a [Gaussian Filter](https://en.wikipedia.org/wiki/Gaussian_filter)
+ *
+ * https://software.intel.com/en-us/articles/iir-gaussian-blur-filter-implementation-using-intel-advanced-vector-extensions
+ * */
+export function gaussianFilter(
   src: Uint8ClampedArray,
   width: number,
   height: number,

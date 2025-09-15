@@ -39,17 +39,18 @@ function conv3y(data, i, w, m) {
 }
 
 /**
- * [Sobel Edge Detection Algorithm](https://en.wikipedia.org/wiki/Sobel_operator)
- * @param pixels - Object of image parameters
+ * Apply the [Sobel Operator](https://en.wikipedia.org/wiki/Sobel_operator) on an image
+ * for getting pixels with highly varying neighbors
+ * @param pixeldata - Object of image parameters
  * @param
  */
-export function edgeDetection(pixels: Uint8ClampedArray, width: number) {
+export function sobelGradient(pixeldata: Uint8ClampedArray, width: number) {
   // mask - gradient operator e.g. Prewitt, Sobel, Scharr, etc.
-  const mask = [1, 2, 1]
-  var data = pixels
+  // cosnt mask = [1,1,1] // prewitt
+  const mask = [1, 2, 1] // sobel
   var w = width * 4
-  var l = data.length - w - 4
-  var edges = new Uint8ClampedArray(data.length)
+  var l = pixeldata.length - w - 4
+  var edges = new Uint8ClampedArray(pixeldata.length)
 
   // Start from row 1 and end at row height-2 to avoid edge wrap-around
   for (var i = w + 4; i < l; i += 4) {
@@ -61,8 +62,8 @@ export function edgeDetection(pixels: Uint8ClampedArray, width: number) {
       continue
     }
 
-    var dx = conv3x(data, i, w, mask)
-    var dy = conv3y(data, i, w, mask)
+    var dx = conv3x(pixeldata, i, w, mask)
+    var dy = conv3y(pixeldata, i, w, mask)
     edges[i] = edges[i + 1] = edges[i + 2] = Math.sqrt(dx * dx + dy * dy)
     edges[i + 3] = 255
   }

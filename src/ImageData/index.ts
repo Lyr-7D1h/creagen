@@ -1,11 +1,11 @@
-// use p5 as ref https://p5js.org/reference/#/p5.Image
-
 import { Color } from '../Color'
-import { gaussianBlur } from './gaussianBlur'
-import { edgeDetection } from './edgeDetection'
+import { gaussianFilter } from './gaussianFilter'
+import { sobelGradient } from './sobelGradient'
 import { Vector } from '../Vector'
+import { greyscaleFilter } from './greyscaleFilter'
+import { cannyEdgeDetection } from './cannyEdgeDetection'
 
-// https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
+// TODO: calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
 export class ImageData {
   private pixeldata: Uint8ClampedArray
 
@@ -48,7 +48,7 @@ export class ImageData {
     return this.pixeldata.length / 4
   }
 
-  clone() {
+  clone(): ImageData {
     // Create a canvas with the current pixel data
     const canvas = document.createElement('canvas')
     canvas.width = this.width
@@ -69,7 +69,7 @@ export class ImageData {
     // Create the cloned ImageData instance
     const cloned = Object.create(ImageData.prototype)
     cloned.img = clonedImg
-    cloned.pixeldata = new Uint8ClampedArray(this.pixeldata) // Copy the pixel data directly
+    cloned.pixeldata = new Uint8ClampedArray(this.pixeldata)
 
     return cloned
   }
@@ -144,7 +144,7 @@ export class ImageData {
     return new Color(this.pixeldata.slice(i, i + 4))
   }
 
-  html() {
+  async html() {
     // if custom pixeldata transform it to image
     if (this.pixeldata.length > 0) {
       const canvas = document.createElement('canvas')
@@ -157,13 +157,24 @@ export class ImageData {
       imageData.data.set(this.pixeldata)
 
       ctx.putImageData(imageData, 0, 0)
-      this.img.src = canvas.toDataURL('image/png')
+      const dataUrl = canvas.toDataURL('image/png')
+
+      // Properly wait for the data URL to load
+      await new Promise<void>((resolve, reject) => {
+        if (this.img.src === dataUrl && this.img.complete) {
+          resolve()
+        } else {
+          this.img.onload = () => resolve()
+          this.img.onerror = (e) => reject(e)
+          this.img.src = dataUrl
+        }
+      })
     }
     return this.img
   }
 
-  gaussianBlur(radius: number) {
-    gaussianBlur(this.pixeldata, this.width, this.height, radius)
+  gaussianBlur(radius: number): ImageData {
+    gaussianFilter(this.pixeldata, this.width, this.height, radius)
     return this
   }
 
@@ -188,7 +199,10 @@ export class ImageData {
     this.applyCanvasFilter(`brightness(${percentage})`)
   }
 
-  horizontalGradient(startPercentage: number, endPercentage: number) {
+  horizontalGradient(
+    startPercentage: number,
+    endPercentage: number,
+  ): ImageData {
     const width = this.width * 4
     for (let y = 0; y < this.height; y += 1) {
       const o = y * width
@@ -203,27 +217,55 @@ export class ImageData {
     return this
   }
 
-  edgeDetection() {
-    const buff = edgeDetection(this.pixeldata, this.width)
-    this.pixeldata = buff
-    return this
+  /**
+   * Use edge detection on the image.
+   *
+   * @param options Edge detection algorithm and parameters
+   *
+   * @example
+   * ```typescript
+   * // Use default Sobel
+   * image.edgeDetection()
+   *
+   * // Explicitly use Sobel
+   * image.edgeDetection({ algorithm: 'sobel' })
+   *
+   * // Use Canny with default parameters
+   * image.edgeDetection({ algorithm: 'canny' })
+   *
+   * // Use Canny with custom parameters
+   * image.edgeDetection({
+   *   algorithm: 'canny',
+   *   lowThreshold: 50,
+   *   highThreshold: 150,
+   *   gaussianFilterRadius: 1.5
+   * })
+   * ```
+   */
+  edgeDetection(
+    options: EdgeDetectionOptions = { algorithm: 'sobel' },
+  ): ImageData {
+    switch (options.algorithm) {
+      case 'canny':
+        this.pixeldata = cannyEdgeDetection(
+          this.pixeldata,
+          this.width,
+          this.height,
+          options.lowThreshold ?? 80,
+          options.highThreshold ?? 90,
+          options.gaussianFilterRadius ?? 1.0,
+          options.minComponentSize ?? 8,
+        )
+        return this
+      case 'sobel':
+      default:
+        this.pixeldata = sobelGradient(this.pixeldata, this.width)
+        return this
+    }
   }
 
-  greyscale() {
-    for (let i = 0; i < this.pixeldata.length; i += 4) {
-      // Calculate luminance using standard RGB to grayscale conversion
-      const grey = Math.round(
-        0.299 * this.pixeldata[i] + // Red
-          0.587 * this.pixeldata[i + 1] + // Green
-          0.114 * this.pixeldata[i + 2], // Blue
-      )
-
-      // Set RGB channels to the same grey value
-      this.pixeldata[i] = grey // Red
-      this.pixeldata[i + 1] = grey // Green
-      this.pixeldata[i + 2] = grey // Blue
-      // Alpha channel (i + 3) remains unchanged
-    }
+  greyscale(): ImageData {
+    greyscaleFilter(this.pixeldata)
     return this
   }
 
@@ -233,7 +275,7 @@ export class ImageData {
    *
    * @param factor 1.0 = no change, >1.0 = increased contrast, <1.0 = decreased contrast
    */
-  contrast(factor: number) {
+  contrast(factor: number): ImageData {
     factor = Math.max(0.1, Math.min(3.0, factor))
 
     // Apply contrast formula: newValue = (oldValue - 128) * factor + 128
@@ -262,7 +304,7 @@ export class ImageData {
    */
   forEach(
     callback: (color: Color, x: number, y: number, index: number) => void,
-  ) {
+  ): ImageData {
     const width = this.width
     for (let i = 0; i < this.pixeldata.length; i += 4) {
       const pixelIndex = i / 4
@@ -278,7 +320,7 @@ export class ImageData {
    * Invert the colors of the image (negative effect)
    * Each RGB channel is inverted: newValue = 255 - oldValue
    */
-  invert() {
+  invert(): ImageData {
     for (let i = 0; i < this.pixeldata.length; i += 4) {
       this.pixeldata[i] = 255 - this.pixeldata[i] // Red
       this.pixeldata[i + 1] = 255 - this.pixeldata[i + 1] // Green
@@ -288,3 +330,37 @@ export class ImageData {
     return this
   }
 }
+
+export interface SobelOptions {
+  algorithm: 'sobel'
+}
+
+export interface CannyOptions {
+  algorithm: 'canny'
+  /**
+   * A number between [0-100], given the percentille threshold for which pixel is a weak edge.
+   *
+   * A weak edge needs to be connected to
+   * @default 80
+   */
+  lowThreshold?: number
+  /**
+   * A number between [0-100], given the percentille threshold for which pixel is a strong edge
+   * @default 90
+   * */
+  highThreshold?: number
+  /**
+   * How big should the radius be for the gaussian filter
+   * @default 1
+   */
+  gaussianFilterRadius?: number
+
+  /**
+   * Find all connected components and keep only those with sufficient size.
+   * Higher values remove more small noise but may eliminate thin lines.
+   * @default 8
+   */
+  minComponentSize?: number
+}
+
+export type EdgeDetectionOptions = SobelOptions | CannyOptions
