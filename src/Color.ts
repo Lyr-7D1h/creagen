@@ -1,8 +1,8 @@
 import * as Math from './math'
-import { CREAGEN_ASSERTS } from './constants'
 import { Random } from './Random'
 import { FlatBounds } from './types'
 import { Vector } from './Vector'
+import { debugAssert } from './asserts'
 
 export class Color extends Vector<4> {
   static fromHex(hex: string) {
@@ -112,13 +112,18 @@ export class Color extends Vector<4> {
 
   // constructor(r: number, g: number, b: number, a?: number)
   // constructor(color: number[] | Uint8ClampedArray)
-  constructor(
+  private constructor(
     r: number | number[] | Uint8ClampedArray,
     g?: number,
     b?: number,
     a?: number,
   ) {
+    debugAssert(
+      (typeof r === 'number' && !Number.isInteger(r)) ||
+        (Array.isArray(r) && !Number.isInteger(r[0])),
+    )
     if (CREAGEN_ASSERTS) {
+      console.log('asdf')
       if (
         (typeof r === 'number' && !Number.isInteger(r)) ||
         (Array.isArray(r) && !Number.isInteger(r[0]))
@@ -137,6 +142,7 @@ export class Color extends Vector<4> {
         throw Error('has to be an integer')
       }
     }
+
     // using grey as a number
     if (
       typeof r === 'number' &&
