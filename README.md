@@ -20,8 +20,10 @@ npm run build
 
 - Use codemirror for editing code
 - Reduce svg size (https://www.svgviewer.dev/)
-- Add docs screen
-- Customize theme
+- Add docs website
+- Add benchmarking
+    - vitest
+    - reliable hardwarde https://codspeed.io/ 
 - Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
 - Audio 
     - Generation

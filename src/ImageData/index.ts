@@ -4,7 +4,10 @@ import { sobelGradient } from './sobelGradient'
 import { Vector } from '../Vector'
 import { greyscaleFilter } from './greyscaleFilter'
 import { cannyEdgeDetection } from './cannyEdgeDetection'
+import { Bitmap } from '../Bitmap'
 
+// WASM implementation https://silvia-odwyer.github.io/photon/guide/
+//
 // TODO: calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
 export class ImageData {
   private pixeldata: Uint8ClampedArray
@@ -72,6 +75,12 @@ export class ImageData {
     cloned.pixeldata = new Uint8ClampedArray(this.pixeldata)
 
     return cloned
+  }
+
+  /** Convert an index to the Uint8ClampedArray pixel array to coordinates in the image, top left corner being [0,0]  */
+  indexToCoords(i: number): [number, number] {
+    i = Math.floor(i / 4)
+    return [i % this.width, Math.floor(i / this.width)]
   }
 
   get(x: number, y: number): Color
@@ -331,16 +340,9 @@ export class ImageData {
    * Iterate over each pixel in the image
    * @param callback Function called for each pixel with (color, x, y, index)
    */
-  forEach(
-    callback: (color: Color, x: number, y: number, index: number) => void,
-  ): ImageData {
-    const width = this.width
+  forEach(callback: (color: Color, startIndex: number) => void): ImageData {
     for (let i = 0; i < this.pixeldata.length; i += 4) {
-      const pixelIndex = i / 4
-      const x = pixelIndex % width
-      const y = Math.floor(pixelIndex / width)
-      const color = new Color(this.pixeldata.slice(i, i + 4))
-      callback(color, x, y, pixelIndex)
+      callback(new Color(this.pixeldata.slice(i, i + 4)), i)
     }
     return this
   }
@@ -357,6 +359,25 @@ export class ImageData {
       // Alpha channel (i + 3) remains unchanged
     }
     return this
+  }
+
+  toBitmap(threshold: number = 255) {
+    const bitmap = Bitmap.create(this.width, this.height)
+    if (threshold === 255) {
+      let i = 0
+      this.forEach((c) => {
+        if (c.r === 255 && c.b === 255 && c.g === 255)
+          bitmap.setByIndex(i, true)
+        i++
+      })
+    } else {
+      let i = 0
+      this.forEach((c) => {
+        if (c.luminance() > threshold) bitmap.setByIndex(i, true)
+        i++
+      })
+    }
+    return bitmap
   }
 }
 
