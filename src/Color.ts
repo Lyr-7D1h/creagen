@@ -118,12 +118,7 @@ export class Color extends Vector<4> {
     b?: number,
     a?: number,
   ) {
-    debugAssert(
-      (typeof r === 'number' && !Number.isInteger(r)) ||
-        (Array.isArray(r) && !Number.isInteger(r[0])),
-    )
     if (CREAGEN_ASSERTS) {
-      console.log('asdf')
       if (
         (typeof r === 'number' && !Number.isInteger(r)) ||
         (Array.isArray(r) && !Number.isInteger(r[0]))
