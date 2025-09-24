@@ -18,7 +18,7 @@
   },
   "keywords": [],
   "author": "Lyr",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "devDependencies": {
     "@types/kd-tree-javascript": "^1.0.3",
     "@types/node": "^24.5.2",
