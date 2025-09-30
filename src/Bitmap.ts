@@ -1,7 +1,7 @@
 import { vec, Vector } from './Vector'
 import { toSkeleton } from './Bitmap/toSkeleton'
 import { zhangSuenThinning } from './Bitmap/zhangSuenThinning'
-import { extractContours } from './Bitmap/suzukiAbeContourAlgorithm'
+import { ContourExtractor, ContourExtractorOpts } from './ContourExtractor'
 
 export class Bitmap {
   static create(width: number, height: number) {
@@ -35,7 +35,7 @@ export class Bitmap {
   ) {}
 
   // Compute bit index for (x, y)
-  _index(x, y) {
+  coordsToIndex(x, y) {
     if (!this.bounds(x, y)) {
       throw new RangeError(`Coordinates (${x}, ${y}) out of bounds`)
     }
@@ -57,13 +57,14 @@ export class Bitmap {
     return new Bitmap(this.width, this.height, new Uint8Array(this.data))
   }
 
+  /** The amount of bits in this map */
   size() {
     return this.width * this.height
   }
 
   // Get bit value at (x, y)
   get(x: number, y: number) {
-    const i = this._index(x, y)
+    const i = this.coordsToIndex(x, y)
     const byteIndex = i >> 3 // divide by 8
     const bitIndex = i & 7 // modulo 8
     return ((this.data[byteIndex] >> bitIndex) & 1) > 0
@@ -78,7 +79,7 @@ export class Bitmap {
 
   // Set bit at (x, y) to value (0 or 1)
   set(x: number, y: number, value: boolean) {
-    const i = this._index(x, y)
+    const i = this.coordsToIndex(x, y)
     const byteIndex = i >> 3
     const bitIndex = i & 7
     if (value) {
@@ -101,7 +102,7 @@ export class Bitmap {
 
   // Toggle bit at (x, y)
   toggle(x: number, y: number) {
-    const i = this._index(x, y)
+    const i = this.coordsToIndex(x, y)
     const byteIndex = i >> 3
     const bitIndex = i & 7
     this.data[byteIndex] ^= 1 << bitIndex
@@ -109,7 +110,7 @@ export class Bitmap {
 
   // print bitmap (# for 1, . for 0)
   toPrettyString() {
-    const out = []
+    const out: string[] = []
     for (let y = 0; y < this.height; y++) {
       let row = ''
       for (let x = 0; x < this.width; x++) {
@@ -129,8 +130,12 @@ export class Bitmap {
 
   /** Get all points that have a false neighbor using 4 connectivity (left, top, right, down) */
   boundaryPoints(): Vector<2>[] {
-    const points = []
-    this.forEach((x, y) => {
+    const points: Vector<2>[] = []
+    this.forEach((v, i) => {
+      if (!v) return
+
+      let [x, y] = this.indexToCoords(i)
+
       // A point is on the boundary if it's on the edge of the bitmap
       if (x === 0 || x === this.width - 1 || y === 0 || y === this.height - 1) {
         points.push(vec(x, y))
@@ -149,11 +154,23 @@ export class Bitmap {
     return points
   }
 
-  /** For each true value */
-  forEach(cb: (x: number, y: number) => void) {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        if (this.get(x, y)) cb(x, y)
+  /** Go over each bit value */
+  forEach(cb: (value: boolean, index: number) => void) {
+    let bitIndex = 0
+    const totalBits = this.width * this.height
+
+    for (
+      let byteIndex = 0;
+      byteIndex < this.data.length && bitIndex < totalBits;
+      byteIndex++
+    ) {
+      let byte = this.data[byteIndex]
+
+      // Process up to 8 bits in this byte
+      for (let bit = 0; bit < 8 && bitIndex < totalBits; bit++, bitIndex++) {
+        const value = (byte & 1) > 0
+        cb(value, bitIndex)
+        byte >>= 1 // shift to next bit
       }
     }
   }
@@ -168,9 +185,19 @@ export class Bitmap {
     return toSkeleton(this)
   }
 
-  contours() {
-    return extractContours(this)
+  contours(opts?: ContourExtractorOpts) {
+    return ContourExtractor.fromBitmap(this, opts).extractContours()
   }
+
+  // contours() {
+  //   const image = new Mat(8, 8)
+
+  //   this.forEach((x, y) => {
+  //     image.setAt(y, x, 1)
+  //   })
+
+  //   return findContours(image)
+  // }
 
   // TODO: Add potrace for transforming a bitmap into smooth curves and lines
   // https://potrace.sourceforge.net/potrace.pdf,

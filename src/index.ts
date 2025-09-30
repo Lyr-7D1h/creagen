@@ -26,5 +26,8 @@ export { matrix, Matrix } from './Matrix'
 export { KMeans } from './SignalProcessing/KMeans'
 export { Audio } from './Audio'
 export { Bitmap } from './Bitmap'
+export { ContourExtractorOpts, ContourApproximation } from './ContourExtractor'
 
-export type * from './types'
+export type { FixedNumberArray, FixedArray } from './types'
+
+export { Tree, NodeId } from './Tree'

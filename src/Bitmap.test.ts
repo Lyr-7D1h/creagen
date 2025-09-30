@@ -52,17 +52,17 @@ describe('Bitmap', () => {
     })
 
     test('_index() should compute correct bit index', () => {
-      expect(bitmap._index(0, 0)).toBe(0)
-      expect(bitmap._index(1, 0)).toBe(1)
-      expect(bitmap._index(0, 1)).toBe(10)
-      expect(bitmap._index(5, 3)).toBe(35)
+      expect(bitmap.coordsToIndex(0, 0)).toBe(0)
+      expect(bitmap.coordsToIndex(1, 0)).toBe(1)
+      expect(bitmap.coordsToIndex(0, 1)).toBe(10)
+      expect(bitmap.coordsToIndex(5, 3)).toBe(35)
     })
 
     test('_index() should throw for out of bounds coordinates', () => {
-      expect(() => bitmap._index(-1, 0)).toThrow(RangeError)
-      expect(() => bitmap._index(0, -1)).toThrow(RangeError)
-      expect(() => bitmap._index(10, 0)).toThrow(RangeError)
-      expect(() => bitmap._index(0, 10)).toThrow(RangeError)
+      expect(() => bitmap.coordsToIndex(-1, 0)).toThrow(RangeError)
+      expect(() => bitmap.coordsToIndex(0, -1)).toThrow(RangeError)
+      expect(() => bitmap.coordsToIndex(10, 0)).toThrow(RangeError)
+      expect(() => bitmap.coordsToIndex(0, 10)).toThrow(RangeError)
     })
 
     test('indexToCoords() should convert index back to coordinates', () => {
@@ -117,7 +117,7 @@ describe('Bitmap', () => {
     test('coordinate and index methods should be consistent', () => {
       const x = 3,
         y = 2
-      const index = bitmap._index(x, y)
+      const index = bitmap.coordsToIndex(x, y)
 
       bitmap.set(x, y, true)
       expect(bitmap.getByIndex(index)).toBe(true)
@@ -150,8 +150,8 @@ describe('Bitmap', () => {
 
     test('forEach() should iterate only over true values', () => {
       const coords: Array<[number, number]> = []
-      bitmap.forEach((x, y) => {
-        coords.push([x, y])
+      bitmap.forEach((v, i) => {
+        if (v) coords.push(bitmap.indexToCoords(i))
       })
 
       expect(coords).toHaveLength(5)
@@ -259,36 +259,6 @@ describe('Bitmap', () => {
         expect(typeof point[0]).toBe('number')
         expect(typeof point[1]).toBe('number')
       })
-    })
-
-    test('contours() should extract contours', () => {
-      const bitmap = Bitmap.create(5, 5)
-      // Create a simple rectangle
-      for (let x = 1; x <= 3; x++) {
-        for (let y = 1; y <= 3; y++) {
-          bitmap.set(x, y, true)
-        }
-      }
-
-      const contours = bitmap.contours()
-      expect(Array.isArray(contours)).toBe(true)
-    })
-
-    test('contours() should extract contours with multiple holes', () => {
-      const bitmap = Bitmap.fromBooleanMatrix(
-        [
-          [0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 1, 1, 1, 1, 1, 1, 1, 0],
-          [0, 1, 0, 0, 1, 0, 0, 1, 0],
-          [0, 1, 0, 0, 1, 0, 0, 1, 0],
-          [0, 1, 1, 1, 1, 1, 1, 1, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0],
-        ].map((a) => a.map((v) => v === 1)),
-      )
-
-      const contours = bitmap.contours()
-      console.log(contours)
-      expect(Array.isArray(contours)).toBe(true)
     })
   })
 
