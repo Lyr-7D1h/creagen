@@ -8,7 +8,8 @@ import { Bitmap } from '../Bitmap'
 
 // WASM implementation https://silvia-odwyer.github.io/photon/guide/
 //
-// TODO: calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
+// TODO(perf): calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
+// TODO: Use opencv for image processing https://github.com/TechStark/opencv-js
 export class ImageData {
   private pixeldata: Uint8ClampedArray
 

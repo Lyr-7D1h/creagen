@@ -48,6 +48,7 @@ export interface CanvasOptions<R extends RenderMode = RenderMode.C2D> {
   canvas?: HTMLCanvasElement
 }
 
+// TODO(perf): use OffscreenCanvasRendering  https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvasRenderingContext2D
 export class Canvas<R extends RenderMode> {
   children: Renderable[]
   element: HTMLCanvasElement | SVGElement
@@ -78,7 +79,7 @@ export class Canvas<R extends RenderMode> {
       this.element = opts?.canvas ?? document.createElement('canvas')
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
-      const ctx = this.element.getContext('2d')
+      const ctx = this.element.getContext('2d') // TODO(perf): turn off transparancy backdrop https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#turn_off_transparency
       if (ctx === null) throw Error('No 2d context supported')
       this.ctx = ctx!
     }
