@@ -41,7 +41,7 @@ function isTypedArray(value: Data): value is TypedArray {
 }
 
 function getShape(data: Data): number[] {
-  const shape = []
+  const shape: number[] = []
   let row: Data | undefined = data
   while (typeof row !== 'undefined') {
     if (typeof row[0] === 'number') {

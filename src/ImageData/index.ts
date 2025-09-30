@@ -150,7 +150,7 @@ export class ImageData {
 
     const width = this.width
     const i = y * width * 4 + x * 4
-    return new Color(this.pixeldata.slice(i, i + 4))
+    return Color.create(this.pixeldata.slice(i, i + 4))
   }
 
   async html() {
@@ -342,7 +342,7 @@ export class ImageData {
    */
   forEach(callback: (color: Color, startIndex: number) => void): ImageData {
     for (let i = 0; i < this.pixeldata.length; i += 4) {
-      callback(new Color(this.pixeldata.slice(i, i + 4)), i)
+      callback(Color.create(this.pixeldata.slice(i, i + 4)), i)
     }
     return this
   }

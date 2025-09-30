@@ -28,13 +28,13 @@ export class Random {
   static integer(stop: number): number
   static integer(start: number, stop: number): number
   static integer(x1: number, x2?: number) {
-    return defaultRng.integer(x1, x2)
+    return defaultRng.integer(x1, x2!)
   }
 
   static float(stop: number): number
   static float(start: number, stop: number): number
   static float(x1: number, x2?: number) {
-    return defaultRng.float(x1, x2)
+    return defaultRng.float(x1, x2!)
   }
 
   static perlin(x: number, y: number, z: number) {

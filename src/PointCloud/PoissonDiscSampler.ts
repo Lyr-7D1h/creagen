@@ -22,7 +22,7 @@ export function* poissonDiscSampler(
   // TODO(perf): use Float64Array, fill and return
   const grid = new Array(gridWidth * gridHeight)
 
-  const queue = []
+  const queue: [number, number][] = []
 
   // Pick the first sample.
   const [x, y] = sample(minX + width / 2, minY + height / 2)
@@ -55,7 +55,7 @@ export function* poissonDiscSampler(
 
     // If none of k candidates were accepted, remove it from the queue.
     const r = queue.pop()
-    if (i < queue.length) queue[i] = r
+    if (i < queue.length) queue[i] = r!
   }
 
   function far(x, y) {
@@ -82,7 +82,7 @@ export function* poissonDiscSampler(
   function sample(x, y) {
     const s = (grid[
       gridWidth * (((y - minY) / cellSize) | 0) + (((x - minX) / cellSize) | 0)
-    ] = [x, y])
+    ] = [x, y]) as [number, number]
     queue.push(s)
     return s
   }

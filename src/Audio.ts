@@ -11,8 +11,8 @@ export class Audio {
   private intialized: boolean = false
 
   // FFT data arrays
-  private fftData: Uint8Array | null = null
-  private timeData: Uint8Array | null = null
+  private fftData: Uint8Array<ArrayBuffer> | null = null
+  private timeData: Uint8Array<ArrayBuffer> | null = null
 
   static create(fftSize: number = 2048) {
     return new Audio(fftSize)

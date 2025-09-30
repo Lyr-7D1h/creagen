@@ -78,7 +78,9 @@ export class Canvas<R extends RenderMode> {
       this.element = opts?.canvas ?? document.createElement('canvas')
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
-      this.ctx = this.element.getContext('2d')
+      const ctx = this.element.getContext('2d')
+      if (ctx === null) throw Error('No 2d context supported')
+      this.ctx = ctx!
     }
     this.children = []
   }

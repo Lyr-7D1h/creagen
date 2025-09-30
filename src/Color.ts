@@ -2,7 +2,6 @@ import * as Math from './math'
 import { Random } from './Random'
 import { FlatBounds } from './types'
 import { Vector } from './Vector'
-import { debugAssert } from './asserts'
 
 export class Color extends Vector<4> {
   static fromHex(hex: string) {
@@ -291,7 +290,7 @@ export function color(
   b?: number,
   a?: number,
 ) {
-  return new Color(r, g, b, a)
+  return Color.create(r as any, g as any, b as any, a as any)
 }
 
 function hex(x: number) {

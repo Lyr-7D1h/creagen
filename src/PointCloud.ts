@@ -245,7 +245,7 @@ export class PointCloud<N extends number> {
   delaunay(): Delaunay {
     if (this._delaunay) return this._delaunay
     this._delaunay = D3Delaunay.from(this.points)
-    return this._delaunay
+    return this._delaunay!
   }
 
   voronoi(bounds: FlatBounds<2>): Voronoi {

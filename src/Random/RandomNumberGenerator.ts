@@ -32,7 +32,7 @@ export class RandomNumberGenerator {
   float(stop: number): number
   float(start: number, stop: number): number
   float(x1: number, x2?: number) {
-    return this.randomFn() * Math.diff(x1, x2) + x1
+    return this.randomFn() * (x2 ? Math.diff(x1, x2) : x1) + x1
   }
 
   /** Get a random number between 0 and 1 */

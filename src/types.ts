@@ -1,5 +1,3 @@
-import { Conversion } from './Conversion'
-
 // Type-level arithmetic to multiply N by 2 using tuple manipulation
 type Tuple<
   N extends number,
@@ -25,8 +23,3 @@ export type GrowToSize<
 
 export type FixedNumberArray<N extends number> = GrowToSize<number, N, [], 0>
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
-
-// Re-export conversion functions from Conversion class for backward compatibility
-export const isFlatNumberArray = Conversion.isFlatNumberArray
-export const isNestedNumberArray = Conversion.isNestedNumberArray
-export const convertArrayLikeToFloat64Array = Conversion.toFloat64Array

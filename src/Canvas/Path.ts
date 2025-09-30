@@ -27,7 +27,7 @@ interface PathSegment {
 export class Path extends Geometry<PathOptions> {
   private _segments: PathSegment[] = []
   /** Reference to current segment */
-  currentPoints: Vector<2>[]
+  currentPoints: Vector<2>[] = undefined!
 
   constructor(options: PathOptions) {
     super(options)
@@ -35,7 +35,7 @@ export class Path extends Geometry<PathOptions> {
   }
 
   private newSegment(): void {
-    const points = []
+    const points: Vector<2>[] = []
     if (this.currentPoints) {
       let pointsLength = this.currentPoints.length
       // don't do anything if segment is empty
@@ -129,7 +129,10 @@ export class Path extends Geometry<PathOptions> {
 
   /** Get all points in the path */
   points() {
-    return this._segments.reduce((a, c) => (a = a.concat(c.points)), [])
+    return this._segments.reduce(
+      (a, c) => (a = a.concat(c.points)),
+      [] as Vector<2>[],
+    )
   }
 
   /** Get total number of points across all segments */
@@ -343,7 +346,7 @@ function wrapAroundPoints(
   currentIndex: number = 0,
 ): Vector<2>[][] {
   const [xmin, xmax, ymin, ymax] = bounds
-  let segments = []
+  let segments: Vector<2>[][] = []
   const width = xmax - xmin
   const height = ymax - ymin
 
@@ -361,7 +364,7 @@ function wrapAroundPoints(
     if (d1 !== null && d2 !== null) continue
 
     // always one point out of bounds
-    const d = d1 || d2
+    const d = (d1 || d2)!
     // if left use xmin as limit otherwise xmax
     const xm = d.x < 0 ? xmin : xmax
     // if above use ymin as limit otherwise ymax
@@ -418,7 +421,7 @@ function wrapAroundPoints(
         ...queue.splice(
           i + 1,
           queue.length - i + 2,
-          isSmooth(options) ? undefined : intersection,
+          ...(!isSmooth(options) ? [intersection] : []),
         ),
       ]
 

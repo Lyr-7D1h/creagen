@@ -1,6 +1,6 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import type { Delaunay } from '../Voronoi'
 import { Bitmap } from '../Bitmap'
+import { Delaunay } from '../PointCloud'
 
 // TODO: Look into https://www.npmjs.com/package/flo-mat
 // TODO: move into Image and use marchingsquares

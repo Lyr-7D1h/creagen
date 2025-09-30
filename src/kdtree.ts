@@ -40,7 +40,7 @@ export class KDTree {
     this.tree.finish()
   }
 
-  nearest(point: Vector<2>, maxDistance?: number) {
+  nearest(point: Vector<2>, maxDistance: number) {
     return this.tree.within(point.x, point.y, maxDistance)
     // const [x, y] = this.dataset[index]
     // return this.tree.nearest([x, y], count)

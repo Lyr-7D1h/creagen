@@ -175,6 +175,7 @@ export class SpatialMap {
     const maxDistance = ((distance + this.spacing) * 2.83) ** 2
 
     const neigbors = this.nearestNeighborsFromGrid(i, distance)
+    const wrap = this.wrap
 
     const w = this.width
     const h = this.height
@@ -198,7 +199,7 @@ export class SpatialMap {
 
           let dir = pn.clone().sub(p)
           // update direction of attraction if direction to neighbor is wrapped around in space
-          if (this.wrap && dir.mag2() > maxDistance) {
+          if (wrap && dir.mag2() > maxDistance) {
             const qc = quadrant(w, h, p)
             const qn = quadrant(w, h, cn)
             // correct neighbor position to mirror the location

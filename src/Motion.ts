@@ -1,35 +1,35 @@
 /** A motion profile */
-export class Motion {
-  velocity: number
-  velocityMin: number
-  velocityMax: number
+// export class Motion {
+//   velocity: number
+//   velocityMin: number
+//   velocityMax: number
 
-  acceleration: number
-  accelerationMin: number
-  accelerationMax: number
+//   acceleration: number
+//   accelerationMin: number
+//   accelerationMax: number
 
-  jerk: number
-  jerkMin: number
-  jerkMax: number
+//   jerk: number
+//   jerkMin: number
+//   jerkMax: number
 
-  snap: number
-  snapMax: number
+//   snap: number
+//   snapMax: number
 
-  constructor(
-    public value: number,
-    public target: number = value,
-  ) {}
+//   constructor(
+//     public value: number,
+//     public target: number = value,
+//   ) {}
 
-  setTarget(target: number) {
-    this.target = target
-  }
+//   setTarget(target: number) {
+//     this.target = target
+//   }
 
-  /**
-   * Update the value according the the motion plan
-   * @param increase (-1 to 1) Percentage to increase the value in within bounds
-   * @param dt difference in time
-   */
-  update(_t: number) {}
+//   /**
+//    * Update the value according the the motion plan
+//    * @param increase (-1 to 1) Percentage to increase the value in within bounds
+//    * @param dt difference in time
+//    */
+//   update(_t: number) {}
 
-  getPosition(_t: number) {}
-}
+//   getPosition(_t: number) {}
+// }
