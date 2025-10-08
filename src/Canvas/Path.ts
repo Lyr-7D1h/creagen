@@ -507,21 +507,24 @@ function svgPath({ points, options }: PathSegment): string {
   }
 
   if (isSmooth(options)) {
-    // TODO: fix in case of wrap around
     let path = ''
     for (const segment of segments) {
-      if (segment.length < 3) {
-        throw Error(
-          `Need atleast 3 points to create a smooth path: '${points}' given`,
-        )
+      if (segment.length < 2) {
+        continue
       }
 
-      path += `M${points[0][0]} ${points[0][1]}`
+      path += `M${segment[0][0]} ${segment[0][1]}`
+
+      // If only two points, draw a simple line
+      if (segment.length === 2) {
+        path += `L${segment[1][0]} ${segment[1][1]}`
+        continue
+      }
 
       const [p1x, p2x] = computeControlPoints(segment, 0, options.tension || 0)
       const [p1y, p2y] = computeControlPoints(segment, 1, options.tension || 0)
       for (let i = 0; i < p1x.length; i++) {
-        path += `C${p1x[i]} ${p1y[i]}, ${p2x[i]} ${p2y[i]}, ${points[i + 1][0]} ${points[i + 1][1]}`
+        path += `C${p1x[i]} ${p1y[i]}, ${p2x[i]} ${p2y[i]}, ${segment[i + 1][0]} ${segment[i + 1][1]}`
       }
     }
     return path
