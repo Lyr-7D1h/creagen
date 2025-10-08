@@ -132,6 +132,7 @@ export class ImageData {
     const cloned = Object.create(ImageData.prototype)
     cloned.img = clonedImg
     cloned.pixeldata = new Uint8ClampedArray(this.pixeldata)
+    cloned.mat = this.mat.clone()
 
     return cloned
   }
@@ -446,6 +447,77 @@ export class ImageData {
 
     // Update pixeldata
     this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+    return this
+  }
+
+  /**
+   * Apply Sobel edge detection to the image
+   * @param dx Order of derivative in x direction (0, 1, or 2, default: 1)
+   * @param dy Order of derivative in y direction (0, 1, or 2, default: 1)
+   * @param kernelSize Size of the Sobel kernel (1, 3, 5, or 7, default: 3)
+   * @returns The modified ImageData instance
+   * @see https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gacea54f142e81b6758cb6f375ce782c8d
+   */
+  sobel(dx: number = 1, dy: number = 1, kernelSize: number = 3): ImageData {
+    // Validate parameters
+    dx = Math.max(0, Math.min(2, dx))
+    dy = Math.max(0, Math.min(2, dy))
+    if (![1, 3, 5, 7].includes(kernelSize)) {
+      kernelSize = 3
+    }
+
+    // At least one derivative must be non-zero
+    if (dx === 0 && dy === 0) {
+      dx = 1
+      dy = 1
+    }
+
+    const gray = new cv.Mat()
+    const gradX = new cv.Mat()
+    const gradY = new cv.Mat()
+    const absGradX = new cv.Mat()
+    const absGradY = new cv.Mat()
+    const grad = new cv.Mat()
+
+    try {
+      // Convert to grayscale first
+      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+
+      if (dx > 0 && dy > 0) {
+        // Compute gradients in both directions
+        cv.Sobel(gray, gradX, cv.CV_16S, dx, 0, kernelSize)
+        cv.Sobel(gray, gradY, cv.CV_16S, 0, dy, kernelSize)
+
+        // Convert to absolute values
+        cv.convertScaleAbs(gradX, absGradX)
+        cv.convertScaleAbs(gradY, absGradY)
+
+        // Combine gradients: |G| = |Gx| + |Gy| (approximation of sqrt(Gx^2 + Gy^2))
+        cv.addWeighted(absGradX, 0.5, absGradY, 0.5, 0, grad)
+      } else if (dx > 0) {
+        // Only x direction
+        cv.Sobel(gray, gradX, cv.CV_16S, dx, 0, kernelSize)
+        cv.convertScaleAbs(gradX, grad)
+      } else {
+        // Only y direction
+        cv.Sobel(gray, gradY, cv.CV_16S, 0, dy, kernelSize)
+        cv.convertScaleAbs(gradY, grad)
+      }
+
+      // Convert back to RGBA
+      cv.cvtColor(grad, this.mat, cv.COLOR_GRAY2RGBA)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      gray.delete()
+      gradX.delete()
+      gradY.delete()
+      absGradX.delete()
+      absGradY.delete()
+      grad.delete()
+    }
 
     return this
   }
