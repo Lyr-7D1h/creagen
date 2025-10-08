@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import dts from 'vite-plugin-dts'
 
 export default defineConfig(({ mode }) => {
@@ -11,6 +12,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      // needed for opencv.js
+      nodePolyfills(),
       dts({
         entryRoot: './src',
         outDir: './dist',

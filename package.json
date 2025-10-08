@@ -14,7 +14,8 @@
     "watch": "vite build --mode development --watch",
     "watch:release": "vite build --mode production --watch",
     "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "bench": "vitest bench"
   },
   "keywords": [],
   "author": "Lyr",
@@ -28,10 +29,12 @@
     "typescript": "^5.7.3",
     "vite": "^7.1.6",
     "vite-plugin-dts": "^4.5.4",
-    "vitest": "^3.0.8"
+    "vite-plugin-node-polyfills": "^0.24.0",
+    "vitest": "3.2.4"
   },
   "dependencies": {
     "@rarebearsoft/marvinj": "^1.0.0",
+    "@techstark/opencv-js": "^4.11.0-release.1",
     "@turf/turf": "^7.2.0",
     "d3-delaunay": "^6.0.4",
     "d3-quadtree": "^3.0.1",

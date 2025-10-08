@@ -17,49 +17,17 @@ export class Color extends Vector<4> {
     return new Color(v)
   }
 
-  static get BLACK() {
-    return new Color(0, 0, 0)
-  }
-
-  static get WHITE() {
-    return new Color(255, 255, 255)
-  }
-
-  static get RED() {
-    return new Color(255, 0, 0)
-  }
-
-  static get GREEN() {
-    return new Color(0, 255, 0)
-  }
-
-  static get BLUE() {
-    return new Color(0, 0, 255)
-  }
-
-  static get YELLOW() {
-    return new Color(255, 255, 0)
-  }
-
-  static get CYAN() {
-    return new Color(0, 255, 255)
-  }
-
-  static get MAGENTA() {
-    return new Color(255, 0, 255)
-  }
-
-  static get ORANGE() {
-    return new Color(255, 165, 0)
-  }
-
-  static get PURPLE() {
-    return new Color(128, 0, 128)
-  }
-
-  static get PINK() {
-    return new Color(255, 192, 203)
-  }
+  static readonly BLACK = new Color(0, 0, 0)
+  static readonly WHITE = new Color(255, 255, 255)
+  static readonly RED = new Color(255, 0, 0)
+  static readonly GREEN = new Color(0, 255, 0)
+  static readonly BLUE = new Color(0, 0, 255)
+  static readonly YELLOW = new Color(255, 255, 0)
+  static readonly CYAN = new Color(0, 255, 255)
+  static readonly MAGENTA = new Color(255, 0, 255)
+  static readonly ORANGE = new Color(255, 165, 0)
+  static readonly PURPLE = new Color(128, 0, 128)
+  static readonly PINK = new Color(255, 192, 203)
 
   static random() {
     return new Color(

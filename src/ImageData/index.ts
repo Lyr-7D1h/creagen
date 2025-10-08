@@ -1,19 +1,72 @@
 import { Color } from '../Color'
-import { gaussianFilter } from './gaussianFilter'
-import { sobelGradient } from './sobelGradient'
 import { Vector } from '../Vector'
-import { greyscaleFilter } from './greyscaleFilter'
-import { cannyEdgeDetection } from './cannyEdgeDetection'
 import { Bitmap } from '../Bitmap'
+import loadCV, { Mat } from '@techstark/opencv-js'
 
-// WASM implementation https://silvia-odwyer.github.io/photon/guide/
-//
+/**
+ * Morphological operations for image processing
+ * @see https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
+ */
+export enum MorphologyOperation {
+  /** Erode - shrinks bright regions, removes small white noise */
+  ERODE = 0,
+  /** Dilate - expands bright regions, fills small holes */
+  DILATE = 1,
+  /** Opening - erosion followed by dilation, removes small bright noise while preserving shape */
+  OPEN = 2,
+  /** Closing - dilation followed by erosion, fills small dark holes while preserving shape */
+  CLOSE = 3,
+  /** Morphological gradient - difference between dilation and erosion, outlines objects */
+  GRADIENT = 4,
+  /** Top hat - difference between input and opening, extracts small bright elements */
+  TOPHAT = 5,
+  /** Black hat - difference between closing and input, extracts small dark elements */
+  BLACKHAT = 6,
+  /** Hit-or-miss transform - finds specific patterns in binary images */
+  HITMISS = 7,
+}
+
+/**
+ * Structuring element shapes for morphological operations
+ */
+export enum MorphologyShape {
+  /** Rectangular structuring element */
+  RECT = 0,
+  /** Cross-shaped structuring element (+ shape) */
+  CROSS = 1,
+  /** Elliptical/circular structuring element (smoothest) */
+  ELLIPSE = 2,
+}
+
+/**
+ * Threshold types for image binarization
+ * @see https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+ */
+export enum ThresholdType {
+  /** Binary threshold: pixel > threshold ? 255 : 0 */
+  BINARY = 0,
+  /** Binary inverse threshold: pixel > threshold ? 0 : 255 */
+  BINARY_INV = 1,
+  /** Truncate threshold: pixel > threshold ? threshold : pixel (caps values) */
+  TRUNC = 2,
+  /** To zero threshold: pixel > threshold ? pixel : 0 (removes low values) */
+  TOZERO = 3,
+  /** To zero inverse threshold: pixel > threshold ? 0 : pixel (removes high values) */
+  TOZERO_INV = 4,
+  /** Otsu's method: automatically determines optimal threshold using histogram */
+  OTSU = 8,
+  /** Triangle method: automatically determines threshold using triangle algorithm */
+  TRIANGLE = 16,
+}
+
 // TODO(perf): calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
-// TODO: Use opencv for image processing https://github.com/TechStark/opencv-js
+let cv: typeof import('@techstark/opencv-js') = loadCV
 export class ImageData {
   private pixeldata: Uint8ClampedArray
+  private mat: Mat
 
   static async create(src: string) {
+    if (cv instanceof Promise) cv = await cv
     const img = new globalThis.Image()
     img.src = src
     await new Promise<void>((resolve, reject) => {
@@ -36,7 +89,12 @@ export class ImageData {
     ctx.drawImage(img, 0, 0)
 
     this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-    this.img = img
+    // Initialize mat lazily when needed
+    this.mat = cv.matFromImageData({
+      data: this.pixeldata,
+      width: canvas.width,
+      height: canvas.height,
+    })
   }
 
   get width() {
@@ -183,160 +241,6 @@ export class ImageData {
     return this.img
   }
 
-  gaussianBlur(radius: number): ImageData {
-    gaussianFilter(this.pixeldata, this.width, this.height, radius)
-    return this
-  }
-
-  private applyCanvasFilter(type: string) {
-    const canvas = document.createElement('canvas')
-    canvas.width = this.width
-    canvas.height = this.height
-    const ctx = canvas.getContext('2d')!
-
-    // Create ImageData from our pixel data
-    const imageData = ctx.createImageData(this.width, this.height)
-    imageData.data.set(this.pixeldata)
-
-    ctx.putImageData(imageData, 0, 0)
-    ctx.filter = type
-    this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-    return this
-  }
-
-  // TODO: not working
-  brightness(percentage: number) {
-    this.applyCanvasFilter(`brightness(${percentage})`)
-  }
-
-  horizontalGradient(
-    startPercentage: number,
-    endPercentage: number,
-  ): ImageData {
-    const width = this.width * 4
-    for (let y = 0; y < this.height; y += 1) {
-      const o = y * width
-      const p =
-        startPercentage + ((endPercentage - startPercentage) * y) / this.height
-      for (let x = 0; x < width; x += 4) {
-        this.pixeldata[o + x] *= p
-        this.pixeldata[o + x + 1] *= p
-        this.pixeldata[o + x + 2] *= p
-      }
-    }
-    return this
-  }
-
-  /**
-   * Use edge detection on the image.
-   *
-   * @param options Edge detection algorithm and parameters
-   *
-   * @example
-   * ```typescript
-   * // Use default Sobel
-   * image.edgeDetection()
-   *
-   * // Explicitly use Sobel
-   * image.edgeDetection('sobel')
-   *
-   * // Use Canny with default parameters
-   * image.edgeDetection('canny')
-   *
-   * // Use Canny with custom parameters
-   * image.edgeDetection('canny', 80, 90, 1)
-   * ```
-   */
-  edgeDetection(algorithm: 'sobel'): ImageData
-  edgeDetection(
-    algorithm: 'canny',
-    /**
-     * A number between [0-100], given the percentille threshold for which pixel is a weak edge.
-     *
-     * A weak edge needs to be connected to
-     * @default 80
-     */
-    lowThreshold?: number,
-    /**
-     * A number between [0-100], given the percentille threshold for which pixel is a strong edge
-     * @default 90
-     * */
-    highThreshold?: number,
-    /**
-     * How big should the radius be for the gaussian filter
-     * @default 1
-     */
-    gaussianFilterRadius?: number,
-
-    /**
-     * Find all connected components and keep only those with sufficient size.
-     * Higher values remove more small noise but may eliminate thin lines.
-     * @default 8
-     */
-    minComponentSize?: number,
-  ): ImageData
-  edgeDetection()
-  edgeDetection(
-    algorithm: 'sobel' | 'canny' = 'sobel',
-    lowThreshold: number = 80,
-    highThreshold: number = 90,
-    gaussianFilterRadius: number = 1,
-
-    minComponentSize: number = 8,
-  ): ImageData {
-    switch (algorithm) {
-      case 'canny':
-        this.pixeldata = cannyEdgeDetection(
-          this.pixeldata,
-          this.width,
-          this.height,
-          lowThreshold,
-          highThreshold,
-          gaussianFilterRadius,
-          minComponentSize,
-        )
-        return this
-      case 'sobel':
-      default:
-        this.pixeldata = sobelGradient(this.pixeldata, this.width)
-        return this
-    }
-  }
-
-  greyscale(): ImageData {
-    greyscaleFilter(this.pixeldata)
-    return this
-  }
-
-  /**
-   * Apply contrast to image making color tend toward middle gray (128)
-   * or more towards the outer ends (0, 255)
-   *
-   * @param factor 1.0 = no change, >1.0 = increased contrast, <1.0 = decreased contrast
-   */
-  contrast(factor: number): ImageData {
-    factor = Math.max(0.1, Math.min(3.0, factor))
-
-    // Apply contrast formula: newValue = (oldValue - 128) * factor + 128
-    // This centers around middle gray (128) and scales the difference
-    for (let i = 0; i < this.pixeldata.length; i += 4) {
-      this.pixeldata[i] = Math.max(
-        0,
-        Math.min(255, (this.pixeldata[i] - 128) * factor + 128),
-      ) // Red
-      this.pixeldata[i + 1] = Math.max(
-        0,
-        Math.min(255, (this.pixeldata[i + 1] - 128) * factor + 128),
-      ) // Green
-      this.pixeldata[i + 2] = Math.max(
-        0,
-        Math.min(255, (this.pixeldata[i + 2] - 128) * factor + 128),
-      ) // Blue
-      // Alpha channel (i + 3) remains unchanged
-    }
-    return this
-  }
-
   /**
    * Iterate over each pixel in the image
    * @param callback Function called for each pixel with (color, x, y, index)
@@ -349,19 +253,9 @@ export class ImageData {
   }
 
   /**
-   * Invert the colors of the image (negative effect)
-   * Each RGB channel is inverted: newValue = 255 - oldValue
+   * Convert image to bitmap based on luminance threshold
+   * @param threshold Luminance threshold value (min: 0, max: 255, default: 255, pixels above threshold become white)
    */
-  invert(): ImageData {
-    for (let i = 0; i < this.pixeldata.length; i += 4) {
-      this.pixeldata[i] = 255 - this.pixeldata[i] // Red
-      this.pixeldata[i + 1] = 255 - this.pixeldata[i + 1] // Green
-      this.pixeldata[i + 2] = 255 - this.pixeldata[i + 2] // Blue
-      // Alpha channel (i + 3) remains unchanged
-    }
-    return this
-  }
-
   toBitmap(threshold: number = 255) {
     const bitmap = Bitmap.create(this.width, this.height)
     if (threshold === 255) {
@@ -380,38 +274,416 @@ export class ImageData {
     }
     return bitmap
   }
-}
 
-export interface SobelOptions {
-  algorithm: 'sobel'
-}
-
-export interface CannyOptions {
-  algorithm: 'canny'
   /**
-   * A number between [0-100], given the percentille threshold for which pixel is a weak edge.
+   * Adjust brightness of the image
+   * @param percentage Brightness multiplier (min: 0, max: 3.0, default: 1.0 = no change, >1.0 = brighter, <1.0 = darker)
+   */
+  brightness(percentage: number): ImageData {
+    percentage = Math.max(0, Math.min(3.0, percentage))
+
+    // Use convertTo: dst = src * alpha + beta
+    // For brightness: dst = src * percentage
+    this.mat.convertTo(this.mat, -1, percentage, 0)
+
+    // Update pixeldata
+    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+    return this
+  }
+
+  /**
+   * Apply horizontal gradient to the image
+   * @param startPercentage Starting brightness factor at top (min: 0, max: 1.0)
+   * @param endPercentage Ending brightness factor at bottom (min: 0, max: 1.0)
+   */
+  horizontalGradient(
+    startPercentage: number,
+    endPercentage: number,
+  ): ImageData {
+    // Create a gradient mask using OpenCV
+    const gradient = new cv.Mat(this.height, this.width, cv.CV_32FC1)
+
+    try {
+      // Fill gradient values
+      for (let y = 0; y < this.height; y++) {
+        const factor =
+          startPercentage +
+          ((endPercentage - startPercentage) * y) / this.height
+        for (let x = 0; x < this.width; x++) {
+          gradient.floatPtr(y, x)[0] = factor
+        }
+      }
+
+      // Convert mat to float for multiplication
+      const floatMat = new cv.Mat()
+      this.mat.convertTo(floatMat, cv.CV_32F)
+
+      // Split into channels
+      const channels = new cv.MatVector()
+      cv.split(floatMat, channels)
+
+      // Apply gradient to RGB channels only
+      for (let i = 0; i < 3; i++) {
+        const channel = channels.get(i)
+        cv.multiply(channel, gradient, channel)
+      }
+
+      // Merge back
+      cv.merge(channels, floatMat)
+
+      // Convert back to 8-bit
+      floatMat.convertTo(this.mat, cv.CV_8U)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+      // Cleanup
+      channels.delete()
+      floatMat.delete()
+    } finally {
+      gradient.delete()
+    }
+
+    return this
+  }
+
+  greyscale(): ImageData {
+    const grayMat = new cv.Mat()
+
+    try {
+      cv.cvtColor(this.mat, grayMat, cv.COLOR_RGBA2GRAY)
+
+      // Convert back to RGBA format for consistency (gray value in all channels)
+      cv.cvtColor(grayMat, this.mat, cv.COLOR_GRAY2RGBA)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      grayMat.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Apply contrast to image making color tend toward middle gray (128)
+   * or more towards the outer ends (0, 255)
    *
-   * A weak edge needs to be connected to
-   * @default 80
+   * @param factor Contrast multiplier (min: 0.1, max: 3.0, default: 1.0 = no change, >1.0 = increased contrast, <1.0 = decreased contrast)
    */
-  lowThreshold?: number
-  /**
-   * A number between [0-100], given the percentille threshold for which pixel is a strong edge
-   * @default 90
-   * */
-  highThreshold?: number
-  /**
-   * How big should the radius be for the gaussian filter
-   * @default 1
-   */
-  gaussianFilterRadius?: number
+  contrast(factor: number): ImageData {
+    factor = Math.max(0.1, Math.min(3.0, factor))
+
+    // Use OpenCV's convertTo for contrast adjustment
+    // formula: dst = src * alpha + beta
+    // For contrast around 128: dst = (src - 128) * factor + 128
+    // We want: (src - 128) * factor + 128 = src * factor - 128 * factor + 128
+    const beta = 128 * (1 - factor)
+    this.mat.convertTo(this.mat, -1, factor, beta)
+
+    // Update pixeldata
+    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+    return this
+  }
 
   /**
-   * Find all connected components and keep only those with sufficient size.
-   * Higher values remove more small noise but may eliminate thin lines.
-   * @default 8
+   * Invert the colors of the image (negative effect)
+   * Each RGB channel is inverted: newValue = 255 - oldValue
    */
-  minComponentSize?: number
+  invert(): ImageData {
+    const temp = new cv.Mat()
+
+    try {
+      // Use OpenCV's bitwise_not for inversion
+      // This inverts all channels including alpha, so we need to handle alpha separately
+      cv.bitwise_not(this.mat, temp)
+
+      // Restore original alpha channel
+      const channels = new cv.MatVector()
+      cv.split(temp, channels)
+      const alphaChannel = new cv.MatVector()
+      cv.split(this.mat, alphaChannel)
+
+      // Replace inverted alpha with original alpha
+      const mergedChannels = new cv.MatVector()
+      mergedChannels.push_back(channels.get(0)) // Inverted R
+      mergedChannels.push_back(channels.get(1)) // Inverted G
+      mergedChannels.push_back(channels.get(2)) // Inverted B
+      mergedChannels.push_back(alphaChannel.get(3)) // Original A
+
+      cv.merge(mergedChannels, this.mat)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+      // Cleanup
+      channels.delete()
+      alphaChannel.delete()
+      mergedChannels.delete()
+    } finally {
+      temp.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Apply Gaussian blur to the image
+   * @param kernelSize Size of the Gaussian kernel (min: 1, typical: 3-15, default: 5, must be odd, will be adjusted if even)
+   * @param sigma Standard deviation of the Gaussian kernel (min: 0, default: 0, 0 = auto-calculated from kernel size)
+   */
+  blur(kernelSize: number = 5, sigma: number = 0): ImageData {
+    kernelSize = kernelSize % 2 === 0 ? kernelSize + 1 : kernelSize
+
+    cv.GaussianBlur(
+      this.mat,
+      this.mat,
+      new cv.Size(kernelSize, kernelSize),
+      sigma,
+    )
+
+    // Update pixeldata
+    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+
+    return this
+  }
+
+  /**
+   * Apply threshold to create a binary image
+   * @param threshold Threshold value (min: 0, max: 255, default: 127)
+   * @param type Threshold type (default: ThresholdType.BINARY, see ThresholdType enum)
+   */
+  threshold(
+    threshold: number = 127,
+    type: ThresholdType = ThresholdType.BINARY,
+  ): ImageData {
+    const gray = new cv.Mat()
+
+    try {
+      // Convert to grayscale first
+      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+
+      // Apply threshold (reuse gray as both src and dst)
+      cv.threshold(gray, gray, threshold, 255, type)
+
+      // Convert back to RGBA directly to this.mat
+      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      gray.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Apply Canny edge detection
+   * @param lowThreshold Lower threshold for edge detection (min: 0, max: 255, typical: 50-100, default: 50)
+   * @param highThreshold Upper threshold for edge detection (min: 0, max: 255, typical: 100-200, default: 150, should be 2-3x lowThreshold)
+   */
+  canny(lowThreshold: number = 50, highThreshold: number = 150): ImageData {
+    const gray = new cv.Mat()
+
+    try {
+      // Convert to grayscale
+      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+
+      // Apply Canny edge detection (reuse gray as both src and dst)
+      cv.Canny(gray, gray, lowThreshold, highThreshold)
+
+      // Convert back to RGBA directly to this.mat
+      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      gray.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Apply morphological operations (erode, dilate, open, close)
+   * @param operation Operation type (default: MorphologyOperation.CLOSE, see MorphologyOperation enum)
+   * @param kernelSize Size of the structuring element (min: 1, typical: 3-9, default: 5)
+   * @param shape Shape of the structuring element (default: MorphologyShape.ELLIPSE, see MorphologyShape enum)
+   */
+  morphology(
+    operation: MorphologyOperation = MorphologyOperation.CLOSE,
+    kernelSize: number = 5,
+    shape: MorphologyShape = MorphologyShape.ELLIPSE,
+  ): ImageData {
+    const kernel = cv.getStructuringElement(
+      shape,
+      new cv.Size(kernelSize, kernelSize),
+    )
+
+    try {
+      cv.morphologyEx(this.mat, this.mat, operation, kernel)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      kernel.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Sharpen the image using unsharp masking
+   * @param amount Amount of sharpening (min: 0, typical: 0.5-2.5, default: 1.5, higher = more sharpening)
+   */
+  sharpen(amount: number = 1.5): ImageData {
+    const blurred = new cv.Mat()
+    const temp = new cv.Mat()
+
+    try {
+      // Blur the image
+      cv.GaussianBlur(this.mat, blurred, new cv.Size(5, 5), 0)
+
+      // Subtract blurred from original to get high-frequency details
+      cv.subtract(this.mat, blurred, temp)
+
+      // Add the high-frequency details back with weight
+      cv.addWeighted(this.mat, 1.0, temp, amount, 0, this.mat)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      blurred.delete()
+      temp.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Apply adaptive threshold (good for images with varying lighting)
+   * @param blockSize Size of pixel neighborhood (min: 3, typical: 5-21, default: 11, must be odd, will be adjusted if even)
+   * @param C Constant subtracted from the mean (typical: -10 to 10, default: 2, positive = darker threshold, negative = lighter threshold)
+   */
+  adaptiveThreshold(blockSize: number = 11, C: number = 2): ImageData {
+    blockSize = blockSize % 2 === 0 ? blockSize + 1 : blockSize
+
+    const gray = new cv.Mat()
+
+    try {
+      // Convert to grayscale
+      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+
+      // Apply adaptive threshold (reuse gray as both src and dst)
+      cv.adaptiveThreshold(
+        gray,
+        gray,
+        255,
+        cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv.THRESH_BINARY,
+        blockSize,
+        C,
+      )
+
+      // Convert back to RGBA directly to this.mat
+      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    } finally {
+      gray.delete()
+    }
+
+    return this
+  }
+
+  /**
+   * Extract smoothed line contours from the image
+   * @param blurSize Gaussian blur kernel size for pre-smoothing (min: 0, typical: 3-9, default: 5, 0 = no blur, must be odd)
+   * @param morphSize Morphological operation size to clean up noise (min: 0, typical: 2-5, default: 3, 0 = skip)
+   * @param epsilon Curve approximation accuracy (min: 0, typical: 0.5-3, default: 0.5, lower = more detail, 0 = no approximation, pixels)
+   * @param threshold Binary threshold value (min: 0, max: 255, typical: 100-150, default: 120)
+   */
+  lines(
+    blurSize: number = 5,
+    morphSize: number = 3,
+    epsilon: number = 0.5,
+    threshold: number = 120,
+  ): Vector<2>[][] {
+    const temp = new cv.Mat()
+
+    cv.cvtColor(this.mat, temp, cv.COLOR_RGBA2GRAY)
+
+    // 1. Pre-smooth with Gaussian blur
+    if (blurSize > 0) {
+      const kernelSize = blurSize % 2 === 0 ? blurSize + 1 : blurSize
+      cv.GaussianBlur(temp, temp, new cv.Size(kernelSize, kernelSize), 0)
+    }
+
+    cv.threshold(temp, temp, threshold, 255, cv.THRESH_BINARY)
+
+    // 2. Morphological operations to reduce noise
+    if (morphSize > 0) {
+      const kernel = cv.getStructuringElement(
+        MorphologyShape.ELLIPSE,
+        new cv.Size(morphSize, morphSize),
+      )
+      // Close small gaps
+      cv.morphologyEx(temp, temp, MorphologyOperation.CLOSE, kernel)
+      // Remove small noise
+      cv.morphologyEx(temp, temp, MorphologyOperation.OPEN, kernel)
+      kernel.delete()
+    }
+
+    const contours = new cv.MatVector()
+    const hierarchy = new cv.Mat()
+    cv.findContours(
+      temp,
+      contours,
+      hierarchy,
+      cv.RETR_LIST,
+      cv.CHAIN_APPROX_SIMPLE, // Changed from CHAIN_APPROX_NONE to keep some simplification
+    )
+
+    const lines: Vector<2>[][] = []
+    for (let i = 0; i < contours.size(); i++) {
+      const contour = contours.get(i)
+
+      // 3. Approximate contour to reduce points
+      const approx = new cv.Mat()
+      if (epsilon > 0) {
+        // Use epsilon directly as pixel tolerance
+        cv.approxPolyDP(contour, approx, epsilon, true)
+      } else {
+        contour.copyTo(approx)
+      }
+      const points: Vector<2>[] = []
+      for (let j = 0; j < approx.rows; j++) {
+        const x = approx.data32S[j * 2]
+        const y = approx.data32S[j * 2 + 1]
+        points.push(new Vector(x, y))
+      }
+
+      if (points.length > 1) {
+        lines.push(points)
+      }
+
+      approx.delete()
+    }
+
+    temp.delete()
+    contours.delete()
+    hierarchy.delete()
+
+    return lines
+  }
+
+  potrace() {
+    // https://github.com/tomayac/esm-potrace-wasm
+    // https://github.com/tooolbox/node-potrace
+    // https://github.com/oslllo/potrace
+  }
 }
-
-export type EdgeDetectionOptions = SobelOptions | CannyOptions

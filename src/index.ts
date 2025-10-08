@@ -15,7 +15,12 @@ export { Random } from './Random/index'
 export { SpatialMap } from './spatialmap'
 export { KDTree } from './kdtree'
 export { QuadTree } from './quadtree'
-export { ImageData } from './ImageData'
+export {
+  ImageData,
+  MorphologyOperation,
+  MorphologyShape,
+  ThresholdType,
+} from './ImageData'
 export { color, Color } from './Color'
 export { PointCloud } from './PointCloud'
 export { Conversion } from './Conversion'
@@ -25,8 +30,11 @@ export { matrix, Matrix } from './Matrix'
 export { KMeans } from './SignalProcessing/KMeans'
 export { Audio } from './Audio'
 export { Bitmap } from './Bitmap'
-export { ContourExtractorOpts, ContourApproximation } from './ContourExtractor'
+export {
+  ContourApproximation,
+  type ContourExtractorOpts,
+} from './ContourExtractor'
 
 export type { FixedNumberArray, FixedArray } from './types'
 
-export { Tree, NodeId } from './Tree'
+export { Tree, type NodeId } from './Tree'

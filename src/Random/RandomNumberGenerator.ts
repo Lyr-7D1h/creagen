@@ -1,4 +1,4 @@
-import { Math } from '..'
+import * as Math from '../math'
 // TODO: implement same distributions https://jstat.github.io/distributions.html
 
 /**
