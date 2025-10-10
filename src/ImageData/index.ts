@@ -111,28 +111,21 @@ export class ImageData {
   }
 
   clone(): ImageData {
-    // Create a canvas with the current pixel data
-    const canvas = document.createElement('canvas')
-    canvas.width = this.width
-    canvas.height = this.height
-    const ctx = canvas.getContext('2d')!
-
-    // Put our pixel data onto the canvas
-    const imageData = ctx.createImageData(this.width, this.height)
-    imageData.data.set(this.pixeldata)
-    ctx.putImageData(imageData, 0, 0)
-
-    // Create new image from canvas
-    const clonedImg = new globalThis.Image()
-    clonedImg.src = canvas.toDataURL('image/png')
-    clonedImg.width = this.width
-    clonedImg.height = this.height
-
     // Create the cloned ImageData instance
     const cloned = Object.create(ImageData.prototype)
+
+    const clonedImg = new globalThis.Image()
+    clonedImg.width = this.width
+    clonedImg.height = this.height
     cloned.img = clonedImg
+
     cloned.pixeldata = new Uint8ClampedArray(this.pixeldata)
-    cloned.mat = this.mat.clone()
+
+    cloned.mat = cv.matFromImageData({
+      data: cloned.pixeldata,
+      width: this.width,
+      height: this.height,
+    })
 
     return cloned
   }
@@ -717,7 +710,7 @@ export class ImageData {
       contours,
       hierarchy,
       cv.RETR_LIST,
-      cv.CHAIN_APPROX_SIMPLE, // Changed from CHAIN_APPROX_NONE to keep some simplification
+      cv.CHAIN_APPROX_SIMPLE,
     )
 
     const lines: Vector<2>[][] = []
