@@ -55,7 +55,7 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   get x(): number {
-    return this[0]!
+    return this[0]
   }
 
   set x(v: number) {
@@ -98,7 +98,7 @@ export class Vector<N extends number> extends Array<number> {
   dist2(v: Vector<N>) {
     let dist = 0
     for (let i = 0; i < this.length; i++) {
-      dist += (this[i]! - v[i]!) ** 2
+      dist += (this[i] - v[i]) ** 2
     }
     return dist
   }
@@ -112,14 +112,14 @@ export class Vector<N extends number> extends Array<number> {
     callbackfn: (value: number, index: number, array: number[]) => number,
   ) {
     for (let i = 0; i < this.length; i++) {
-      this[i] = callbackfn(this[i]!, i, this)
+      this[i] = callbackfn(this[i], i, this)
     }
     return this
   }
 
   add(v: Vector<N>) {
     for (let i = 0; i < this.length; i++) {
-      this[i] += v[i]!
+      this[i] += v[i]
     }
     return this
   }
@@ -146,7 +146,7 @@ export class Vector<N extends number> extends Array<number> {
 
   roundToDec(dec?: number) {
     for (let i = 0; i < this.length; i++) {
-      this[i] = Math.roundToDec(this[i]!, dec)
+      this[i] = Math.roundToDec(this[i], dec)
     }
     return this
   }
@@ -154,7 +154,7 @@ export class Vector<N extends number> extends Array<number> {
   /** Linear interpolation towards `target` in steps of `alpha`% */
   lerp(target: Vector<N>, alpha: number) {
     for (let i = 0; i < this.length; i++) {
-      this[i] = (1 - alpha) * this[i]! + alpha * target[i]!
+      this[i] = (1 - alpha) * this[i] + alpha * target[i]
     }
     return this
   }
@@ -177,7 +177,7 @@ export class Vector<N extends number> extends Array<number> {
   /** Compare two vectors for equality */
   equals(v: Vector<N>) {
     for (let i = 0; i < this.length; i++) {
-      if (this[i]! !== v[i]!) {
+      if (this[i] !== v[i]) {
         return false
       }
     }
@@ -187,7 +187,7 @@ export class Vector<N extends number> extends Array<number> {
   dot(v: Vector<N>) {
     let a = 0
     for (let i = 0; i < this.length; i++) {
-      a += this[i]! * v[i]!
+      a += this[i] * v[i]
     }
     return a
   }
@@ -219,7 +219,7 @@ export class Vector<N extends number> extends Array<number> {
 
   round() {
     for (let i = 0; i < this.length; i++) {
-      this[i] = Math.round(this[i]!)
+      this[i] = Math.round(this[i])
     }
     return this
   }
@@ -242,7 +242,7 @@ export class Vector<N extends number> extends Array<number> {
 
     for (let i = 0; i < this.length; i++) {
       if (divisors[i] === undefined) break
-      this[i] /= divisors[i]!
+      this[i] /= divisors[i]
     }
 
     return this
@@ -266,7 +266,7 @@ export class Vector<N extends number> extends Array<number> {
 
     for (let i = 0; i < this.length; i++) {
       if (multipliers[i] === undefined) break
-      this[i] *= multipliers[i]!
+      this[i] *= multipliers[i]
     }
 
     return this
@@ -274,7 +274,7 @@ export class Vector<N extends number> extends Array<number> {
 
   floor() {
     for (let i = 0; i < this.length; i++) {
-      this[i] = Math.floor(this[i]!)
+      this[i] = Math.floor(this[i])
     }
     return this
   }
@@ -330,7 +330,7 @@ export class Vector<N extends number> extends Array<number> {
     if (size < 0 || !Number.isFinite(size)) {
       throw Error('size must be a positive number')
     }
-    var index = 0,
+    let index = 0,
       resIndex = 0,
       result = Array(Math.ceil(this.length / size))
 
@@ -344,7 +344,7 @@ export class Vector<N extends number> extends Array<number> {
   within(bounds: FlatBounds<N>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
-      if (this[i]! < start || this[i]! > stop) {
+      if (this[i] < start || this[i] > stop) {
         return false
       }
     }
@@ -358,7 +358,7 @@ export class Vector<N extends number> extends Array<number> {
    */
   atan2(): number {
     if (this.length != 2) throw new Error('Only 2d atan is supported')
-    return Math.atan2(this[1]!, this[0]!)
+    return Math.atan2(this[1], this[0])
   }
 
   /**
@@ -370,7 +370,7 @@ export class Vector<N extends number> extends Array<number> {
    */
   atan2p(): number {
     if (this.length != 2) throw new Error('Only 2d atan is supported')
-    const a = Math.atan2(this[1]!, this[0]!)
+    const a = Math.atan2(this[1], this[0])
     return a >= 0 ? a : a + 2 * Math.PI
   }
 
@@ -411,7 +411,7 @@ export class Vector<N extends number> extends Array<number> {
   wrapAround(bounds: FlatBounds<N>) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
-      const v = this[i]!
+      const v = this[i]
       if (v < start) {
         const diff = stop - start
         this[i] = stop - ((start - v) % diff)
@@ -429,7 +429,7 @@ export class Vector<N extends number> extends Array<number> {
       const d = i * 2
       const min = bounds[d]
       const max = bounds[d + 1]
-      this[i] = Math.max(min, Math.min(max, this[i]!))
+      this[i] = Math.max(min, Math.min(max, this[i]))
     }
     return this
   }
@@ -437,7 +437,7 @@ export class Vector<N extends number> extends Array<number> {
   /** Clamp each dimension to stay within min/max values */
   clampRange(min: number, max: number): this {
     for (let i = 0; i < this.length; i++) {
-      this[i] = Math.max(min, Math.min(max, this[i]!))
+      this[i] = Math.max(min, Math.min(max, this[i]))
     }
     return this
   }
@@ -446,7 +446,7 @@ export class Vector<N extends number> extends Array<number> {
   reflect(bounds: FlatBounds<N>): this {
     for (let i = 0; i < this.length; i++) {
       const [min, max] = (bounds as any)[i] as [number, number]
-      const v = this[i]!
+      const v = this[i]
 
       if (v < min) {
         this[i] = min + (min - v) // Reflect below minimum
@@ -464,7 +464,7 @@ export class Vector<N extends number> extends Array<number> {
 
     for (let i = 0; i < this.length; i++) {
       const [min, max] = (bounds as any)[i] as [number, number]
-      const v = this[i]!
+      const v = this[i]
       const range = max - min
 
       if (v !== 0) {

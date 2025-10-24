@@ -25,7 +25,7 @@ interface PathSegment {
 }
 
 export class Path extends Geometry<PathOptions> {
-  private _segments: PathSegment[] = []
+  private readonly _segments: PathSegment[] = []
   /** Reference to current segment */
   currentPoints: Vector<2>[] = undefined!
 
@@ -37,7 +37,7 @@ export class Path extends Geometry<PathOptions> {
   private newSegment(): void {
     const points: Vector<2>[] = []
     if (this.currentPoints) {
-      let pointsLength = this.currentPoints.length
+      const pointsLength = this.currentPoints.length
       // don't do anything if segment is empty
       if (pointsLength === 0) return
       // add last point from previous segment
@@ -351,13 +351,13 @@ function wrapAroundPoints(
   const height = ymax - ymin
 
   // const [ymin, ymax] = bounds[1]
-  let queue = [...points.map((p) => p.clone())]
+  const queue = [...points.map((p) => p.clone())]
   for (let i = 0; i < queue.length - 1; i++) {
     currentIndex += 1
     // what direction is the first point outside of bounds
-    let d1 = outsideBoundDirection(queue[i], bounds)
+    const d1 = outsideBoundDirection(queue[i], bounds)
     // what direction is the second point outside of bounds
-    let d2 = outsideBoundDirection(queue[i + 1], bounds)
+    const d2 = outsideBoundDirection(queue[i + 1], bounds)
     // if both inside of bounds skip
     if (d1 === null && d2 === null) continue
     // if both outside skip
@@ -370,8 +370,8 @@ function wrapAroundPoints(
     // if above use ymin as limit otherwise ymax
     const ym = d.y < 0 ? ymin : ymax
 
-    let [x1, y1] = queue[i]
-    let [x2, y2] = queue[i + 1]
+    const [x1, y1] = queue[i]
+    const [x2, y2] = queue[i + 1]
 
     // swap points to keep x1 < x2
     let a
@@ -411,7 +411,7 @@ function wrapAroundPoints(
       iy = y1 + a * (xm - x1)
     }
 
-    let intersection = vec(ix, iy)
+    const intersection = vec(ix, iy)
 
     let outsideSegment
     if (d1 === null) {

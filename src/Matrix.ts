@@ -39,7 +39,7 @@ export class Matrix<R extends number, C extends number> {
       this.cols = args[2]
     } else if (args[0].length > 0 && Array.isArray(args[0][0])) {
       // [ [[1, 2], [3, 4]] ]
-      this.elements = args[0].flat() as number[]
+      this.elements = args[0].flat()
       this.rows = args[0].length as R
       this.cols = args[0][0].length as C
     } else {

@@ -11,7 +11,7 @@ export class Conversion {
   /** Type guard for array-like structures (includes arrays, typed arrays, etc.) */
   static isArrayLike(v: unknown): v is ArrayLike<unknown> {
     return (
-      !!v &&
+      Boolean(v) &&
       typeof v === 'object' &&
       'length' in (v as any) &&
       Number.isInteger((v as any).length) &&
@@ -105,7 +105,7 @@ export class Conversion {
   ): Float64Array {
     const result = new Float64Array(array.length * dimension)
     for (let i = 0; i < array.length; i++) {
-      const row = array[i] as ArrayLike<number>
+      const row = array[i]
       for (let d = 0; d < dimension; d++) {
         result[i * dimension + d] = row[d]
       }
@@ -195,7 +195,7 @@ export class Conversion {
       }
       const result: Vector<N>[] = []
       for (let i = 0; i < array.length; i++) {
-        const row = array[i] as ArrayLike<number>
+        const row = array[i]
         if (row.length !== dimension) {
           throw new Error(
             `Row ${i} has length ${row.length}, expected dimension ${dimension}`,
@@ -223,14 +223,14 @@ export class Conversion {
     bounds: FlatBounds<N> | FixedArray<[number, number], N>,
   ): FlatBounds<N> {
     if (Conversion.isFlatNumberArray(bounds)) {
-      return bounds as FlatBounds<N>
+      return bounds
     }
 
     // Convert [[min1, max1], [min2, max2], ...] to [min1, max1, min2, max2, ...]
     const boundsArray = bounds as ArrayLike<[number, number]>
     const result: number[] = []
     for (let i = 0; i < boundsArray.length; i++) {
-      const bound = boundsArray[i] as [number, number]
+      const bound = boundsArray[i]
       result.push(bound[0], bound[1])
     }
     return result as FlatBounds<N>

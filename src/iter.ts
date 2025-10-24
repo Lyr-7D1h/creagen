@@ -16,7 +16,7 @@ function* range(x1: number, x2?: number): Generator<number> {
  * A wrapper class for iterables that provides chainable iterator operations
  */
 export class Iter<T> implements Iterable<T> {
-  constructor(private iterable: Iterable<T>) {}
+  constructor(private readonly iterable: Iterable<T>) {}
 
   /** Make the class itself iterable */
   *[Symbol.iterator](): Iterator<T> {

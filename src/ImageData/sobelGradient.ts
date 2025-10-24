@@ -48,12 +48,12 @@ export function sobelGradient(pixeldata: Uint8ClampedArray, width: number) {
   // mask - gradient operator e.g. Prewitt, Sobel, Scharr, etc.
   // cosnt mask = [1,1,1] // prewitt
   const mask = [1, 2, 1] // sobel
-  var w = width * 4
-  var l = pixeldata.length - w - 4
-  var edges = new Uint8ClampedArray(pixeldata.length)
+  const w = width * 4
+  const l = pixeldata.length - w - 4
+  const edges = new Uint8ClampedArray(pixeldata.length)
 
   // Start from row 1 and end at row height-2 to avoid edge wrap-around
-  for (var i = w + 4; i < l; i += 4) {
+  for (let i = w + 4; i < l; i += 4) {
     // Additional check to ensure we're not at the left or right edge
     const col = (i / 4) % width
     if (col === 0 || col === width - 1) {
@@ -62,8 +62,8 @@ export function sobelGradient(pixeldata: Uint8ClampedArray, width: number) {
       continue
     }
 
-    var dx = conv3x(pixeldata, i, w, mask)
-    var dy = conv3y(pixeldata, i, w, mask)
+    const dx = conv3x(pixeldata, i, w, mask)
+    const dy = conv3y(pixeldata, i, w, mask)
     edges[i] = edges[i + 1] = edges[i + 2] = Math.sqrt(dx * dx + dy * dy)
     edges[i + 3] = 255
   }

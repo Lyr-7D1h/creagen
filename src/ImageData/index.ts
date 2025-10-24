@@ -63,7 +63,7 @@ export enum ThresholdType {
 let cv: typeof import('@techstark/opencv-js') = loadCV
 export class ImageData {
   private pixeldata: Uint8ClampedArray
-  private mat: Mat
+  private readonly mat: Mat
 
   static async create(src: string) {
     if (cv instanceof Promise) cv = await cv

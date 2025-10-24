@@ -128,8 +128,8 @@ type NoiseFunction2D = (x: number, y: number) => number
 function createNoise2D(random: UnitRandomFn = Math.random): NoiseFunction2D {
   const perm = buildPermutationTable(random)
   // precalculating this yields a little ~3% performance improvement.
-  const permGrad2x = new Float64Array(perm).map((v) => grad2[(v % 12) * 2]!)
-  const permGrad2y = new Float64Array(perm).map((v) => grad2[(v % 12) * 2 + 1]!)
+  const permGrad2x = new Float64Array(perm).map((v) => grad2[(v % 12) * 2])
+  const permGrad2y = new Float64Array(perm).map((v) => grad2[(v % 12) * 2 + 1])
   return function noise2D(x: number, y: number): number {
     // if(!isFinite(x) || !isFinite(y)) return 0;
     let n0 = 0 // Noise contributions from the three corners
@@ -168,27 +168,27 @@ function createNoise2D(random: UnitRandomFn = Math.random): NoiseFunction2D {
     // Calculate the contribution from the three corners
     let t0 = 0.5 - x0 * x0 - y0 * y0
     if (t0 >= 0) {
-      const gi0 = ii + perm[jj]!
-      const g0x = permGrad2x[gi0]!
-      const g0y = permGrad2y[gi0]!
+      const gi0 = ii + perm[jj]
+      const g0x = permGrad2x[gi0]
+      const g0y = permGrad2y[gi0]
       t0 *= t0
       // n0 = t0 * t0 * (grad2[gi0] * x0 + grad2[gi0 + 1] * y0); // (x,y) of grad3 used for 2D gradient
       n0 = t0 * t0 * (g0x * x0 + g0y * y0)
     }
     let t1 = 0.5 - x1 * x1 - y1 * y1
     if (t1 >= 0) {
-      const gi1 = ii + i1 + perm[jj + j1]!
-      const g1x = permGrad2x[gi1]!
-      const g1y = permGrad2y[gi1]!
+      const gi1 = ii + i1 + perm[jj + j1]
+      const g1x = permGrad2x[gi1]
+      const g1y = permGrad2y[gi1]
       t1 *= t1
       // n1 = t1 * t1 * (grad2[gi1] * x1 + grad2[gi1 + 1] * y1);
       n1 = t1 * t1 * (g1x * x1 + g1y * y1)
     }
     let t2 = 0.5 - x2 * x2 - y2 * y2
     if (t2 >= 0) {
-      const gi2 = ii + 1 + perm[jj + 1]!
-      const g2x = permGrad2x[gi2]!
-      const g2y = permGrad2y[gi2]!
+      const gi2 = ii + 1 + perm[jj + 1]
+      const g2x = permGrad2x[gi2]
+      const g2y = permGrad2y[gi2]
       t2 *= t2
       // n2 = t2 * t2 * (grad2[gi2] * x2 + grad2[gi2 + 1] * y2);
       n2 = t2 * t2 * (g2x * x2 + g2y * y2)
@@ -218,9 +218,9 @@ type NoiseFunction3D = (x: number, y: number, z: number) => number
 function createNoise3D(random: UnitRandomFn = Math.random): NoiseFunction3D {
   const perm = buildPermutationTable(random)
   // precalculating these seems to yield a speedup of over 15%
-  const permGrad3x = new Float64Array(perm).map((v) => grad3[(v % 12) * 3]!)
-  const permGrad3y = new Float64Array(perm).map((v) => grad3[(v % 12) * 3 + 1]!)
-  const permGrad3z = new Float64Array(perm).map((v) => grad3[(v % 12) * 3 + 2]!)
+  const permGrad3x = new Float64Array(perm).map((v) => grad3[(v % 12) * 3])
+  const permGrad3y = new Float64Array(perm).map((v) => grad3[(v % 12) * 3 + 1])
+  const permGrad3z = new Float64Array(perm).map((v) => grad3[(v % 12) * 3 + 2])
   return function noise3D(x: number, y: number, z: number): number {
     let n0, n1, n2, n3 // Noise contributions from the four corners
     // Skew the input space to determine which simplex cell we're in
@@ -312,42 +312,42 @@ function createNoise3D(random: UnitRandomFn = Math.random): NoiseFunction3D {
     let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0
     if (t0 < 0) n0 = 0.0
     else {
-      const gi0 = ii + perm[jj + perm[kk]!]!
+      const gi0 = ii + perm[jj + perm[kk]]
       t0 *= t0
       n0 =
         t0 *
         t0 *
-        (permGrad3x[gi0]! * x0 + permGrad3y[gi0]! * y0 + permGrad3z[gi0]! * z0)
+        (permGrad3x[gi0] * x0 + permGrad3y[gi0] * y0 + permGrad3z[gi0] * z0)
     }
     let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1
     if (t1 < 0) n1 = 0.0
     else {
-      const gi1 = ii + i1 + perm[jj + j1 + perm[kk + k1]!]!
+      const gi1 = ii + i1 + perm[jj + j1 + perm[kk + k1]]
       t1 *= t1
       n1 =
         t1 *
         t1 *
-        (permGrad3x[gi1]! * x1 + permGrad3y[gi1]! * y1 + permGrad3z[gi1]! * z1)
+        (permGrad3x[gi1] * x1 + permGrad3y[gi1] * y1 + permGrad3z[gi1] * z1)
     }
     let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2
     if (t2 < 0) n2 = 0.0
     else {
-      const gi2 = ii + i2 + perm[jj + j2 + perm[kk + k2]!]!
+      const gi2 = ii + i2 + perm[jj + j2 + perm[kk + k2]]
       t2 *= t2
       n2 =
         t2 *
         t2 *
-        (permGrad3x[gi2]! * x2 + permGrad3y[gi2]! * y2 + permGrad3z[gi2]! * z2)
+        (permGrad3x[gi2] * x2 + permGrad3y[gi2] * y2 + permGrad3z[gi2] * z2)
     }
     let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3
     if (t3 < 0) n3 = 0.0
     else {
-      const gi3 = ii + 1 + perm[jj + 1 + perm[kk + 1]!]!
+      const gi3 = ii + 1 + perm[jj + 1 + perm[kk + 1]]
       t3 *= t3
       n3 =
         t3 *
         t3 *
-        (permGrad3x[gi3]! * x3 + permGrad3y[gi3]! * y3 + permGrad3z[gi3]! * z3)
+        (permGrad3x[gi3] * x3 + permGrad3y[gi3] * y3 + permGrad3z[gi3] * z3)
     }
     // Add contributions from each corner to get the final noise value.
     // The result is scaled to stay just inside [-1,1]
@@ -375,10 +375,10 @@ type NoiseFunction4D = (x: number, y: number, z: number, w: number) => number
 function createNoise4D(random: UnitRandomFn = Math.random): NoiseFunction4D {
   const perm = buildPermutationTable(random)
   // precalculating these leads to a ~10% speedup
-  const permGrad4x = new Float64Array(perm).map((v) => grad4[(v % 32) * 4]!)
-  const permGrad4y = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 1]!)
-  const permGrad4z = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 2]!)
-  const permGrad4w = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 3]!)
+  const permGrad4x = new Float64Array(perm).map((v) => grad4[(v % 32) * 4])
+  const permGrad4y = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 1])
+  const permGrad4z = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 2])
+  const permGrad4w = new Float64Array(perm).map((v) => grad4[(v % 32) * 4 + 3])
   return function noise4D(x: number, y: number, z: number, w: number): number {
     let n0, n1, n2, n3, n4 // Noise contributions from the five corners
     // Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
@@ -467,67 +467,67 @@ function createNoise4D(random: UnitRandomFn = Math.random): NoiseFunction4D {
     let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0
     if (t0 < 0) n0 = 0.0
     else {
-      const gi0 = ii + perm[jj + perm[kk + perm[ll]!]!]!
+      const gi0 = ii + perm[jj + perm[kk + perm[ll]]]
       t0 *= t0
       n0 =
         t0 *
         t0 *
-        (permGrad4x[gi0]! * x0 +
-          permGrad4y[gi0]! * y0 +
-          permGrad4z[gi0]! * z0 +
-          permGrad4w[gi0]! * w0)
+        (permGrad4x[gi0] * x0 +
+          permGrad4y[gi0] * y0 +
+          permGrad4z[gi0] * z0 +
+          permGrad4w[gi0] * w0)
     }
     let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1 - w1 * w1
     if (t1 < 0) n1 = 0.0
     else {
-      const gi1 = ii + i1 + perm[jj + j1 + perm[kk + k1 + perm[ll + l1]!]!]!
+      const gi1 = ii + i1 + perm[jj + j1 + perm[kk + k1 + perm[ll + l1]]]
       t1 *= t1
       n1 =
         t1 *
         t1 *
-        (permGrad4x[gi1]! * x1 +
-          permGrad4y[gi1]! * y1 +
-          permGrad4z[gi1]! * z1 +
-          permGrad4w[gi1]! * w1)
+        (permGrad4x[gi1] * x1 +
+          permGrad4y[gi1] * y1 +
+          permGrad4z[gi1] * z1 +
+          permGrad4w[gi1] * w1)
     }
     let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2 - w2 * w2
     if (t2 < 0) n2 = 0.0
     else {
-      const gi2 = ii + i2 + perm[jj + j2 + perm[kk + k2 + perm[ll + l2]!]!]!
+      const gi2 = ii + i2 + perm[jj + j2 + perm[kk + k2 + perm[ll + l2]]]
       t2 *= t2
       n2 =
         t2 *
         t2 *
-        (permGrad4x[gi2]! * x2 +
-          permGrad4y[gi2]! * y2 +
-          permGrad4z[gi2]! * z2 +
-          permGrad4w[gi2]! * w2)
+        (permGrad4x[gi2] * x2 +
+          permGrad4y[gi2] * y2 +
+          permGrad4z[gi2] * z2 +
+          permGrad4w[gi2] * w2)
     }
     let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3 - w3 * w3
     if (t3 < 0) n3 = 0.0
     else {
-      const gi3 = ii + i3 + perm[jj + j3 + perm[kk + k3 + perm[ll + l3]!]!]!
+      const gi3 = ii + i3 + perm[jj + j3 + perm[kk + k3 + perm[ll + l3]]]
       t3 *= t3
       n3 =
         t3 *
         t3 *
-        (permGrad4x[gi3]! * x3 +
-          permGrad4y[gi3]! * y3 +
-          permGrad4z[gi3]! * z3 +
-          permGrad4w[gi3]! * w3)
+        (permGrad4x[gi3] * x3 +
+          permGrad4y[gi3] * y3 +
+          permGrad4z[gi3] * z3 +
+          permGrad4w[gi3] * w3)
     }
     let t4 = 0.6 - x4 * x4 - y4 * y4 - z4 * z4 - w4 * w4
     if (t4 < 0) n4 = 0.0
     else {
-      const gi4 = ii + 1 + perm[jj + 1 + perm[kk + 1 + perm[ll + 1]!]!]!
+      const gi4 = ii + 1 + perm[jj + 1 + perm[kk + 1 + perm[ll + 1]]]
       t4 *= t4
       n4 =
         t4 *
         t4 *
-        (permGrad4x[gi4]! * x4 +
-          permGrad4y[gi4]! * y4 +
-          permGrad4z[gi4]! * z4 +
-          permGrad4w[gi4]! * w4)
+        (permGrad4x[gi4] * x4 +
+          permGrad4y[gi4] * y4 +
+          permGrad4z[gi4] * z4 +
+          permGrad4w[gi4] * w4)
     }
     // Sum up and scale the result to cover the range [-1,1]
     return 27.0 * (n0 + n1 + n2 + n3 + n4)
@@ -548,7 +548,7 @@ function buildPermutationTable(random: UnitRandomFn): Uint8Array {
   }
   for (let i = 0; i < tableSize / 2 - 1; i++) {
     const r = i + ~~(random() * (256 - i))
-    const aux = p[i]!
+    const aux = p[i]
     p[i] = p[r]!
     p[r] = aux
   }

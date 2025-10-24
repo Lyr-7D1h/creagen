@@ -6,7 +6,7 @@ export class Audio {
   private audioContext: AudioContext | null = null
   private analyser: AnalyserNode | null = null
   private microphone: MediaStreamAudioSourceNode | null = null
-  private fftSize: number = 2048
+  private readonly fftSize: number = 2048
   private stream: MediaStream | null = null
   private intialized: boolean = false
 

@@ -133,7 +133,7 @@ export class NDArray<I extends Data> {
     const data = this._data
 
     return {
-      next: () => ({ value: data[++index]!, done: !(index in data) }),
+      next: () => ({ value: data[++index], done: !(index in data) }),
     }
   }
 
@@ -156,7 +156,7 @@ export class NDArray<I extends Data> {
         return {
           next: () => {
             index[last]++
-            if (index[last]! >= this.array._shape[last]!) {
+            if (index[last] >= this.array._shape[last]) {
               // if 1d then stop
               if (index.length === 1) return { value: 0, done: true }
 
@@ -165,7 +165,7 @@ export class NDArray<I extends Data> {
               let i = 1
               index[last - i]++
               // keep resetting and lowering indexes until the lowest index is too big
-              while (index[last - i]! >= this.array._shape[last - i]!) {
+              while (index[last - i] >= this.array._shape[last - i]) {
                 if (last - i === 0) return { value: 0, done: true }
                 index[last - i] = 0
                 i++

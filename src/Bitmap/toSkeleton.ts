@@ -10,11 +10,11 @@ export function toSkeleton(map: Bitmap) {
   const voronoi = delaunay.voronoi([0, 0, map.width, map.height])
 
   const seen = new Set()
-  let medialEdges: [number, number][] = []
+  const medialEdges: [number, number][] = []
   for (let i = 0; i < boundaryPoints.length; i++) {
     const cell = voronoi.cellPolygon(i)
     if (!cell) continue
-    for (let [x, y] of cell) {
+    for (const [x, y] of cell) {
       const key = x + ',' + y
       if (seen.has(key)) continue
 

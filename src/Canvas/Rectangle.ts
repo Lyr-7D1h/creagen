@@ -19,7 +19,7 @@ export class Rectangle extends Geometry<RectangleOptions> {
     this.x = x
     this.y = y
     this.width = width
-    this.height = height as number
+    this.height = height
   }
 
   _svg() {
@@ -37,6 +37,6 @@ export class Rectangle extends Geometry<RectangleOptions> {
 
   _canvas(ctx: CanvasRenderingContext2D) {
     this._applyCanvasOptions(ctx)
-    ctx.fillRect(this.x, this.y, this.width!, this.height)
+    ctx.fillRect(this.x, this.y, this.width, this.height)
   }
 }

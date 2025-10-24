@@ -33,22 +33,22 @@ import { vec, Vector } from './Vector'
  * Inspired by https://github.com/matthias-research/pages/blob/master/tenMinutePhysics/11-hashing.html#L293
  */
 export class SpatialMap {
-  private wrap: boolean
+  private readonly wrap: boolean
 
   private cellStart: Int32Array
   private cellEntries: Int32Array
   private queryIds: Int32Array
   private querySize: number
-  private spacing: number
+  private readonly spacing: number
 
   private positionsSize: number
-  private positions: Vector<2>[]
+  private readonly positions: Vector<2>[]
 
-  private width: number
-  private height: number
+  private readonly width: number
+  private readonly height: number
 
-  private rowLength: number
-  private columnLength: number
+  private readonly rowLength: number
+  private readonly columnLength: number
 
   constructor(
     width: number,
@@ -95,14 +95,14 @@ export class SpatialMap {
 
     let start = 0
     for (let i = 0; i < this.cellStart.length; i++) {
-      start += this.cellStart[i]!
+      start += this.cellStart[i]
       this.cellStart[i] = start
     }
 
     for (let ci = 0; ci < this.positions.length; ci++) {
-      const i = this.getIndex(this.positions[ci]!)
+      const i = this.getIndex(this.positions[ci])
       this.cellStart[i]--
-      this.cellEntries[this.cellStart[i]!] = ci
+      this.cellEntries[this.cellStart[i]] = ci
     }
   }
 
@@ -168,7 +168,7 @@ export class SpatialMap {
     distance: number,
   ): Iterator<[number, Vector<2>, number]> {
     const positions = this.positions
-    const p = typeof i === 'number' ? this.positions[i]! : i
+    const p = typeof i === 'number' ? this.positions[i] : i
 
     // can at maximum be in the top right corner which is (distance + start of block) * 2*sqrt(2) (~2.82)
     const distanceSquared = distance ** 2
@@ -185,7 +185,7 @@ export class SpatialMap {
       [Symbol.iterator]() {
         let i = -1
 
-        const next: any = () => {
+        const next = () => {
           i++
           if (i >= this.size) {
             return {
@@ -193,8 +193,8 @@ export class SpatialMap {
               done: true,
             }
           }
-          const ni = this.ids[i]!
-          const cn = positions[ni]!
+          const ni = this.ids[i]
+          const cn = positions[ni]
           const pn = cn
 
           let dir = pn.clone().sub(p)
@@ -217,7 +217,7 @@ export class SpatialMap {
           }
 
           return {
-            value: [this.ids[i]!, dir, dirMag2],
+            value: [this.ids[i], dir, dirMag2] as [number, Vector<2>, number],
             done: false,
           }
         }
@@ -238,13 +238,13 @@ export class SpatialMap {
     i: number | Vector<2>,
     distance: number,
   ): Iterator<number> {
-    const { x, y } = typeof i === 'number' ? this.positions[i]! : i
+    const { x, y } = typeof i === 'number' ? this.positions[i] : i
     this.querySize = 0
 
     let x0 = Math.floor((x - distance) / this.spacing)
     let y0 = Math.floor((y - distance) / this.spacing)
 
-    let x1 = Math.floor((x + distance) / this.spacing)
+    const x1 = Math.floor((x + distance) / this.spacing)
     let y1 = Math.floor((y + distance) / this.spacing)
 
     if (!this.wrap) {
@@ -259,11 +259,11 @@ export class SpatialMap {
         const index = this.get(xi, yi)
 
         for (
-          let j = this.cellStart[index]!;
-          j < this.cellStart[index + 1]!;
+          let j = this.cellStart[index];
+          j < this.cellStart[index + 1];
           j++
         ) {
-          const ci = this.cellEntries[j]!
+          const ci = this.cellEntries[j]
           // // skip current cell
           if (ci === i) continue
           this.queryIds[this.querySize] = ci
@@ -287,7 +287,7 @@ export class SpatialMap {
               }
             }
             return {
-              value: this.ids[i]!,
+              value: this.ids[i],
               done: false,
             }
           },

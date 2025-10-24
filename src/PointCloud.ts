@@ -150,7 +150,7 @@ export class PointCloud<N extends number> {
 
   private constructor(
     private points: Float64Array,
-    private dimensions: N,
+    private readonly dimensions: N,
   ) {}
 
   get size() {

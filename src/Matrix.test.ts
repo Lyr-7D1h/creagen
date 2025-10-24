@@ -25,7 +25,7 @@ test('get', () => {
   expect(matrix.rows).toBe(2)
   expect(matrix.cols).toBe(2)
   expect(matrix.length).toBe(4)
-  let matrix4 = new Matrix<4, 2>([
+  const matrix4 = new Matrix<4, 2>([
     [1, 2],
     [3, 4],
     [5, 6],

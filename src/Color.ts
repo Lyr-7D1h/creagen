@@ -41,7 +41,7 @@ export class Color extends Vector<4> {
   override within(bounds: FlatBounds<4>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
-      if (this[i]! < start || this[i]! > stop) {
+      if (this[i] < start || this[i] > stop) {
         return false
       }
     }
@@ -53,7 +53,7 @@ export class Color extends Vector<4> {
   override wrapAround(bounds: FlatBounds<4> | []) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (bounds as any)[i] as [number, number]
-      const v = this[i]!
+      const v = this[i]
       if (v < start) {
         const diff = stop - start
         this[i] = stop - ((start - v) % diff)
@@ -144,7 +144,7 @@ export class Color extends Vector<4> {
   }
 
   get r() {
-    return this[0]!
+    return this[0]
   }
 
   set r(v: number) {
@@ -152,7 +152,7 @@ export class Color extends Vector<4> {
   }
 
   get g() {
-    return this[1]!
+    return this[1]
   }
 
   set g(v: number) {
@@ -160,7 +160,7 @@ export class Color extends Vector<4> {
   }
 
   get b() {
-    return this[2]!
+    return this[2]
   }
 
   set b(v: number) {
@@ -168,7 +168,7 @@ export class Color extends Vector<4> {
   }
 
   get a() {
-    return this[3]!
+    return this[3]
   }
 
   set a(v: number) {

@@ -75,7 +75,7 @@ export class CDF {
 
     // update probabilities
     for (let i = 0; i < this.p.length; i++) {
-      this.p[i] = Math.roundToDec((this.p[i]! + p[i]!) / 2)
+      this.p[i] = Math.roundToDec((this.p[i] + p[i]) / 2)
     }
 
     // update cdf

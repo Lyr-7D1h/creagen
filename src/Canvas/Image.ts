@@ -5,7 +5,7 @@ export interface ImageOptions {}
 
 export class Image extends Renderable {
   constructor(
-    private img: ImageData,
+    private readonly img: ImageData,
     public x: number,
     public y: number,
     public width: number,

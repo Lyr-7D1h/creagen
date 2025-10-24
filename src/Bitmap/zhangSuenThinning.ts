@@ -5,7 +5,7 @@ export function zhangSuenThinning(map: Bitmap) {
   const width = map.width
 
   let changed = true
-  let out = map.clone()
+  const out = map.clone()
 
   while (changed) {
     changed = false

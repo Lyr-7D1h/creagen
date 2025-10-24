@@ -31,7 +31,7 @@ export class Bitmap {
   constructor(
     public readonly width,
     public readonly height,
-    private data: Uint8Array,
+    private readonly data: Uint8Array,
   ) {}
 
   // Compute bit index for (x, y)
@@ -134,7 +134,7 @@ export class Bitmap {
     this.forEach((v, i) => {
       if (!v) return
 
-      let [x, y] = this.indexToCoords(i)
+      const [x, y] = this.indexToCoords(i)
 
       // A point is on the boundary if it's on the edge of the bitmap
       if (x === 0 || x === this.width - 1 || y === 0 || y === this.height - 1) {

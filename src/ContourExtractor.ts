@@ -71,12 +71,12 @@ export interface Contour {
  * Finds all contours (boundaries) of connected components in a bitmap
  */
 export class ContourExtractor {
-  private tree: Tree<Contour> = Tree.create()
+  private readonly tree: Tree<Contour> = Tree.create()
   /** Quick lookup table for finding contours with the same nbd label (2^7) */
   private ctable = new Array(MASK8_LVAL).fill(null)
 
-  private offsetX = -1
-  private offsetY = -1
+  private readonly offsetX = -1
+  private readonly offsetY = -1
   /**
    * Last Neigborhood Boundary Position
    *
@@ -182,7 +182,7 @@ export class ContourExtractor {
           isHole = true
         }
 
-        const lval = this.image[this.coordsToIndex(...this.lnbd)]! & MASK8_LVAL
+        const lval = this.image[this.coordsToIndex(...this.lnbd)] & MASK8_LVAL
         let parent = this.findFirstBoundingContour(y, lval)
 
         // if current contour is a hole and previous contour is a hole or
@@ -190,7 +190,7 @@ export class ContourExtractor {
         // the parent of the contour is the parent of the previous contour else
         // the parent is the previous contour itself.
         if (parent) {
-          let parentNode = this.tree.get(parent)
+          const parentNode = this.tree.get(parent)
           if (parentNode.isHole === isHole) {
             if (this.tree.getParent(parent) !== null) {
               parent = parent
@@ -277,7 +277,7 @@ export class ContourExtractor {
     isHole: boolean,
   ): boolean {
     const stopPtr = this.coordsToIndex(end[0], end[1])
-    let i0 = this.coordsToIndex(start[0], start[1])
+    const i0 = this.coordsToIndex(start[0], start[1])
     let i1: number,
       i3: number,
       i4: number = -1
