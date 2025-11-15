@@ -39,8 +39,12 @@ export class Color extends Vector<4> {
 
   /** Check if a number is within `limits` */
   override within(bounds: FlatBounds<4>): boolean {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [start, stop] = (bounds as any)[i] as [number, number]
+      const start = bounds[d]
+      d++
+      const stop = bounds[d]
+      d++
       if (this[i] < start || this[i] > stop) {
         return false
       }
@@ -51,8 +55,13 @@ export class Color extends Vector<4> {
   /** if a number is above or below a limit it correct it so it is within the boundary limits */
   // added empty array union to `bounds` due to typescript bug
   override wrapAround(bounds: FlatBounds<4> | []) {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [start, stop] = (bounds as any)[i] as [number, number]
+      const start = bounds[d]
+      d++
+      const stop = bounds[d]
+      d++
+
       const v = this[i]
       if (v < start) {
         const diff = stop - start

@@ -2,8 +2,6 @@ import { UnitRandomFn } from './Random'
 
 // ========== STATIC ITERATOR GENERATORS ==========
 
-function range(start: number, stop?: number): Generator<number>
-function range(stop: number): Generator<number>
 function* range(x1: number, x2?: number): Generator<number> {
   const stop = typeof x2 === 'undefined' ? x1 : x2
   const start = typeof x2 === 'undefined' ? 0 : x1
@@ -41,6 +39,7 @@ export class Iter<T> implements Iterable<T> {
 
   /** Split the iterable into chunks of specified size */
   chunk(chunkSize: number): Iter<T[]> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     return new Iter(
       (function* () {
@@ -69,6 +68,7 @@ export class Iter<T> implements Iterable<T> {
 
   /** Randomize the order of items */
   randomize(length: number, randomFn: UnitRandomFn = Math.random): Iter<T> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     return new Iter(
       (function* () {
@@ -89,6 +89,7 @@ export class Iter<T> implements Iterable<T> {
 
   /** Map each item to a new value */
   map<U>(fn: (item: T, index: number) => U): Iter<U> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     return new Iter(
       (function* () {
@@ -103,6 +104,7 @@ export class Iter<T> implements Iterable<T> {
 
   /** Filter items based on a predicate */
   filter(fn: (item: T, index: number) => boolean): Iter<T> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     return new Iter(
       (function* () {

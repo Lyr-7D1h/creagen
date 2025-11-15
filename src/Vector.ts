@@ -326,24 +326,30 @@ export class Vector<N extends number> extends Array<number> {
     return spread / this.length
   }
 
-  chunk(size: number): Vector<any>[] {
+  chunk<N extends number>(size: N): Vector<N>[] {
     if (size < 0 || !Number.isFinite(size)) {
       throw Error('size must be a positive number')
     }
     let index = 0,
-      resIndex = 0,
-      result = Array(Math.ceil(this.length / size))
+      resIndex = 0
+    const result = Array<Vector<N>>(Math.ceil(this.length / size))
 
     while (index < this.length) {
-      result[resIndex++] = this.slice(index, (index += size))
+      result[resIndex++] = new Vector(
+        this.slice(index, (index += size)),
+      ) as Vector<N>
     }
     return result
   }
 
   /** Check if a number is within `limits` */
   within(bounds: FlatBounds<N>): boolean {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [start, stop] = (bounds as any)[i] as [number, number]
+      const start = bounds[d] as number
+      d++
+      const stop = bounds[d] as number
+      d++
       if (this[i] < start || this[i] > stop) {
         return false
       }
@@ -409,8 +415,13 @@ export class Vector<N extends number> extends Array<number> {
 
   /** if a number is above or below a limit it correct it so it is within the boundary limits */
   wrapAround(bounds: FlatBounds<N>) {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [start, stop] = (bounds as any)[i] as [number, number]
+      const start = bounds[d] as number
+      d++
+      const stop = bounds[d] as number
+      d++
+
       const v = this[i]
       if (v < start) {
         const diff = stop - start
@@ -425,10 +436,12 @@ export class Vector<N extends number> extends Array<number> {
 
   /** Clamp each dimension to stay within bounds */
   clamp(bounds: FlatBounds<N>): this {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const d = i * 2
-      const min = bounds[d]
-      const max = bounds[d + 1]
+      const min = bounds[d] as number
+      d++
+      const max = bounds[d] as number
+      d++
       this[i] = Math.max(min, Math.min(max, this[i]))
     }
     return this
@@ -444,8 +457,12 @@ export class Vector<N extends number> extends Array<number> {
 
   /** Reflect off bounds when hitting them (bouncing behavior) */
   reflect(bounds: FlatBounds<N>): this {
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [min, max] = (bounds as any)[i] as [number, number]
+      const min = bounds[d] as number
+      d++
+      const max = bounds[d] as number
+      d++
       const v = this[i]
 
       if (v < min) {
@@ -462,8 +479,13 @@ export class Vector<N extends number> extends Array<number> {
     // Find the scale factor needed for each dimension
     let minScale = Infinity
 
+    let d = 0
     for (let i = 0; i < this.length; i++) {
-      const [min, max] = (bounds as any)[i] as [number, number]
+      const min = bounds[d] as number
+      d++
+      const max = bounds[d] as number
+      d++
+
       const v = this[i]
       const range = max - min
 
