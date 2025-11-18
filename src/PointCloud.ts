@@ -262,21 +262,16 @@ export class PointCloud<N extends number> {
    *
    * @param bounds [xmin, ymin, xmax, ymax] - The bounds for the point cloud
    * @param iterations Number of Lloyd iterations to perform (default: 1)
+   * @param tolerance When average movement per iteration is lower than this amount it will stop iterating if `undefined` it is calculated based on boundary size
+   * @param weight Make it weighted, giving a certain bias towards certain values, this is basically [Voronoi Weighted Stippling](https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf) when used with a random sampling technique like [Rejection Sampling](https://en.wikipedia.org/wiki/Rejection_sampling) for getting points on darker/lighter parts of an image @returns a number between 0-1 giving the weight of that point
+   *
    * @returns The updated points array
    */
   lloyd(
     this: PointCloud<2>,
     bounds: FlatBounds<2>,
     iterations: number = 1,
-    /** When average movement per iteration is lower than this amount it will stop iterating
-     * if `undefined` it is calculated based on boundary size */
     tolerance?: number,
-    /**
-     * Make it weighted, giving a certain bias towards certain values,
-     * this is basically [Voronoi Weighted Stippling](https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf) when used with a random
-     * sampling technique like [Rejection Sampling](https://en.wikipedia.org/wiki/Rejection_sampling) for getting points on darker/lighter parts of an image
-     * @returns a number between 0-1 giving the weight of that point
-     * */
     weight: (x: number, y: number) => number = () => 1,
   ) {
     // inspiration: https://observablehq.com/@mbostock/voronoi-stippling
