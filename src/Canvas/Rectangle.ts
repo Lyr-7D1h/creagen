@@ -1,6 +1,6 @@
 import { GeometricOptions, Geometry } from './Geometry'
 
-export interface RectangleOptions extends GeometricOptions {}
+export type RectangleOptions = GeometricOptions
 
 export class Rectangle extends Geometry<RectangleOptions> {
   x: number

@@ -57,7 +57,7 @@ export abstract class Geometry<
   }
 
   _applySvgOptions(element: SVGElement) {
-    element.setAttribute('stroke', this.options.stroke.hex() ?? 'black')
+    element.setAttribute('stroke', this.options.stroke.hex())
     element.setAttribute(
       'fill',
       this.options.fill === null ? 'none' : this.options.fill.hex(),

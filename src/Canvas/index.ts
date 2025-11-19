@@ -157,6 +157,7 @@ export class Canvas<R extends RenderMode> {
   ): Rectangle {
     if (Conversion.isArrayLike(x1)) {
       const p = Conversion.toFixedNumberArray(x1, 2)
+      x5 = x4 as Partial<RectangleOptions>
       x3 = x2
       x4 = x3
       x1 = p[0]
@@ -272,7 +273,7 @@ export class Canvas<R extends RenderMode> {
     return line
   }
 
-  async load() {
+  load() {
     // if svg
     if (!this.ctx) {
       for (const c of this.children) {
@@ -282,7 +283,7 @@ export class Canvas<R extends RenderMode> {
     }
 
     for (const c of this.children) {
-      await c._canvas(this.ctx)
+      c._canvas(this.ctx)
     }
   }
 
@@ -291,8 +292,8 @@ export class Canvas<R extends RenderMode> {
     return [0, this.width, 0, this.height]
   }
 
-  async html(): Promise<SVGElement | HTMLCanvasElement> {
-    await this.load()
+  html(): SVGElement | HTMLCanvasElement {
+    this.load()
     return this.element
   }
 }
