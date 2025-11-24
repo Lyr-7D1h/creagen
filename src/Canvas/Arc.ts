@@ -1,6 +1,6 @@
 import { GeometricOptions, Geometry } from './Geometry'
 
-export interface ArcOptions extends GeometricOptions {}
+export type ArcOptions = GeometricOptions
 export class Arc extends Geometry {
   constructor(
     options: GeometricOptions,
@@ -15,10 +15,12 @@ export class Arc extends Geometry {
   }
 
   override _svg(): SVGCircleElement {
+    this._dirty = false
     throw Error('Not implemented')
   }
 
   override _canvas(ctx: CanvasRenderingContext2D) {
+    this._dirty = false
     ctx.beginPath()
     ctx.arc(
       this.x,

@@ -28,6 +28,7 @@ export abstract class Geometry<
    * Set stroke width for the path
    */
   strokeWidth(width: number): this {
+    this._dirty = true
     this.options.strokeWidth = width
     return this
   }
@@ -36,6 +37,7 @@ export abstract class Geometry<
    * Set stroke color for the path
    */
   stroke(color: Color): this {
+    this._dirty = true
     this.options.stroke = color
     return this
   }
@@ -44,6 +46,7 @@ export abstract class Geometry<
    * Set fill color for the path
    */
   fill(color: Color | null): this {
+    this._dirty = true
     this.options.fill = color
     return this
   }
@@ -52,6 +55,7 @@ export abstract class Geometry<
    * Set fill opacity for the path
    */
   fillOpacity(opacity: number): this {
+    this._dirty = true
     this.options.fillOpacity = opacity
     return this
   }

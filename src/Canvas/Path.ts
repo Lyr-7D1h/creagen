@@ -36,6 +36,7 @@ export class Path extends Geometry<PathOptions> {
 
   private newSegment(): void {
     const points: Vector<2>[] = []
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
     if (this.currentPoints) {
       const pointsLength = this.currentPoints.length
       // don't do anything if segment is empty
@@ -55,6 +56,7 @@ export class Path extends Geometry<PathOptions> {
    * Set stroke width for the path
    */
   override strokeWidth(width: number): this {
+    this._dirty = true
     if (this.options.strokeWidth === width) return this
     this.newSegment()
     super.strokeWidth(width)
@@ -65,6 +67,7 @@ export class Path extends Geometry<PathOptions> {
    * Set stroke color for the path
    */
   override stroke(color: Color): this {
+    this._dirty = true
     if (this.options.stroke === color) return this
     this.newSegment()
     super.stroke(color)
@@ -75,6 +78,7 @@ export class Path extends Geometry<PathOptions> {
    * Set fill color for the path
    */
   override fill(color: Color | null): this {
+    this._dirty = true
     if (this.options.fill === color) return this
     this.newSegment()
     super.fill(color)
@@ -85,6 +89,7 @@ export class Path extends Geometry<PathOptions> {
    * Set fill opacity for the path
    */
   override fillOpacity(opacity: number): this {
+    this._dirty = true
     if (this.options.fillOpacity === opacity) return this
     this.newSegment()
     super.fillOpacity(opacity)
@@ -96,6 +101,7 @@ export class Path extends Geometry<PathOptions> {
    * @param tension Control curve tension (0.0-1.0): higher values make sharper curves, by default smooth (0)
    */
   smooth(tension: number = 0): this {
+    this._dirty = true
     if (this.options.tension === tension) return this
     this.newSegment()
     this.options.tension = tension
@@ -106,6 +112,7 @@ export class Path extends Geometry<PathOptions> {
    * Set whether the path should be closed (connect first and last points)
    */
   closed(closed: boolean = true): this {
+    this._dirty = true
     if (this.options.closed === closed) return this
     this.newSegment()
     this.options.closed = closed
@@ -116,6 +123,7 @@ export class Path extends Geometry<PathOptions> {
    * Set wrap around bounds for the path
    */
   wrapAround(bounds: FlatBounds<2> | null): this {
+    this._dirty = true
     if (this.options.wrapAround === bounds) return this
     this.newSegment()
     this.options.wrapAround = bounds
@@ -153,6 +161,7 @@ export class Path extends Geometry<PathOptions> {
     x1: number | ArrayLike<number> | ArrayLike<ArrayLike<number>>,
     x2?: number,
   ): this {
+    this._dirty = true
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.currentPoints.push(vec(x1, x2))
     } else if (Array.isArray(x1)) {
@@ -169,6 +178,7 @@ export class Path extends Geometry<PathOptions> {
   }
 
   _svg(): SVGPathElement | SVGGElement {
+    this._dirty = false
     // If all segments have the same visual options, combine them into one path
     const hasUniformOptions = this._segments.every(
       (segment) =>
@@ -236,6 +246,7 @@ export class Path extends Geometry<PathOptions> {
   }
 
   _canvas(ctx: CanvasRenderingContext2D): void {
+    this._dirty = false
     // Render each segment with its own options
     for (const segment of this._segments) {
       if (segment.points.length === 0) continue

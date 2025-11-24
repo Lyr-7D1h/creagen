@@ -277,12 +277,14 @@ export class Canvas<R extends RenderMode> {
     // if svg
     if (!this.ctx) {
       for (const c of this.children) {
+        if (!c._dirty) continue
         this.element.appendChild(c._svg())
       }
       return
     }
 
     for (const c of this.children) {
+      if (!c._dirty) continue
       c._canvas(this.ctx)
     }
   }

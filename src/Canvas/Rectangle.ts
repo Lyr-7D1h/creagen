@@ -23,6 +23,7 @@ export class Rectangle extends Geometry<RectangleOptions> {
   }
 
   _svg() {
+    this._dirty = false
     const element = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'rect',
@@ -36,6 +37,7 @@ export class Rectangle extends Geometry<RectangleOptions> {
   }
 
   _canvas(ctx: CanvasRenderingContext2D) {
+    this._dirty = false
     this._applyCanvasOptions(ctx)
     ctx.fillRect(this.x, this.y, this.width, this.height)
   }

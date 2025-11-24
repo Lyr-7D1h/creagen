@@ -10,9 +10,7 @@ export type LoadableObject =
 /** Load a html loadable object into #canvas-container */
 export async function load(loadableObject: LoadableObject) {
   let container = document.getElementById('canvas-container')
-  if (container === null) {
-    container = document.body
-  }
+  container ??= document.body
 
   if (loadableObject instanceof Node) {
     container.appendChild(loadableObject)

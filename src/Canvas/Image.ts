@@ -1,7 +1,7 @@
 import { ImageData as ImageData } from '../ImageData'
 import { Renderable } from './Renderable'
 
-export interface ImageOptions {}
+export type ImageOptions = object
 
 export class Image extends Renderable {
   constructor(
@@ -16,14 +16,17 @@ export class Image extends Renderable {
   }
 
   data() {
+    this._dirty = true
     return this.img
   }
 
   _svg(): SVGCircleElement {
+    this._dirty = false
     throw new Error('not implemented')
   }
 
   async _canvas(ctx: CanvasRenderingContext2D) {
+    this._dirty = false
     const img = await this.img.html()
     if (!img.complete) {
       throw Error('Image has not been loaded')
