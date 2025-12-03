@@ -3,6 +3,7 @@ export type NodeId<T = unknown> = number & {
   readonly __brand: 'NodeId'
   readonly __tree: T
 }
+
 const MAX = 0xffffffff
 export class Tree<T> {
   values: Array<T> = []
