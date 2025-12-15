@@ -1,5 +1,4 @@
 export * as Math from './math'
-export * as graph from './graph'
 export { load, type LoadableObject } from './load'
 export { draw, type DrawFn } from './draw'
 export { Iter } from './iter'

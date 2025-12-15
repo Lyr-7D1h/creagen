@@ -29,20 +29,17 @@ export class RandomNumberGenerator {
     return x1 + Math.round(this.randomFn() * (x2 - x1))
   }
 
+  float(): number
   float(stop: number): number
   float(start: number, stop: number): number
-  float(x1: number, x2?: number) {
+  float(x1?: number, x2?: number) {
+    if (typeof x1 === 'undefined') return this.randomFn()
     return this.randomFn() * (x2 ? Math.diff(x1, x2) : x1) + x1
-  }
-
-  /** Get a random number between 0 and 1 */
-  random() {
-    return this.randomFn()
   }
 
   bool(p: number = 0.5) {
     if (p < 0 || p > 1) throw Error('Requires a float between 0 and 1')
-    return this.random() < p
+    return this.float() < p
   }
 }
 

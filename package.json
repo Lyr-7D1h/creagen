@@ -3,7 +3,7 @@
   "version": "0.0.19",
   "description": "",
   "type": "module",
-  "browser": "./dist/creagen.mjs",
+  "browser": "./dist/creagen.js",
   "files": [
     "dist"
   ],

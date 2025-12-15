@@ -31,19 +31,15 @@ export class Random {
     return defaultRng.integer(x1, x2!)
   }
 
+  static float(): number
   static float(stop: number): number
   static float(start: number, stop: number): number
-  static float(x1: number, x2?: number) {
-    return defaultRng.float(x1, x2!)
+  static float(x1?: number, x2?: number) {
+    return defaultRng.float(x1 as number, x2!)
   }
 
   static perlin(x: number, y: number, z: number) {
     return perlin(x, y, z)
-  }
-
-  /** Get a random number between 0 and 1 */
-  static random() {
-    return defaultRng.random()
   }
 
   static bool(p: number = 0.5) {
