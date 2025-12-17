@@ -68,9 +68,9 @@ export class Random {
 
   /** Exponentially distributed random number https://en.wikipedia.org/wiki/Exponential_distribution bounded to never exceed 1*/
   static truncatedExponential(lambda: number, uniformGenerator?: RandomFn) {
+    const u = uniformGenerator ? uniformGenerator : Math.random
     return new RandomNumberGenerator(() => {
-      const u = uniformGenerator ? uniformGenerator() : Math.random()
-      return -Math.log(1 - u * (1 - Math.exp(-lambda))) / lambda
+      return -Math.log(1 - u() * (1 - Math.exp(-lambda))) / lambda
     })
   }
 
