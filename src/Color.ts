@@ -208,6 +208,7 @@ export class Color extends Vector<4> {
     this.r = Math.floor(this.r)
     this.g = Math.floor(this.g)
     this.b = Math.floor(this.b)
+    this.a = Math.floor(this.a)
     return this
   }
 
@@ -226,14 +227,10 @@ export class Color extends Vector<4> {
   }
 
   gradient(color: Color, percentage: number) {
-    let d = color.r - this.r
-    this.r += Math.sign(d) * Math.abs(d) * percentage
-    d = color.g - this.g
-    this.g += Math.sign(d) * Math.abs(d) * percentage
-    d = color.b - this.b
-    this.b += Math.sign(d) * Math.abs(d) * percentage
-    d = color.a - this.a
-    this.a += Math.sign(d) * Math.abs(d) * percentage
+    this.r += (color.r - this.r) * percentage
+    this.g += (color.g - this.g) * percentage
+    this.b += (color.b - this.b) * percentage
+    this.a += (color.a - this.a) * percentage
     return this.normalize()
   }
 
