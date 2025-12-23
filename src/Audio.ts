@@ -1,161 +1,171 @@
+import Meyda, { MeydaAudioFeature, MeydaFeaturesObject } from 'meyda'
+
+export type Feature = MeydaAudioFeature | 'bpm'
+
+const ALL_MEYDA_FEATURES: Feature[] = [
+  'amplitudeSpectrum',
+  'buffer',
+  'chroma',
+  'complexSpectrum',
+  'energy',
+  'loudness',
+  'mfcc',
+  'perceptualSharpness',
+  'perceptualSpread',
+  'powerSpectrum',
+  'rms',
+  'spectralCentroid',
+  'spectralFlatness',
+  'spectralKurtosis',
+  'spectralRolloff',
+  'spectralSkewness',
+  'spectralSlope',
+  'spectralSpread',
+  'zcr',
+  'bpm',
+]
+
+export type FeatureResponse = Partial<MeydaFeaturesObject> & { bpm?: number }
+
 /**
  * Audio class for analyzing audio from web browser
- * Provides real-time access to FFT data and amplitude
+ * Provides real-time access to FFT data, amplitude, and advanced audio features via Meyda
  */
 export class Audio {
-  private audioContext: AudioContext | null = null
-  private analyser: AnalyserNode | null = null
-  private microphone: MediaStreamAudioSourceNode | null = null
-  private readonly fftSize: number = 2048
-  private stream: MediaStream | null = null
-  private intialized: boolean = false
+  private audioContext: AudioContext
+  private analyser: AnalyserNode
 
-  // FFT data arrays
-  private fftData: Uint8Array<ArrayBuffer> | null = null
-  private timeData: Uint8Array<ArrayBuffer> | null = null
-
-  static create(fftSize: number = 2048) {
-    return new Audio(fftSize)
-  }
-
-  constructor(fftSize: number = 2048) {
-    this.fftSize = fftSize
-  }
+  // BPM tracking
+  private lastBeatTime: number = 0
+  private beatIntervals: number[] = []
+  private energyHistory: number[] = []
+  private readonly maxBeatIntervals = 8
+  private readonly historySize = 43
 
   /**
-   * Initialize audio context and analyzer
-   * @returns Promise that resolves when audio is initialized
+   * Create and initialize an Audio instance
+   * @param fftSize Size of FFT analysis (default: 2048)
+   * @returns Promise that resolves with initialized Audio instance
    */
-  public async initialize(): Promise<void> {
-    if (this.intialized) return
+  static async create(fftSize: number = 2048): Promise<Audio> {
+    const audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)()
 
-    try {
-      this.audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)()
+    // Get microphone access
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      // Get microphone access
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const analyser = audioContext.createAnalyser()
+    analyser.fftSize = fftSize
 
-      this.analyser = this.audioContext.createAnalyser()
-      this.analyser.fftSize = this.fftSize
+    const microphone = audioContext.createMediaStreamSource(stream)
+    microphone.connect(analyser)
 
-      this.microphone = this.audioContext.createMediaStreamSource(this.stream)
-      this.microphone.connect(this.analyser)
+    const audio = new Audio(audioContext, analyser)
+    return audio
+  }
 
-      this.fftData = new Uint8Array(this.analyser.frequencyBinCount)
-      this.timeData = new Uint8Array(this.analyser.fftSize)
-
-      this.intialized = true
-    } catch (error) {
-      console.error('Error initializing audio:', error)
-      throw error
-    }
+  private constructor(audioContext: AudioContext, analyser: AnalyserNode) {
+    this.audioContext = audioContext
+    this.analyser = analyser
   }
 
   /**
-   * Get current FFT data
-   * @returns Frequency data as Uint8Array (0-255 values)
+   * Extract audio features using Meyda
+   * @param features Array of feature names to extract, or 'all' for all available features
+   * @returns Object containing the requested audio features
    */
-  public getFFTData(): Uint8Array {
-    if (!this.intialized || !this.analyser || !this.fftData) {
-      throw new Error('Audio not initialized. Call initialize() first')
+  public getFeatures(features: Feature[] | 'all' = 'all'): FeatureResponse {
+    // Get time domain data for Meyda
+    const buffer = new Float32Array(this.analyser.fftSize)
+    this.analyser.getFloatTimeDomainData(buffer)
+
+    const featuresToExtract = features === 'all' ? ALL_MEYDA_FEATURES : features
+
+    // Extract Meyda features (excluding BPM which is custom)
+    const meydaFeatures = featuresToExtract.filter(
+      (f) => f !== 'bpm',
+    ) as Feature[]
+    // If BPM is requested, we also need energy
+    const needsEnergy =
+      featuresToExtract.includes('bpm') && !meydaFeatures.includes('energy')
+    const extractFeatures = needsEnergy
+      ? [...meydaFeatures, 'energy']
+      : meydaFeatures
+
+    const result = Meyda.extract(
+      extractFeatures as MeydaAudioFeature[],
+      buffer,
+    ) as Partial<MeydaFeaturesObject> & { bpm?: number }
+
+    if (featuresToExtract.includes('bpm') && result.energy !== undefined) {
+      result.bpm = this.calculateBPM(result.energy)
     }
 
-    this.analyser.getByteFrequencyData(this.fftData)
-    return this.fftData
+    return result
   }
 
   /**
-   * Get current time domain data
-   * @returns Time domain data as Uint8Array (0-255 values)
+   * Calculate BPM using energy-based beat detection
+   * @param energy Current energy value from Meyda
+   * @returns Current BPM estimate, or undefined if not enough data
    */
-  public getTimeData(): Uint8Array {
-    if (!this.intialized || !this.analyser || !this.timeData) {
-      throw new Error('Audio not initialized. Call initialize() first')
+  private calculateBPM(energy: number): number | undefined {
+    // Update energy history
+    this.energyHistory.push(energy)
+    if (this.energyHistory.length > this.historySize) {
+      this.energyHistory.shift()
     }
 
-    this.analyser.getByteTimeDomainData(this.timeData)
-    return this.timeData
+    // Need enough history for beat detection
+    if (this.energyHistory.length < this.historySize) {
+      return undefined
+    }
+
+    // Calculate average energy and variance for threshold
+    const avgEnergy =
+      this.energyHistory.reduce((sum, e) => sum + e, 0) /
+      this.energyHistory.length
+    const variance =
+      this.energyHistory.reduce((sum, e) => sum + (e - avgEnergy) ** 2, 0) /
+      this.energyHistory.length
+    const threshold = avgEnergy + Math.sqrt(variance) * 1.5
+
+    // Detect beat if current energy exceeds threshold
+    const currentTime = this.audioContext.currentTime
+    const timeSinceLastBeat = currentTime - this.lastBeatTime
+
+    if (energy > threshold && timeSinceLastBeat > 0.3) {
+      // Minimum 200 BPM
+      this.beatIntervals.push(timeSinceLastBeat)
+      if (this.beatIntervals.length > this.maxBeatIntervals) {
+        this.beatIntervals.shift()
+      }
+      this.lastBeatTime = currentTime
+    }
+
+    // Calculate BPM from beat intervals
+    if (this.beatIntervals.length >= 2) {
+      const avgInterval =
+        this.beatIntervals.reduce((sum, interval) => sum + interval, 0) /
+        this.beatIntervals.length
+      return Math.round(60 / avgInterval)
+    }
+
+    return undefined
   }
 
   /**
-   * Get current audio amplitude (volume level)
-   * @returns Number between 0 and 1 representing current amplitude
-   */
-  public getAmplitude(): number {
-    const timeData = this.getTimeData()
-    let sum = 0
-
-    // Calculate RMS (root mean square) of time domain data
-    for (let i = 0; i < timeData.length; i++) {
-      // Convert from 0-255 to -1 to 1
-      const amplitude = (timeData[i] - 128) / 128
-      sum += amplitude * amplitude
-    }
-
-    const rms = Math.sqrt(sum / timeData.length)
-    return rms
-  }
-
-  /**
-   * Get frequency data for a specific frequency range
-   * @param minFreq Minimum frequency in Hz
-   * @param maxFreq Maximum frequency in Hz
-   * @returns Object with averageAmplitude and peak data for the frequency range
-   */
-  public getFrequencyRange(
-    minFreq: number,
-    maxFreq: number,
-  ): {
-    averageAmplitude: number
-    peak: number
-  } {
-    if (!this.intialized || !this.analyser || !this.fftData) {
-      throw new Error('Audio not initialized. Call initialize() first')
-    }
-
-    const fftData = this.getFFTData()
-    const nyquist = this.audioContext!.sampleRate / 2
-    const lowBin = Math.floor(
-      (minFreq / nyquist) * this.analyser.frequencyBinCount,
-    )
-    const highBin = Math.ceil(
-      (maxFreq / nyquist) * this.analyser.frequencyBinCount,
-    )
-
-    let sum = 0
-    let peak = 0
-
-    for (let i = lowBin; i <= highBin && i < fftData.length; i++) {
-      sum += fftData[i]
-      peak = Math.max(peak, fftData[i])
-    }
-
-    const binCount = highBin - lowBin + 1
-    return {
-      averageAmplitude: sum / (binCount * 255), // Normalize to 0-1
-      peak: peak / 255, // Normalize to 0-1
-    }
-  }
-
-  /**
-   * Start a continuous audio stream and call the callback function with analysis data
-   * @param callback Function to call with each frame of audio analysis data
-   * @param fps Frames per second for analysis (default: 30)
+   * Start a feature extraction stream with callback
+   * @param callback Function called with extracted features at each interval
+   * @param features Features to extract ('all' or array of feature names)
+   * @param fps Frames per second for feature extraction (default: 30)
    * @returns Function to call to stop the stream
    */
   public startStream(
-    callback: (data: {
-      fft: Uint8Array
-      amplitude: number
-      timeData: Uint8Array
-    }) => void,
+    callback: (features: Partial<MeydaFeaturesObject>) => void,
+    features: Feature[] | 'all' = 'all',
     fps: number = 30,
   ): () => void {
-    if (!this.intialized) {
-      throw new Error('Audio not initialized. Call initialize() first')
-    }
-
     const interval = 1000 / fps
     let animationId: number
     let lastTime = 0
@@ -168,177 +178,16 @@ export class Audio {
 
       lastTime = time - (elapsed % interval)
 
-      const fft = this.getFFTData()
-      const timeData = this.getTimeData()
-      const amplitude = this.getAmplitude()
-
-      callback({
-        fft: fft,
-        amplitude: amplitude,
-        timeData: timeData,
-      })
+      const extractedFeatures = this.getFeatures(features)
+      if (extractedFeatures) {
+        callback(extractedFeatures)
+      }
     }
 
     animationId = requestAnimationFrame(update)
 
-    // Return function to stop the stream
     return () => {
       cancelAnimationFrame(animationId)
     }
-  }
-
-  /**
-   * Get average audio metrics over a specified time window
-   * @param duration Duration of the time window in milliseconds
-   * @param metrics What metrics to average ("amplitude", "fft", or both)
-   * @returns Promise that resolves with the averaged metrics
-   */
-  public async getTimeWindowAverage(
-    duration: number = 1000,
-    metrics: { amplitude?: boolean; fft?: boolean } = {
-      amplitude: true,
-      fft: true,
-    },
-  ): Promise<{ amplitude?: number; fft?: Uint8Array }> {
-    if (!this.intialized) {
-      throw new Error('Audio not initialized. Call initialize() first')
-    }
-
-    return new Promise((resolve) => {
-      const startTime = Date.now()
-      const samples = {
-        amplitudes: [] as number[],
-        fftFrames: [] as Uint8Array[],
-      }
-
-      const collectSamples = this.startStream((data) => {
-        const elapsed = Date.now() - startTime
-
-        // Collect samples
-        if (metrics.amplitude) {
-          samples.amplitudes.push(data.amplitude)
-        }
-
-        if (metrics.fft) {
-          samples.fftFrames.push(new Uint8Array(data.fft))
-        }
-
-        // Check if we've collected enough data
-        if (elapsed >= duration) {
-          collectSamples() // Stop the stream
-
-          const result: { amplitude?: number; fft?: Uint8Array } = {}
-
-          // Calculate amplitude average
-          if (metrics.amplitude && samples.amplitudes.length > 0) {
-            const amplitudeSum = samples.amplitudes.reduce(
-              (sum, val) => sum + val,
-              0,
-            )
-            result.amplitude = amplitudeSum / samples.amplitudes.length
-          }
-
-          // Calculate FFT average
-          if (metrics.fft && samples.fftFrames.length > 0 && this.fftData) {
-            const avgFFT = new Uint8Array(this.fftData.length)
-
-            // Sum all FFT frames
-            for (let i = 0; i < avgFFT.length; i++) {
-              let sum = 0
-              for (const frame of samples.fftFrames) {
-                sum += frame[i]
-              }
-              avgFFT[i] = Math.round(sum / samples.fftFrames.length)
-            }
-
-            result.fft = avgFFT
-          }
-
-          resolve(result)
-        }
-      })
-    })
-  }
-
-  /**
-   * Get frequency band energy over time
-   * @param bands Array of frequency bands to analyze, each with min and max frequencies in Hz
-   * @param duration Duration to analyze in milliseconds
-   * @returns Promise that resolves with the average energy in each band
-   */
-  public async getFrequencyBandsOverTime(
-    bands: Array<{ name: string; minFreq: number; maxFreq: number }>,
-    duration: number = 1000,
-  ): Promise<Array<{ name: string; averageEnergy: number }>> {
-    if (!this.intialized) {
-      throw new Error('Audio not initialized. Call initialize() first')
-    }
-
-    return new Promise((resolve) => {
-      const startTime = Date.now()
-      const bandSamples = bands.map((band) => ({
-        name: band.name,
-        minFreq: band.minFreq,
-        maxFreq: band.maxFreq,
-        samples: [] as number[],
-      }))
-
-      const collectSamples = this.startStream(() => {
-        const elapsed = Date.now() - startTime
-
-        // Collect samples for each band
-        for (const band of bandSamples) {
-          const { averageAmplitude } = this.getFrequencyRange(
-            band.minFreq,
-            band.maxFreq,
-          )
-          band.samples.push(averageAmplitude)
-        }
-
-        // Check if we've collected enough data
-        if (elapsed >= duration) {
-          collectSamples() // Stop the stream
-
-          // Calculate average for each band
-          const results = bandSamples.map((band) => {
-            const sum = band.samples.reduce((acc, val) => acc + val, 0)
-            const average =
-              band.samples.length > 0 ? sum / band.samples.length : 0
-
-            return {
-              name: band.name,
-              averageEnergy: average,
-            }
-          })
-
-          resolve(results)
-        }
-      })
-    })
-  }
-
-  /**
-   * Clean up and release resources
-   */
-  public dispose(): void {
-    if (this.microphone) {
-      this.microphone.disconnect()
-    }
-
-    if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop())
-    }
-
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close()
-    }
-
-    this.analyser = null
-    this.microphone = null
-    this.audioContext = null
-    this.stream = null
-    this.fftData = null
-    this.timeData = null
-    this.intialized = false
   }
 }
