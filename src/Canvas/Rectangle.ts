@@ -32,13 +32,35 @@ export class Rectangle extends Geometry<RectangleOptions> {
     element.setAttribute('height', this.height.toString())
     element.setAttribute('x', this.x.toString())
     element.setAttribute('y', this.y.toString())
+
+    if (this.options.rotation !== 0) {
+      const cx = this.x + this.width / 2
+      const cy = this.y + this.height / 2
+      const degrees = (this.options.rotation * 180) / Math.PI
+      element.setAttribute('transform', `rotate(${degrees} ${cx} ${cy})`)
+    }
+
     super._applySvgOptions(element)
     return element
   }
 
   _canvas(ctx: CanvasRenderingContext2D) {
     this._dirty = false
+
+    if (this.options.rotation !== 0) {
+      ctx.save()
+      const cx = this.x + this.width / 2
+      const cy = this.y + this.height / 2
+      ctx.translate(cx, cy)
+      ctx.rotate(this.options.rotation)
+      ctx.translate(-cx, -cy)
+    }
+
     this._applyCanvasOptions(ctx)
     ctx.fillRect(this.x, this.y, this.width, this.height)
+
+    if (this.options.rotation !== 0) {
+      ctx.restore()
+    }
   }
 }

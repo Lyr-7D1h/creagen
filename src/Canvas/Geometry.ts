@@ -6,12 +6,14 @@ export const defaultGeometricOptions: GeometricOptions = {
   fillOpacity: 1,
   stroke: Color.BLACK,
   strokeWidth: 1,
+  rotation: 0,
 }
 export interface GeometricOptions {
   fill: Color | null
   fillOpacity: number
   stroke: Color
   strokeWidth: number
+  rotation: number
 }
 
 export abstract class Geometry<
@@ -57,6 +59,15 @@ export abstract class Geometry<
   fillOpacity(opacity: number): this {
     this._dirty = true
     this.options.fillOpacity = opacity
+    return this
+  }
+
+  /**
+   * Set rotation angle in radians
+   */
+  rotate(angle: number): this {
+    this._dirty = true
+    this.options.rotation = angle
     return this
   }
 
