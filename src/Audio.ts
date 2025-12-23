@@ -25,7 +25,7 @@ const ALL_MEYDA_FEATURES: Feature[] = [
   'bpm',
 ]
 
-export type FeatureResponse = Partial<MeydaFeaturesObject> & { bpm?: number }
+export type FeatureResult = Partial<MeydaFeaturesObject> & { bpm?: number }
 
 /**
  * Audio class for analyzing audio from web browser
@@ -74,12 +74,19 @@ export class Audio {
    * @param features Array of feature names to extract, or 'all' for all available features
    * @returns Object containing the requested audio features
    */
-  public getFeatures(features: Feature[] | 'all' = 'all'): FeatureResponse {
+  public getFeatures(
+    features: Feature[] | Feature | 'all' = 'all',
+  ): FeatureResult {
     // Get time domain data for Meyda
     const buffer = new Float32Array(this.analyser.fftSize)
     this.analyser.getFloatTimeDomainData(buffer)
 
-    const featuresToExtract = features === 'all' ? ALL_MEYDA_FEATURES : features
+    const featuresToExtract =
+      features === 'all'
+        ? ALL_MEYDA_FEATURES
+        : Array.isArray(features)
+          ? features
+          : [features]
 
     // Extract Meyda features (excluding BPM which is custom)
     const meydaFeatures = featuresToExtract.filter(
