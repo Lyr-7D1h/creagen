@@ -270,6 +270,64 @@ export class ImageData {
   }
 
   /**
+   * Scale (resize) the image
+   * @param factor Scale factor (e.g., 2 = double size, 0.5 = half size) OR target width
+   * @param height Optional target height (if first param is width). If omitted and factor is provided, scales proportionally
+   * @param interpolation OpenCV interpolation method (default: cv.INTER_LINEAR)
+   * @returns The modified ImageData instance
+   */
+  scale(
+    factor: number,
+    height?: number,
+    interpolation: number = cv.INTER_LINEAR,
+  ): ImageData {
+    let newWidth: number
+    let newHeight: number
+
+    if (typeof height !== 'undefined') {
+      // Interpret as (width, height)
+      newWidth = Math.floor(factor)
+      newHeight = Math.floor(height)
+    } else {
+      // Interpret as scale factor
+      newWidth = Math.floor(this.width * factor)
+      newHeight = Math.floor(this.height * factor)
+    }
+
+    // Ensure dimensions are at least 1
+    newWidth = Math.max(1, newWidth)
+    newHeight = Math.max(1, newHeight)
+
+    const dsize = new cv.Size(newWidth, newHeight)
+    const resized = new cv.Mat()
+
+    try {
+      cv.resize(this.mat, resized, dsize, 0, 0, interpolation)
+
+      // Update internal mat
+      this.mat.delete()
+      Object.defineProperty(this, 'mat', {
+        value: resized,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      })
+
+      // Update pixeldata
+      this.pixeldata = new Uint8ClampedArray(resized.data)
+
+      // Update img dimensions
+      this.img.width = newWidth
+      this.img.height = newHeight
+    } catch (e) {
+      resized.delete()
+      throw e
+    }
+
+    return this
+  }
+
+  /**
    * Adjust brightness of the image
    * @param percentage Brightness multiplier (min: 0, max: 3.0, default: 1.0 = no change, >1.0 = brighter, <1.0 = darker)
    */
