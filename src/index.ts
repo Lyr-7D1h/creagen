@@ -27,7 +27,7 @@ export { Conversion } from './Conversion'
 export { vec, Vector, ALL_DIRECTIONS, DIRECTIONS, DIAGONALS } from './Vector'
 export { matrix, Matrix } from './Matrix'
 export { KMeans } from './SignalProcessing/KMeans'
-export { Audio, Feature, FeatureResult as FeatureResponse } from './Audio'
+export { Audio, type Feature, type FeatureResult } from './Audio'
 export { Bitmap } from './Bitmap'
 export {
   ContourApproximation,
