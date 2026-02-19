@@ -264,17 +264,25 @@ export class Canvas<R extends RenderMode> {
   line(
     x1: ArrayLike<number>,
     x2: ArrayLike<number>,
-    opts?: Partial<PathOptions>,
+    options?: Partial<PathOptions>,
   ) {
-    const line = this.path(opts)
+    const line = new Path({
+      ...defaultGeometricOptions,
+      fill: null,
+      closed: false,
+      wrapAround: null,
+      tension: 1,
+      ...options,
+    })
     line.add(x1)
     line.add(x2)
     this.add(line)
     return line
   }
 
-  load() {
-    // if svg
+  /** Draw to canvas */
+  draw() {
+    // return as svg when no canvas context
     if (!this.ctx) {
       for (const c of this.children) {
         if (!c._dirty) continue
@@ -283,6 +291,7 @@ export class Canvas<R extends RenderMode> {
       return
     }
 
+    console.log(this.children)
     for (const c of this.children) {
       if (!c._dirty) continue
       c._canvas(this.ctx)
@@ -295,7 +304,7 @@ export class Canvas<R extends RenderMode> {
   }
 
   html(): SVGElement | HTMLCanvasElement {
-    this.load()
+    this.draw()
     return this.element
   }
 }

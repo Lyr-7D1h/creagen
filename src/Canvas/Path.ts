@@ -56,8 +56,8 @@ export class Path extends Geometry<PathOptions> {
    * Set stroke width for the path
    */
   override strokeWidth(width: number): this {
-    this._dirty = true
     if (this.options.strokeWidth === width) return this
+    this._dirty = true
     this.newSegment()
     super.strokeWidth(width)
     return this
@@ -67,8 +67,8 @@ export class Path extends Geometry<PathOptions> {
    * Set stroke color for the path
    */
   override stroke(color: Color): this {
-    this._dirty = true
     if (this.options.stroke === color) return this
+    this._dirty = true
     this.newSegment()
     super.stroke(color)
     return this
@@ -78,8 +78,8 @@ export class Path extends Geometry<PathOptions> {
    * Set fill color for the path
    */
   override fill(color: Color | null): this {
-    this._dirty = true
     if (this.options.fill === color) return this
+    this._dirty = true
     this.newSegment()
     super.fill(color)
     return this
@@ -89,8 +89,8 @@ export class Path extends Geometry<PathOptions> {
    * Set fill opacity for the path
    */
   override fillOpacity(opacity: number): this {
-    this._dirty = true
     if (this.options.fillOpacity === opacity) return this
+    this._dirty = true
     this.newSegment()
     super.fillOpacity(opacity)
     return this
@@ -101,8 +101,8 @@ export class Path extends Geometry<PathOptions> {
    * @param tension Control curve tension (0.0-1.0): higher values make sharper curves, by default smooth (0)
    */
   smooth(tension: number = 0): this {
-    this._dirty = true
     if (this.options.tension === tension) return this
+    this._dirty = true
     this.newSegment()
     this.options.tension = tension
     return this
@@ -112,8 +112,8 @@ export class Path extends Geometry<PathOptions> {
    * Set whether the path should be closed (connect first and last points)
    */
   closed(closed: boolean = true): this {
-    this._dirty = true
     if (this.options.closed === closed) return this
+    this._dirty = true
     this.newSegment()
     this.options.closed = closed
     return this
@@ -123,8 +123,8 @@ export class Path extends Geometry<PathOptions> {
    * Set wrap around bounds for the path
    */
   wrapAround(bounds: FlatBounds<2> | null): this {
-    this._dirty = true
     if (this.options.wrapAround === bounds) return this
+    this._dirty = true
     this.newSegment()
     this.options.wrapAround = bounds
     return this
