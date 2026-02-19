@@ -1,9 +1,10 @@
 {
   "name": "creagen",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "",
   "type": "module",
   "browser": "./dist/creagen.js",
+  "types": "./dist/creagen.d.ts",
   "files": [
     "dist"
   ],
