@@ -261,25 +261,6 @@ export class Canvas<R extends RenderMode> {
     return path
   }
 
-  line(
-    x1: ArrayLike<number>,
-    x2: ArrayLike<number>,
-    options?: Partial<PathOptions>,
-  ) {
-    const line = new Path({
-      ...defaultGeometricOptions,
-      fill: null,
-      closed: false,
-      wrapAround: null,
-      tension: 1,
-      ...options,
-    })
-    line.add(x1)
-    line.add(x2)
-    this.add(line)
-    return line
-  }
-
   /** Draw to canvas */
   draw() {
     // return as svg when no canvas context

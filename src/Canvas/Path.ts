@@ -35,6 +35,7 @@ export class Path extends Geometry<PathOptions> {
     this.newSegment()
   }
 
+  /** Create a new path segment with a set of options */
   private newSegment(): void {
     const points: Vector<2>[] = []
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
