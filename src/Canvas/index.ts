@@ -2,13 +2,22 @@ import { ImageData } from '../ImageData'
 import { Color } from '../Color'
 import { Circle, CircleOptions } from './Circle'
 import { Image, ImageOptions } from './Image'
-import { defaultGeometricOptions } from './Geometry'
 import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 import { Arc, ArcOptions } from './Arc'
+import { Text, TextOptions } from './Text'
 import { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
 import { Renderable } from './Renderable'
+import { GeometricOptions } from './Geometry'
+
+const defaultGeometricOptions: GeometricOptions = {
+  fill: null,
+  fillOpacity: 1,
+  stroke: Color.BLACK,
+  strokeWidth: 1,
+  rotation: 0,
+}
 
 export function getWidth() {
   return Math.max(
@@ -30,7 +39,7 @@ export function getHeight() {
   )
 }
 
-export type GeometryChild = Rectangle | Circle | Image
+export type GeometryChild = Rectangle | Circle | Image | Text
 
 /** How the code renders in the browser  */
 export enum RenderMode {
@@ -259,6 +268,57 @@ export class Canvas<R extends RenderMode> {
     })
     this.add(path)
     return path
+  }
+
+  text(
+    value: string,
+    position: ArrayLike<number>,
+    options?: Partial<TextOptions>,
+  ): Text
+  text(
+    value: string,
+    x: number,
+    y: number,
+    options?: Partial<TextOptions>,
+  ): Text
+  text(
+    value: string,
+    x: ArrayLike<number> | number,
+    yOrOptions?: number | Partial<TextOptions>,
+    options?: Partial<TextOptions>,
+  ): Text {
+    let xPosition: number
+    let yPosition: number
+
+    if (Conversion.isArrayLike(x)) {
+      const p = Conversion.toFixedNumberArray(x, 2)
+      xPosition = p[0]
+      yPosition = p[1]
+
+      if (typeof yOrOptions === 'number') throw Error('Expected TextOptions')
+      options = yOrOptions
+    } else {
+      if (typeof yOrOptions !== 'number')
+        throw Error('Expected a number for y number')
+      xPosition = x
+      yPosition = yOrOptions
+    }
+
+    const text = new Text(value, xPosition, yPosition, {
+      fill: Color.BLACK,
+      stroke: null,
+      strokeWidth: 1,
+      font: 'sans-serif',
+      fontSize: 16,
+      align: 'left',
+      baseline: 'alphabetic',
+      rotation: 0,
+      maxWidth: undefined,
+      ...options,
+    })
+
+    this.add(text)
+    return text
   }
 
   /** Draw to canvas */

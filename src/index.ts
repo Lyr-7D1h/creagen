@@ -8,6 +8,7 @@ export { type ArcOptions } from './Canvas/Arc'
 export { type ImageOptions } from './Canvas/Image'
 export { type PathOptions } from './Canvas/Path'
 export { type RectangleOptions } from './Canvas/Rectangle'
+export { type TextOptions } from './Canvas/Text'
 export { Canvas, getWidth, getHeight, RenderMode } from './Canvas'
 
 export { Random } from './Random/index'

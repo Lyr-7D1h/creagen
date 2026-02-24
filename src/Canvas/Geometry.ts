@@ -1,13 +1,6 @@
 import { Color } from '../Color'
 import { Renderable } from './Renderable'
 
-export const defaultGeometricOptions: GeometricOptions = {
-  fill: null,
-  fillOpacity: 1,
-  stroke: Color.BLACK,
-  strokeWidth: 1,
-  rotation: 0,
-}
 export interface GeometricOptions {
   fill: Color | null
   fillOpacity: number
