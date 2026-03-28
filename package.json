@@ -24,15 +24,12 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@types/kd-tree-javascript": "^1.0.3",
     "@types/meyda": "^4.3.8",
     "@types/node": "^24.5.2",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
     "eslint": "^9.17.0",
-    "prettier": "^3.4.2",
     "terser": "^5.44.0",
-    "tslib": "^2.8.1",
     "typescript": "^5.7.3",
     "vite": "^7.1.6",
     "vite-plugin-dts": "^4.5.4",
@@ -40,17 +37,11 @@
     "vitest": "3.2.4"
   },
   "dependencies": {
-    "@rarebearsoft/marvinj": "^1.0.0",
     "@techstark/opencv-js": "^4.11.0-release.1",
-    "@turf/turf": "^7.2.0",
     "d3-delaunay": "^6.0.4",
     "d3-quadtree": "^3.0.1",
-    "kd-tree-javascript": "^1.0.3",
     "kdbush": "^4.0.2",
-    "knn": "^0.0.2",
     "meyda": "^5.6.3",
-    "ml-kmeans": "^6.0.0",
-    "rbush": "^4.0.1",
-    "skmeans": "^0.11.3"
+    "ml-kmeans": "^6.0.0"
   }
 }
