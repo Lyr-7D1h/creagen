@@ -11,7 +11,7 @@
   "scripts": {
     "build": "vite build --mode development",
     "build:release": "vite build --mode production",
-    "watch": "vite build --mode development --watch",
+    "build:watch": "vite build --mode development --watch",
     "watch:release": "vite build --mode production --watch",
     "test": "vitest",
     "test:watch": "vitest --watch",
