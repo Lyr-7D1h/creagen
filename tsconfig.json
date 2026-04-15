@@ -8,15 +8,16 @@
     // "pretty": true,
 
     "declaration": true,
-    "declarationDir": "./dist/types",
-    "outDir": "./dist",
+    "declarationDir": "dist",
+    "outDir": "dist",
+    "rootDir": "./src",
 
     "module": "ESNext",
     "target": "ESNext",
 
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
 
-    "lib": ["es2020", "DOM"],
+    "lib": ["ESNext", "DOM"],
 
     "esModuleInterop": true,
     "skipLibCheck": true,

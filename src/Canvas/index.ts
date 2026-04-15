@@ -37,7 +37,8 @@ export enum RenderMode {
   /** Default 2d rendering format */
   C2D = 'c2d',
   /** WebGL rendering format */
-  WebGL = 'webgl',
+  // TODO: implement webgl
+  // WebGL = 'webgl',
   /** Svg rendering format */
   Svg = 'svg',
 }
@@ -66,7 +67,6 @@ export class Canvas<R extends RenderMode> {
     this.width = opts?.width ?? getWidth()
     this.height = opts?.height ?? getHeight()
 
-    if (renderMode === RenderMode.WebGL) throw Error('WebGL not supported yet')
     if (renderMode === RenderMode.Svg) {
       if (opts?.canvas) throw Error('Canvas cannot be passed to SVG mode')
       this.element = document.createElementNS(
