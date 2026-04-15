@@ -50,6 +50,11 @@ export class Vector<N extends number> extends Array<number> {
     return new Vector<N>(...(items as number[]))
   }
 
+  /**
+   * Return the dimension of the Vector
+   *
+   * NOTE: use `.mag()` to get the magnitude of the vector
+   * */
   override get length(): N {
     return super.length as N
   }
