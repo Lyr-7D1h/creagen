@@ -291,7 +291,6 @@ export class Canvas<R extends RenderMode> {
       return
     }
 
-    console.log(this.children)
     for (const c of this.children) {
       if (!c._dirty) continue
       c._canvas(this.ctx)
