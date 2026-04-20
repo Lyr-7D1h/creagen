@@ -84,15 +84,8 @@ export function simplexSeed(random: UnitRandomFn) {
   noise2d = noise3d = noise4d = undefined
 }
 
-export function simplex(x: number, y: number): number
-export function simplex(x: number, y: number, z: number): number
-export function simplex(x: number, y: number, z: number, w: number): number
-export function simplex(
-  x: number,
-  y: number,
-  z?: number | UnitRandomFn,
-  w?: number | UnitRandomFn,
-): number {
+export function simplex(x: number, y: number, z?: number, w?: number): number {
+  // TODO: add argument for random fn
   if (typeof z === 'number') {
     if (typeof w === 'number') {
       if (typeof noise4d === 'undefined') {

@@ -24,6 +24,7 @@ interface PathSegment {
   options: PathOptions
 }
 
+// TODO: enable some kind of clone `new Path().clone()`
 export class Path extends Geometry<PathOptions> {
   private readonly _segments: PathSegment[] = []
   /** Reference to current segment */
@@ -256,11 +257,17 @@ export class Path extends Geometry<PathOptions> {
 
       // Apply segment-specific options
       ctx.lineWidth = segment.options.strokeWidth
+      ctx.strokeStyle = segment.options.stroke.hex()
+
       if (segment.options.fill) {
+        ctx.save()
         ctx.fillStyle = segment.options.fill.hex()
+        ctx.globalAlpha = ctx.globalAlpha * segment.options.fillOpacity
         ctx.fill(path)
-      } else {
-        ctx.strokeStyle = segment.options.stroke.hex()
+        ctx.restore()
+      }
+
+      if (segment.options.strokeWidth > 0) {
         ctx.stroke(path)
       }
     }
@@ -537,6 +544,10 @@ function svgPath({ points, options }: PathSegment): string {
       for (let i = 0; i < p1x.length; i++) {
         path += `C${p1x[i]} ${p1y[i]}, ${p2x[i]} ${p2y[i]}, ${segment[i + 1][0]} ${segment[i + 1][1]}`
       }
+
+      if (options.closed) {
+        path += 'Z'
+      }
     }
     return path
   }
@@ -549,6 +560,10 @@ function svgPath({ points, options }: PathSegment): string {
     path += segment
       .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`)
       .join(' ')
+
+    if (options.closed) {
+      path += 'Z'
+    }
     continue
   }
   return path

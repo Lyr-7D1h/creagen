@@ -7,9 +7,8 @@ import {
   UnitRandomFn,
   xorshift,
 } from './RandomNumberGenerator'
+import { simplex } from './simplex'
 
-export * from './simplex'
-export * from './perlin'
 export * from './RandomNumberGenerator'
 export * from './pmf'
 export * from './cdf'
@@ -38,6 +37,18 @@ export class Random {
     return defaultRng.float(x1 as number, x2!)
   }
 
+  static simplex(x: number, y: number): number
+  static simplex(x: number, y: number, z: number): number
+  static simplex(x: number, y: number, z: number, w: number): number
+  static simplex(x: number, y: number, z?: number, w?: number): number {
+    return simplex(x, y, z, w)
+  }
+
+  /**
+   * Generate a smooth continuous number between -1 and 1 using [Perlin Noise](https://en.wikipedia.org/wiki/Perlin_noise) given a 3d coordinate.
+   *
+   * NOTE: It will return 0 for integer values in order to ensure continuity
+   * */
   static perlin(x: number, y: number, z: number) {
     return perlin(x, y, z)
   }
