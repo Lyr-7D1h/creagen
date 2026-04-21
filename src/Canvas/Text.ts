@@ -11,6 +11,7 @@ export interface TextOptions {
   baseline: CanvasTextBaseline
   rotation: number
   maxWidth?: number
+  lineHeight?: number
 }
 
 function svgTextAnchor(align: CanvasTextAlign): string {
@@ -140,6 +141,16 @@ export class Text extends Renderable {
     return this
   }
 
+  lineHeight(height: number): this {
+    this._dirty = true
+    this.options.lineHeight = height
+    return this
+  }
+
+  private effectiveLineHeight(): number {
+    return this.options.lineHeight ?? this.options.fontSize * 1.2
+  }
+
   override _svg(): SVGTextElement {
     this._dirty = false
     const element = document.createElementNS(
@@ -170,7 +181,24 @@ export class Text extends Renderable {
       element.setAttribute('stroke', this.options.stroke.hex())
       element.setAttribute('stroke-width', this.options.strokeWidth.toString())
     }
-    element.textContent = this.value
+    const lines = this.value.split('\n')
+    if (lines.length === 1) {
+      element.textContent = this.value
+    } else {
+      const effectiveLineHeight = this.effectiveLineHeight()
+      for (let i = 0; i < lines.length; i++) {
+        const tspan = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'tspan',
+        )
+        tspan.setAttribute('x', this.x.toString())
+        if (i > 0) {
+          tspan.setAttribute('dy', effectiveLineHeight.toString())
+        }
+        tspan.textContent = lines[i]
+        element.appendChild(tspan)
+      }
+    }
     return element
   }
 
@@ -187,22 +215,31 @@ export class Text extends Renderable {
     ctx.textAlign = this.options.align
     ctx.textBaseline = this.options.baseline
 
+    const lines = this.value.split('\n')
+    const effectiveLineHeight = this.effectiveLineHeight()
+
     if (this.options.stroke) {
       ctx.strokeStyle = this.options.stroke.hex()
       ctx.lineWidth = this.options.strokeWidth
-      if (typeof this.options.maxWidth === 'number') {
-        ctx.strokeText(this.value, this.x, this.y, this.options.maxWidth)
-      } else {
-        ctx.strokeText(this.value, this.x, this.y)
+      for (let i = 0; i < lines.length; i++) {
+        const lineY = this.y + i * effectiveLineHeight
+        if (typeof this.options.maxWidth === 'number') {
+          ctx.strokeText(lines[i], this.x, lineY, this.options.maxWidth)
+        } else {
+          ctx.strokeText(lines[i], this.x, lineY)
+        }
       }
     }
 
     if (this.options.fill) {
       ctx.fillStyle = this.options.fill.hex()
-      if (typeof this.options.maxWidth === 'number') {
-        ctx.fillText(this.value, this.x, this.y, this.options.maxWidth)
-      } else {
-        ctx.fillText(this.value, this.x, this.y)
+      for (let i = 0; i < lines.length; i++) {
+        const lineY = this.y + i * effectiveLineHeight
+        if (typeof this.options.maxWidth === 'number') {
+          ctx.fillText(lines[i], this.x, lineY, this.options.maxWidth)
+        } else {
+          ctx.fillText(lines[i], this.x, lineY)
+        }
       }
     }
 
