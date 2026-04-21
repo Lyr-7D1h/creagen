@@ -1,6 +1,6 @@
 {
   "name": "creagen",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "",
   "type": "module",
   "browser": "./dist/creagen.js",
@@ -9,10 +9,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build --mode development",
-    "build:release": "vite build --mode production",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
     "build:watch": "vite build --mode development --watch",
-    "watch:release": "vite build --mode production --watch",
+    "watch:prod": "vite build --mode production --watch",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "bench": "vitest bench",
