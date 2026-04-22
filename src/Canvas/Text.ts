@@ -1,17 +1,15 @@
-import { Color } from '../Color'
-import { Renderable } from './Renderable'
+import { CREAGEN_PRECISION } from '../constants'
+import { GeometricOptions, Geometry } from './Geometry'
 
-export interface TextOptions {
-  fill: Color | null
-  stroke: Color | null
-  strokeWidth: number
-  font: string
+export interface TextOptions extends GeometricOptions {
+  fontFamily: string
   fontSize: number
-  align: CanvasTextAlign
-  baseline: CanvasTextBaseline
-  rotation: number
-  maxWidth?: number
-  lineHeight?: number
+  fontStyle: string
+  fontWeight: string
+  textAlign: CanvasTextAlign
+  textBaseline: CanvasTextBaseline
+  maxWidth: number | null
+  lineHeight: number
 }
 
 function svgTextAnchor(align: CanvasTextAlign): string {
@@ -35,7 +33,7 @@ function svgDominantBaseline(baseline: CanvasTextBaseline): string {
     case 'hanging':
       return 'hanging'
     case 'middle':
-      return 'middle'
+      return 'central'
     case 'ideographic':
       return 'ideographic'
     case 'bottom':
@@ -46,109 +44,67 @@ function svgDominantBaseline(baseline: CanvasTextBaseline): string {
   }
 }
 
-export class Text extends Renderable {
-  constructor(
-    public value: string,
-    public x: number,
-    public y: number,
-    public options: TextOptions,
-  ) {
-    super()
+function buildFont(options: TextOptions): string {
+  return `${options.fontStyle} ${options.fontWeight} ${options.fontSize}px ${options.fontFamily}`
+}
+
+function wrapTextLines(
+  text: string,
+  maxWidth: number | null,
+  measure: (value: string) => number,
+): string[] {
+  const rawLines = text.split('\n')
+  if (!maxWidth || maxWidth <= 0) return rawLines
+
+  const lines: string[] = []
+  for (const rawLine of rawLines) {
+    const words = rawLine.split(/\s+/).filter((word) => word.length > 0)
+    if (words.length === 0) {
+      lines.push('')
+      continue
+    }
+
+    let current = words[0]
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i]
+      const next = `${current} ${word}`
+      if (measure(next) <= maxWidth) {
+        current = next
+      } else {
+        lines.push(current)
+        current = word
+      }
+    }
+    lines.push(current)
+  }
+  return lines
+}
+
+function measureTextSvg(font: string, text: string): number {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return text.length * 8
+  ctx.font = font
+  return ctx.measureText(text).width
+}
+
+export class Text extends Geometry<TextOptions> {
+  x: number
+  y: number
+  value: string
+
+  constructor(x: number, y: number, value: string, options: TextOptions) {
+    super(options)
+    this.x = x
+    this.y = y
+    this.value = value
   }
 
-  private fontValue(): string {
-    return `${this.options.fontSize}px ${this.options.font}`
-  }
-
-  content(value: string): this {
+  text(value: string): this {
+    if (this.value === value) return this
     this._dirty = true
     this.value = value
     return this
-  }
-
-  position(x: number, y: number): this
-  position(position: ArrayLike<number>): this
-  position(x: number | ArrayLike<number>, y?: number): this {
-    this._dirty = true
-    if (typeof x === 'number') {
-      if (typeof y !== 'number') throw Error('Expected y number')
-      this.x = x
-      this.y = y
-      return this
-    }
-
-    const p = [x[0], x[1]]
-    if (typeof p[0] !== 'number' || typeof p[1] !== 'number') {
-      throw Error('Expected position with 2 numbers')
-    }
-
-    this.x = p[0]
-    this.y = p[1]
-    return this
-  }
-
-  fill(color: Color | null): this {
-    this._dirty = true
-    this.options.fill = color
-    return this
-  }
-
-  stroke(color: Color | null): this {
-    this._dirty = true
-    this.options.stroke = color
-    return this
-  }
-
-  strokeWidth(width: number): this {
-    this._dirty = true
-    this.options.strokeWidth = width
-    return this
-  }
-
-  font(font: string): this {
-    this._dirty = true
-    this.options.font = font
-    return this
-  }
-
-  fontSize(size: number): this {
-    this._dirty = true
-    this.options.fontSize = size
-    return this
-  }
-
-  align(align: CanvasTextAlign): this {
-    this._dirty = true
-    this.options.align = align
-    return this
-  }
-
-  baseline(baseline: CanvasTextBaseline): this {
-    this._dirty = true
-    this.options.baseline = baseline
-    return this
-  }
-
-  rotate(angle: number): this {
-    this._dirty = true
-    this.options.rotation = angle
-    return this
-  }
-
-  maxWidth(width?: number): this {
-    this._dirty = true
-    this.options.maxWidth = width
-    return this
-  }
-
-  lineHeight(height: number): this {
-    this._dirty = true
-    this.options.lineHeight = height
-    return this
-  }
-
-  private effectiveLineHeight(): number {
-    return this.options.lineHeight ?? this.options.fontSize * 1.2
   }
 
   override _svg(): SVGTextElement {
@@ -157,19 +113,20 @@ export class Text extends Renderable {
       'http://www.w3.org/2000/svg',
       'text',
     )
-    element.setAttribute('x', this.x.toString())
-    element.setAttribute('y', this.y.toString())
-    element.setAttribute(
-      'fill',
-      this.options.fill === null ? 'none' : this.options.fill.hex(),
-    )
-    element.setAttribute('text-anchor', svgTextAnchor(this.options.align))
+
+    element.setAttribute('x', this.x.toFixed(CREAGEN_PRECISION))
+    element.setAttribute('y', this.y.toFixed(CREAGEN_PRECISION))
+    element.setAttribute('font-family', this.options.fontFamily)
+    element.setAttribute('font-size', this.options.fontSize.toString())
+    element.setAttribute('font-style', this.options.fontStyle)
+    element.setAttribute('font-weight', this.options.fontWeight)
+    element.setAttribute('text-anchor', svgTextAnchor(this.options.textAlign))
     element.setAttribute(
       'dominant-baseline',
-      svgDominantBaseline(this.options.baseline),
+      svgDominantBaseline(this.options.textBaseline),
     )
-    element.setAttribute('font-family', this.options.font)
-    element.setAttribute('font-size', this.options.fontSize.toString())
+    this._applySvgOptions(element)
+
     if (this.options.rotation !== 0) {
       const degrees = (this.options.rotation * 180) / Math.PI
       element.setAttribute(
@@ -177,74 +134,63 @@ export class Text extends Renderable {
         `rotate(${degrees} ${this.x} ${this.y})`,
       )
     }
-    if (this.options.stroke) {
-      element.setAttribute('stroke', this.options.stroke.hex())
-      element.setAttribute('stroke-width', this.options.strokeWidth.toString())
-    }
-    const lines = this.value.split('\n')
+
+    const font = buildFont(this.options)
+    const measure = (value: string) => measureTextSvg(font, value)
+    const lines = wrapTextLines(this.value, this.options.maxWidth, measure)
+    const lineHeightPx = this.options.lineHeight * this.options.fontSize
+
     if (lines.length === 1) {
-      element.textContent = this.value
-    } else {
-      const effectiveLineHeight = this.effectiveLineHeight()
-      for (let i = 0; i < lines.length; i++) {
-        const tspan = document.createElementNS(
-          'http://www.w3.org/2000/svg',
-          'tspan',
-        )
-        tspan.setAttribute('x', this.x.toString())
-        if (i > 0) {
-          tspan.setAttribute('dy', effectiveLineHeight.toString())
-        }
-        tspan.textContent = lines[i]
-        element.appendChild(tspan)
-      }
+      element.textContent = lines[0]
+      return element
     }
+
+    for (let i = 0; i < lines.length; i++) {
+      const tspan = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'tspan',
+      )
+      tspan.setAttribute('x', this.x.toFixed(CREAGEN_PRECISION))
+      if (i > 0) {
+        tspan.setAttribute('dy', lineHeightPx.toString())
+      }
+      tspan.textContent = lines[i]
+      element.appendChild(tspan)
+    }
+
     return element
   }
 
-  override _canvas(ctx: CanvasRenderingContext2D): void {
+  override _canvas(ctx: CanvasRenderingContext2D) {
     this._dirty = false
+    ctx.save()
+    ctx.font = buildFont(this.options)
+    ctx.textAlign = this.options.textAlign
+    ctx.textBaseline = this.options.textBaseline
+    ctx.lineWidth = this.options.strokeWidth
+
     if (this.options.rotation !== 0) {
-      ctx.save()
       ctx.translate(this.x, this.y)
       ctx.rotate(this.options.rotation)
       ctx.translate(-this.x, -this.y)
     }
 
-    ctx.font = this.fontValue()
-    ctx.textAlign = this.options.align
-    ctx.textBaseline = this.options.baseline
+    const measure = (value: string) => ctx.measureText(value).width
+    const lines = wrapTextLines(this.value, this.options.maxWidth, measure)
+    const lineHeightPx = this.options.lineHeight * this.options.fontSize
 
-    const lines = this.value.split('\n')
-    const effectiveLineHeight = this.effectiveLineHeight()
-
-    if (this.options.stroke) {
-      ctx.strokeStyle = this.options.stroke.hex()
-      ctx.lineWidth = this.options.strokeWidth
-      for (let i = 0; i < lines.length; i++) {
-        const lineY = this.y + i * effectiveLineHeight
-        if (typeof this.options.maxWidth === 'number') {
-          ctx.strokeText(lines[i], this.x, lineY, this.options.maxWidth)
-        } else {
-          ctx.strokeText(lines[i], this.x, lineY)
-        }
+    for (let i = 0; i < lines.length; i++) {
+      const y = this.y + i * lineHeightPx
+      if (this.options.fill) {
+        ctx.fillStyle = this.options.fill.hex()
+        ctx.fillText(lines[i], this.x, y, this.options.maxWidth ?? undefined)
+      }
+      if (this.options.strokeWidth > 0 && this.options.stroke) {
+        ctx.strokeStyle = this.options.stroke.hex()
+        ctx.strokeText(lines[i], this.x, y, this.options.maxWidth ?? undefined)
       }
     }
 
-    if (this.options.fill) {
-      ctx.fillStyle = this.options.fill.hex()
-      for (let i = 0; i < lines.length; i++) {
-        const lineY = this.y + i * effectiveLineHeight
-        if (typeof this.options.maxWidth === 'number') {
-          ctx.fillText(lines[i], this.x, lineY, this.options.maxWidth)
-        } else {
-          ctx.fillText(lines[i], this.x, lineY)
-        }
-      }
-    }
-
-    if (this.options.rotation !== 0) {
-      ctx.restore()
-    }
+    ctx.restore()
   }
 }

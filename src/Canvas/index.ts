@@ -304,16 +304,16 @@ export class Canvas<R extends RenderMode> {
       yPosition = yOrOptions
     }
 
-    const text = new Text(value, xPosition, yPosition, {
-      fill: Color.BLACK,
-      stroke: null,
-      strokeWidth: 1,
-      font: 'sans-serif',
+    const text = new Text(xPosition, yPosition, value, {
+      ...defaultGeometricOptions,
+      fontFamily: 'sans-serif',
       fontSize: 16,
-      align: 'left',
-      baseline: 'alphabetic',
-      rotation: 0,
-      maxWidth: undefined,
+      fontStyle: 'normal',
+      fontWeight: 'normal',
+      textAlign: 'left',
+      textBaseline: 'alphabetic',
+      maxWidth: null,
+      lineHeight: 1.2,
       ...options,
     })
 
