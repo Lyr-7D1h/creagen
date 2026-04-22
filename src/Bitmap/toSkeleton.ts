@@ -1,15 +1,14 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import { Bitmap } from '../Bitmap'
-import { Delaunay } from '../PointCloud'
+import type { Bitmap } from '../Bitmap'
 
 // TODO: Look into https://www.npmjs.com/package/flo-mat
 // TODO: move into Image and use marchingsquares
-export function toSkeleton(map: Bitmap) {
+export function toSkeleton(map: Bitmap): [number, number][] {
   const boundaryPoints = map.boundaryPoints()
-  const delaunay = D3Delaunay.from(boundaryPoints) as Delaunay
+  const delaunay = D3Delaunay.from(boundaryPoints)
   const voronoi = delaunay.voronoi([0, 0, map.width, map.height])
 
-  const seen = new Set()
+  const seen = new Set<string>()
   const medialEdges: [number, number][] = []
   for (let i = 0; i < boundaryPoints.length; i++) {
     const cell = voronoi.cellPolygon(i)
@@ -18,7 +17,7 @@ export function toSkeleton(map: Bitmap) {
       const key = x + ',' + y
       if (seen.has(key)) continue
 
-      const add = (x, y, x0, y0) => {
+      const add = (x: number, y: number, x0: number, y0: number) => {
         if (!map.bounds(x0, y0) || !map.get(x0, y0)) return false
         seen.add(key)
         medialEdges.push([x, y])

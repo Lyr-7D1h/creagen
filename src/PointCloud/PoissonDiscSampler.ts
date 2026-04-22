@@ -1,4 +1,4 @@
-import { FlatBounds } from '../types'
+import type { FlatBounds } from '../types'
 
 /**
  * modififed https://observablehq.com/@techsparx/an-improvement-on-bridsons-algorithm-for-poisson-disc-samp/2 to use arbitrary bounds
@@ -20,7 +20,7 @@ export function* poissonDiscSampler(
   const gridWidth = Math.ceil(width / cellSize)
   const gridHeight = Math.ceil(height / cellSize)
   // TODO(perf): use Float64Array, fill and return
-  const grid = new Array(gridWidth * gridHeight)
+  const grid = new Array<[number, number] | undefined>(gridWidth * gridHeight)
 
   const queue: [number, number][] = []
 
@@ -58,7 +58,7 @@ export function* poissonDiscSampler(
     if (i < queue.length) queue[i] = r!
   }
 
-  function far(x, y) {
+  function far(x: number, y: number): boolean {
     const i = ((x - minX) / cellSize) | 0
     const j = ((y - minY) / cellSize) | 0
     const i0 = Math.max(i - 2, 0)
@@ -79,10 +79,11 @@ export function* poissonDiscSampler(
     return true
   }
 
-  function sample(x, y) {
-    const s = (grid[
+  function sample(x: number, y: number): [number, number] {
+    const s: [number, number] = [x, y]
+    grid[
       gridWidth * (((y - minY) / cellSize) | 0) + (((x - minX) / cellSize) | 0)
-    ] = [x, y]) as [number, number]
+    ] = s
     queue.push(s)
     return s
   }

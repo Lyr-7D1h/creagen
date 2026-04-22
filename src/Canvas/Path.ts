@@ -1,10 +1,12 @@
 import * as Math from '../math'
-import { GeometricOptions, Geometry } from './Geometry'
-import { vec, Vector } from '../Vector'
+import type { GeometricOptions } from './Geometry'
+import { Geometry } from './Geometry'
+import type { Vector } from '../Vector'
+import { vec } from '../Vector'
 import { solveTriadiagonalMatrix } from '../lin'
-import { FlatBounds } from '../types'
+import type { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
-import { Color } from '../Color'
+import type { Color } from '../Color'
 
 export interface PathOptions extends GeometricOptions {
   /** Connect the first point with the last point */
@@ -38,7 +40,7 @@ export class Path extends Geometry<PathOptions> {
   /** Create a new path segment with a set of options */
   private newSegment(): void {
     const points: Vector<2>[] = []
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
+
     if (this.currentPoints) {
       const pointsLength = this.currentPoints.length
       // don't do anything if segment is empty
@@ -140,7 +142,7 @@ export class Path extends Geometry<PathOptions> {
   /** Get all points in the path */
   points() {
     return this._segments.reduce(
-      (a, c) => (a = a.concat(c.points)),
+      (a, c) => a.concat(c.points),
       [] as Vector<2>[],
     )
   }
@@ -292,9 +294,11 @@ function computeControlPoints(
   const n = points.length - 1
   // stores all equations
   // [P_(1,i-1), P_(1,i), P_(1,i+1)]
-  const A = Array.from(Array(n), () => new Array(3) as [number, number, number])
+  const A: Array<[number, number, number]> = Array.from({ length: n }, () => [
+    0, 0, 0,
+  ])
   // right hand side of all equations
-  const b = new Array(n)
+  const b = new Array(n) as number[]
 
   // First segment equation
   // 2 * P_(1,0) + P_(1,1) = K_0 + 2 * K_1
@@ -320,7 +324,7 @@ function computeControlPoints(
   b[n - 1] = 8 * K[n - 1][index] + K[n][index]
 
   const p1 = solveTriadiagonalMatrix(A, b)
-  const p2 = new Array(n)
+  const p2 = new Array(n) as number[]
   for (let i = 0; i < n - 1; i++) {
     p2[i] = 2 * K[i + 1][index] - p1[i + 1]
   }
@@ -328,8 +332,8 @@ function computeControlPoints(
   p2[n - 1] = 0.5 * (K[n][index] + p1[n - 1])
 
   // linearily interpolate control points to the knots to reduce smoothness
-  const p1x = new Array(n)
-  const p2x = new Array(n)
+  const p1x = new Array(n) as number[]
+  const p2x = new Array(n) as number[]
   for (let i = 0; i < n; i++) {
     p1x[i] = (1 - tension) * p1[i] + tension * K[i][index]
     p2x[i] = (1 - tension) * p2[i] + tension * K[i + 1][index]
@@ -370,7 +374,7 @@ function wrapAroundPoints(
   const height = ymax - ymin
 
   // const [ymin, ymax] = bounds[1]
-  const queue = [...points.map((p) => p.clone())]
+  const queue: Vector<2>[] = points.map((p) => p.clone())
   for (let i = 0; i < queue.length - 1; i++) {
     currentIndex += 1
     // what direction is the first point outside of bounds
@@ -393,7 +397,7 @@ function wrapAroundPoints(
     const [x2, y2] = queue[i + 1]
 
     // swap points to keep x1 < x2
-    let a
+    let a: number
     if (x1 > x2) {
       a = (y1 - y2) / (x1 - x2)
     } else {
@@ -416,14 +420,14 @@ function wrapAroundPoints(
       }
     }
 
-    let ix
+    let ix: number
     // if y is within bounds or it is diagonal bounds with x being closer it should limit the intersection point to the boundry
     if (d.y === 0) {
       ix = xm
     } else {
       ix = x1 + (ym - y1) / a
     }
-    let iy
+    let iy: number
     if (d.x === 0) {
       iy = ym
     } else {
@@ -432,7 +436,7 @@ function wrapAroundPoints(
 
     const intersection = vec(ix, iy)
 
-    let outsideSegment
+    let outsideSegment: Vector<2>[]
     if (d1 === null) {
       // starting points are inside
       outsideSegment = [
@@ -458,7 +462,7 @@ function wrapAroundPoints(
         i += 2
       }
       // should be in the end of queue now
-      console.assert(queue.length - 1 === i)
+      if (CREAGEN_ASSERTS) assert(queue.length - 1 === i)
     } else {
       // starting points are outside
       outsideSegment = queue.splice(0, i + 1, intersection)

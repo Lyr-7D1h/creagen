@@ -691,11 +691,6 @@ describe('ContourExtractor', () => {
           return { name, points: contour.points, mode }
         })
 
-        // Log complete point sets for comparison
-        results.forEach(({ name, points }) => {
-          console.log(`${name} mode points:`, points)
-        })
-
         // Simple mode should have exactly 4 corner points
         const simpleResult = results.find((r) => r.name === 'Simple')!
         expect(simpleResult.points).toEqual([

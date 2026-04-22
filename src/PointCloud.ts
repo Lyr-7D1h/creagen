@@ -1,27 +1,12 @@
-import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import { FixedArray, FlatBounds } from './types'
+import {
+  Delaunay as D3Delaunay,
+  type Delaunay,
+  type Voronoi,
+} from 'd3-delaunay'
+import type { FixedArray, FlatBounds } from './types'
 import { Conversion } from './Conversion'
 import { poissonDiscSampler } from './PointCloud/PoissonDiscSampler'
 import { lloydsAlgorithm } from './PointCloud/Lloyd'
-
-export type Delaunay = {
-  halfedges: Int32Array
-  hull: Int32Array
-  inedges: Int32Array
-  points: Int32Array
-  triangles: Int32Array
-  voronoi: (bounds: FixedArray<number, 4>) => Voronoi
-  find: (x: number, y: number, startingIndex: number) => number
-  update: () => void
-}
-
-export type Voronoi = {
-  circumcenters: Int32Array
-  vectors: Int32Array
-  delaunay: Delaunay
-  cellPolygons: () => [number, number][][]
-  cellPolygon: (i: number) => [number, number][]
-}
 
 const MAX_SAMPLING_ITERATION_LIMIT = 1_000_000
 
@@ -233,6 +218,7 @@ export class PointCloud<N extends number> {
       const newPoint = callback(originalPoint, i)
 
       for (let d = 0; d < this.dimensions; d++) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         this.points[i * this.dimensions + d] = newPoint[d]
       }
     }
@@ -244,8 +230,8 @@ export class PointCloud<N extends number> {
 
   delaunay(): Delaunay {
     if (this._delaunay) return this._delaunay
-    this._delaunay = D3Delaunay.from(this.points)
-    return this._delaunay!
+    this._delaunay = new D3Delaunay(this.points)
+    return this._delaunay
   }
 
   voronoi(bounds: FlatBounds<2>): Voronoi {

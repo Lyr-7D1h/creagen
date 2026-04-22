@@ -10,7 +10,8 @@ export class Matrix<R extends number, C extends number> {
   private elements: number[]
 
   static identity<R extends number>(size: R) {
-    const m = new Matrix<R, R>(new Array(size * size).fill(0), size, size)
+    const elements = new Array(size * size).fill(0) as number[]
+    const m = new Matrix<R, R>(elements, size, size)
     for (let i = 0; i < size; i++) {
       m.elements[i * size + i] = 1
     }
@@ -18,7 +19,8 @@ export class Matrix<R extends number, C extends number> {
   }
 
   static empty<R extends number, C extends number>(rows: R, cols: C) {
-    return new Matrix<R, C>(new Array(rows * cols).fill(0), rows, cols)
+    const elements = new Array(rows * cols).fill(0) as number[]
+    return new Matrix<R, C>(elements, rows, cols)
   }
 
   static create<R extends number, C extends number>(

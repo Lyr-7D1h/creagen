@@ -1,4 +1,4 @@
-import { UnitRandomFn } from './Random'
+import type { UnitRandomFn } from './Random'
 
 // ========== STATIC ITERATOR GENERATORS ==========
 

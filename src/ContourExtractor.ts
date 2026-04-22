@@ -1,6 +1,12 @@
-import { Bitmap } from './Bitmap'
-import { NodeId, Tree } from './Tree'
-import { FixedNumberArray } from './types'
+// TODO: still need to test and fix linting bugs
+/* eslint-disable no-self-assign */
+/* eslint-disable no-empty */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import type { Bitmap } from './Bitmap'
+import type { NodeId } from './Tree'
+import { Tree } from './Tree'
+import type { FixedNumberArray } from './types'
 
 /** Direction vectors for 8-connectivity (clockwise starting from right) */
 const DX = [1, 1, 0, -1, -1, -1, 0, 1]
@@ -122,24 +128,14 @@ export class ContourExtractor {
     },
   ) {}
 
-  private print() {
-    let out = ''
-    for (let i = 0; i < this.image.length; i++) {
-      if (i % this.width === 0) {
-        out += '\n'
-      }
-      out += this.image[i] + '\t'
-    }
-  }
-
   /**
    * Extracts all contours (boundaries) of connected components in the bitmap
    * Returns an array of contours, where each contour is an array of points
    *
    */
+
   // Equivalent to `findNext()` in opencv impl https://github.com/opencv/opencv/blob/6f040337e968d17ecf2b5d92b632ac4fabe775d7/modules/imgproc/src/contours_new.cpp#L588
   extractContours() {
-    this.print()
     let i
     for (let y = 1; y < this.height - 1; y++) {
       let prev = 0
@@ -202,7 +198,7 @@ export class ContourExtractor {
         if (CREAGEN_ASSERTS) {
           if (parent) {
             const node = this.tree.get(parent)
-            console.assert(node.isHole != isHole)
+            assert(node.isHole != isHole)
           }
         }
 
@@ -210,7 +206,7 @@ export class ContourExtractor {
         // set the last visisted
         this.lnbd[0] = start[0]
         const id = this.makeContour(isHole, start)
-        if (CREAGEN_ASSERTS) console.assert(id > 0)
+        if (CREAGEN_ASSERTS) assert(id > 0)
 
         if (parent !== null) this.tree.addChild(parent, id)
 
@@ -248,14 +244,14 @@ export class ContourExtractor {
   }
 
   private getIndexDelta(dir: number) {
-    if (CREAGEN_ASSERTS) console.assert(dir >= 0 && dir < 16)
+    if (CREAGEN_ASSERTS) assert(dir >= 0 && dir < 16)
     dir = dir % 8
     return DX[dir] + DY[dir] * this.width
   }
 
   private coordsToIndex(x: number, y: number) {
-    if (CREAGEN_ASSERTS) console.assert(x > 0 && x < this.width)
-    if (CREAGEN_ASSERTS) console.assert(y > 0 && y < this.height)
+    if (CREAGEN_ASSERTS) assert(x > 0 && x < this.width)
+    if (CREAGEN_ASSERTS) assert(y > 0 && y < this.height)
     return x + this.width * y
   }
   private checkValue(i: number) {
@@ -296,13 +292,13 @@ export class ContourExtractor {
     if (s !== sEnd) {
       // Follow border
       while (true) {
-        if (CREAGEN_ASSERTS) console.assert(i3 !== -1)
-        if (CREAGEN_ASSERTS) console.assert(s < 15 && s > 0)
+        if (CREAGEN_ASSERTS) assert(i3 !== -1)
+        if (CREAGEN_ASSERTS) assert(s < 15 && s > 0)
         // maximum is for s=7  ; 7 + 8
         while (s < 15) {
           s++
           i4 = i3 + this.getIndexDelta(s)
-          if (CREAGEN_ASSERTS) console.assert(i4 !== -1)
+          if (CREAGEN_ASSERTS) assert(i4 !== -1)
           if (this.checkValue(i4)) {
             break
           }
@@ -356,8 +352,6 @@ export class ContourExtractor {
     const rect: FixedNumberArray<4> = [point[0], point[1], point[0], point[1]]
     const points = []
     this.makeContourTrace(start, isHole, point, rect, points)
-
-    this.print()
 
     // translate rect back
     rect[0] -= this.offsetX
@@ -418,11 +412,11 @@ export class ContourExtractor {
       // Follow border
       while (true) {
         const sEndLoop = s
-        if (CREAGEN_ASSERTS) console.assert(s < 15 && s > 0)
+        if (CREAGEN_ASSERTS) assert(s < 15 && s > 0)
         while (s < 15) {
           ++s
           i4 = i3 + this.getIndexDelta(s)
-          if (CREAGEN_ASSERTS) console.assert(i4 >= 0)
+          if (CREAGEN_ASSERTS) assert(i4 >= 0)
           if (this.checkValue(i4)) {
             break
           }

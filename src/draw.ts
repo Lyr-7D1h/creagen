@@ -5,12 +5,13 @@ export type DrawFn = (
   dt: number,
 ) => void
 
-let handle
+let handle: number | undefined
 /** Run a draw loop that runs `fn` every 1/60 seconds */
 // TODO: add framerate
 export function draw(fn: DrawFn) {
   if (handle) cancelAnimationFrame(handle)
-  let t0 = (document.timeline.currentTime as number) ?? 0
+  const now = document.timeline?.currentTime
+  let t0 = typeof now === 'number' ? now : performance.now()
   const draw = (t1: DOMHighResTimeStamp) => {
     const dt = t1 - t0
     fn(t1, dt)

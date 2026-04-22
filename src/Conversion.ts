@@ -1,4 +1,4 @@
-import { FixedArray, FixedNumberArray, FlatBounds } from './types'
+import type { FixedArray, FixedNumberArray, FlatBounds } from './types'
 import { vec, Vector } from './Vector'
 
 /**
@@ -10,31 +10,25 @@ export class Conversion {
 
   /** Type guard for array-like structures (includes arrays, typed arrays, etc.) */
   static isArrayLike(v: unknown): v is ArrayLike<unknown> {
-    return (
-      Boolean(v) &&
-      typeof v === 'object' &&
-      'length' in (v as any) &&
-      Number.isInteger((v as any).length) &&
-      (v as any).length >= 0
-    )
+    if (!v || (typeof v !== 'object' && typeof v !== 'function')) return false
+    if (!('length' in v)) return false
+    const { length } = v
+    return typeof length === 'number' && Number.isInteger(length) && length >= 0
   }
 
   /** Type guard for flat numeric arrays (1D) */
   static isFlatNumberArray(v: unknown): v is ArrayLike<number> {
-    return (
-      Conversion.isArrayLike(v) &&
-      ((v as any).length === 0 || typeof (v as any)[0] === 'number')
-    )
+    if (!Conversion.isArrayLike(v)) return false
+    return v.length === 0 || typeof v[0] === 'number'
   }
 
   /** Type guard for nested numeric arrays (2D matrix) */
   static isNestedNumberArray(v: unknown): v is ArrayLike<ArrayLike<number>> {
-    return (
-      Conversion.isArrayLike(v) &&
-      (v as any).length > 0 &&
-      Conversion.isArrayLike((v as any)[0]) &&
-      ((v as any)[0].length === 0 || typeof (v as any)[0][0] === 'number')
-    )
+    if (!Conversion.isArrayLike(v)) return false
+    if (v.length === 0) return false
+    const firstRow = v[0]
+    if (!Conversion.isArrayLike(firstRow)) return false
+    return firstRow.length === 0 || typeof firstRow[0] === 'number'
   }
 
   /** Type guard for typed arrays (Float32Array, Float64Array, etc.) */
@@ -179,7 +173,7 @@ export class Conversion {
 
       const result: Vector<N>[] = []
       for (let i = 0; i < array.length; i += dimension) {
-        const vectorData: number[] = new Array(dimension)
+        const vectorData: number[] = new Array<number>(dimension)
         for (let d = 0; d < dimension; d++) {
           vectorData[d] = array[i + d]
         }
@@ -202,7 +196,7 @@ export class Conversion {
           )
         }
 
-        const vectorData: number[] = new Array(dimension)
+        const vectorData: number[] = new Array<number>(dimension)
         for (let d = 0; d < dimension; d++) {
           vectorData[d] = row[d]
         }

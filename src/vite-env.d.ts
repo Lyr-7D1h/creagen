@@ -21,3 +21,4 @@
  * */
 declare const CREAGEN_ASSERTS: boolean
 declare const CREAGEN_PRECISION: number
+declare function assert(condition: unknown, message?: string): asserts condition

@@ -1,4 +1,5 @@
-import Meyda, { MeydaAudioFeature, MeydaFeaturesObject } from 'meyda'
+import type { MeydaAudioFeature, MeydaFeaturesObject } from 'meyda';
+import Meyda from 'meyda'
 
 export type Feature = MeydaAudioFeature | 'bpm'
 
@@ -48,8 +49,15 @@ export class Audio {
    * @returns Promise that resolves with initialized Audio instance
    */
   static async create(fftSize: number = 2048): Promise<Audio> {
-    const audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)()
+    type AudioContextConstructor = typeof AudioContext
+    const audioContextCtor =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: AudioContextConstructor })
+        .webkitAudioContext
+    if (!audioContextCtor) {
+      throw new Error('AudioContext is not available in this environment')
+    }
+    const audioContext = new audioContextCtor()
 
     // Get microphone access
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })

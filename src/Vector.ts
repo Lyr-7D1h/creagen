@@ -1,5 +1,5 @@
 import * as Math from './math'
-import { FixedArray, FlatBounds, GrowToSize } from './types'
+import type { FixedArray, FlatBounds, GrowToSize } from './types'
 
 type Y<N extends number> = N extends 3
   ? number
@@ -8,6 +8,7 @@ type Y<N extends number> = N extends 3
     : undefined
 type Z<N extends number> = N extends 3 ? number : undefined
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Vector<N extends number> extends Array<number> {
   constructor(...items: [number[] & { length: N }])
   constructor(...items: number[] & { length: N })
@@ -36,6 +37,7 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   static empty<N extends number>(length: N) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Vector<N>(...Array(length).fill(0))
   }
 
@@ -94,6 +96,7 @@ export class Vector<N extends number> extends Array<number> {
   clone() {
     return new Vector<N>(
       ...([...this] as GrowToSize<number, N, [], 0> & {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [Symbol.iterator]: () => any
       }),
     )
@@ -542,6 +545,7 @@ export function vec<N extends number>(...items: [...number[]]): Vector<N>
 export function vec<N extends number>(
   ...items: [number[] & { length: N }] | (number[] & { length: N })
 ): Vector<N> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
   return Vector.create<N>(...(items as any))
 }
 

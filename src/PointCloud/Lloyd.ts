@@ -1,6 +1,5 @@
 import { Delaunay as D3Delaunay } from 'd3-delaunay'
-import { FixedArray, FlatBounds } from '../types'
-import { Delaunay } from '../PointCloud'
+import type { FixedArray, FlatBounds } from '../types'
 
 /**
  * [Lloyd's Algorithm (Voronoi Relaxation)](https://en.wikipedia.org/wiki/Lloyd%27s_algorithm)
@@ -28,7 +27,7 @@ export function lloydsAlgorithm(
     tolerance ?? Math.min(xmax - xmin, ymax - ymin) * 0.001
 
   for (let iter = 0; iter < iterations; iter++) {
-    const delaunay = new D3Delaunay(points) as Delaunay
+    const delaunay = new D3Delaunay(points)
     delaunay.update()
     const vor = delaunay.voronoi([xmin, ymin, xmax, ymax])
 

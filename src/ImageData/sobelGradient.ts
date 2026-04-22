@@ -5,7 +5,12 @@
  * [-2, 0, +2] × [2]  = Weighted difference between left and right columns
  * [-1, 0, +1]   [1]
  */
-function conv3x(data, i, w, m) {
+function conv3x(
+  data: Uint8ClampedArray,
+  i: number,
+  w: number,
+  m: [number, number, number],
+): number {
   // Check bounds to prevent wrap-around
   if (i - w - 4 < 0 || i + w + 4 >= data.length) return 0
 
@@ -26,7 +31,12 @@ function conv3x(data, i, w, m) {
  * [ 0,  0,  0] × [1, 2, 1] = Weighted difference between top and bottom rows
  * [+1, +2, +1]
  */
-function conv3y(data, i, w, m) {
+function conv3y(
+  data: Uint8ClampedArray,
+  i: number,
+  w: number,
+  m: [number, number, number],
+): number {
   // Check bounds to prevent wrap-around
   if (i - w - 4 < 0 || i + w + 4 >= data.length) return 0
 
@@ -47,7 +57,7 @@ function conv3y(data, i, w, m) {
 export function sobelGradient(pixeldata: Uint8ClampedArray, width: number) {
   // mask - gradient operator e.g. Prewitt, Sobel, Scharr, etc.
   // cosnt mask = [1,1,1] // prewitt
-  const mask = [1, 2, 1] // sobel
+  const mask: [number, number, number] = [1, 2, 1] // sobel
   const w = width * 4
   const l = pixeldata.length - w - 4
   const edges = new Uint8ClampedArray(pixeldata.length)

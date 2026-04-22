@@ -1,4 +1,5 @@
-import { GeometricOptions, Geometry } from './Geometry'
+import type { GeometricOptions} from './Geometry';
+import { Geometry } from './Geometry'
 
 export type ArcOptions = GeometricOptions
 export class Arc extends Geometry {

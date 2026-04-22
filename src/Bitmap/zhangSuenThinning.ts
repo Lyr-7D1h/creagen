@@ -1,6 +1,6 @@
-import { Bitmap } from '../Bitmap'
+import type { Bitmap } from '../Bitmap'
 
-export function zhangSuenThinning(map: Bitmap) {
+export function zhangSuenThinning(map: Bitmap): Bitmap {
   const height = map.height
   const width = map.width
 

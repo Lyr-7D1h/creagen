@@ -1,6 +1,6 @@
 import * as Math from './math'
 import { Random } from './Random'
-import { FlatBounds } from './types'
+import type { FlatBounds } from './types'
 import { Vector } from './Vector'
 
 export class Color extends Vector<4> {
@@ -258,13 +258,16 @@ export class Color extends Vector<4> {
   }
 }
 
+export function color(grey: number, a?: number): Color
+export function color(r: number, g: number, b: number, a?: number): Color
+export function color(color: number[] | Uint8ClampedArray | number): Color
 export function color(
   r: number | number[] | Uint8ClampedArray,
   g?: number,
   b?: number,
   a?: number,
-) {
-  return Color.create(r as any, g as any, b as any, a as any)
+): Color {
+  return Color.create(r as number, g as number, b as number, a)
 }
 
 function hex(x: number) {

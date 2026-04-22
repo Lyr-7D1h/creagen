@@ -12,7 +12,9 @@ export class CDF {
   }
 
   static uniform(length: number) {
-    const p: number[] = new Array(length).fill(Math.roundToDec(1 / length))
+    const p: number[] = new Array<number>(length).fill(
+      Math.roundToDec(1 / length),
+    )
 
     return new CDF(p)
   }
@@ -44,7 +46,7 @@ export class CDF {
 
     if (CREAGEN_ASSERTS) {
       const sum = p.reduce((a, b) => a + b)
-      console.assert(sum === 1, sum)
+      assert(sum === 1, String(sum))
     }
 
     // account for floating point errors

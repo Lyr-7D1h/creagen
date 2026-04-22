@@ -1,15 +1,21 @@
 import { ImageData } from '../ImageData'
 import { Color } from '../Color'
-import { Circle, CircleOptions } from './Circle'
-import { Image, ImageOptions } from './Image'
-import { Path, PathOptions } from './Path'
-import { Rectangle, RectangleOptions } from './Rectangle'
-import { Arc, ArcOptions } from './Arc'
-import { Text, TextOptions } from './Text'
-import { FlatBounds } from '../types'
+import type { CircleOptions } from './Circle';
+import { Circle } from './Circle'
+import type { ImageOptions } from './Image';
+import { Image } from './Image'
+import type { PathOptions } from './Path';
+import { Path } from './Path'
+import type { RectangleOptions } from './Rectangle';
+import { Rectangle } from './Rectangle'
+import type { ArcOptions } from './Arc';
+import { Arc } from './Arc'
+import type { TextOptions } from './Text';
+import { Text } from './Text'
+import type { FlatBounds } from '../types'
 import { Conversion } from '../Conversion'
-import { Renderable } from './Renderable'
-import { GeometricOptions } from './Geometry'
+import type { Renderable } from './Renderable'
+import type { GeometricOptions } from './Geometry'
 
 const defaultGeometricOptions: GeometricOptions = {
   fill: null,

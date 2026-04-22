@@ -1,7 +1,8 @@
 import { Color } from '../Color'
 import { Vector } from '../Vector'
 import { Bitmap } from '../Bitmap'
-import loadCV, { Mat } from '@techstark/opencv-js'
+import type { CV, Mat } from '@techstark/opencv-js'
+import loadCV from '@techstark/opencv-js'
 
 /**
  * Morphological operations for image processing
@@ -60,13 +61,26 @@ export enum ThresholdType {
 }
 
 // TODO(perf): calculate image processing in a worker https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
-let cv: typeof import('@techstark/opencv-js') = loadCV
+type OpenCVModule = CV
+let cv: CV | Promise<CV> = loadCV
+
+async function resolveCV(): Promise<CV> {
+  if (cv instanceof Promise) {
+    cv = await cv
+  }
+  return cv
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
 export class ImageData {
   private pixeldata: Uint8ClampedArray
-  private readonly mat: Mat
+  private mat: Mat
 
   static async create(src: string) {
-    if (cv instanceof Promise) cv = await cv
+    const resolvedCv = await resolveCV()
     const img = new globalThis.Image()
     img.src = src
     await new Promise<void>((resolve, reject) => {
@@ -74,27 +88,35 @@ export class ImageData {
         resolve()
       }
       img.onerror = (e) => {
-        reject(`Failed to load image: ${e}`)
+        reject(new Error(`Failed to load image: ${errorMessage(e)}`))
       }
     })
-    return new ImageData(img)
+    return new ImageData(img, resolvedCv)
   }
 
   /** @param src url or base64 string with image data */
-  private constructor(public img: HTMLImageElement) {
+  private constructor(
+    public img: HTMLImageElement,
+    readonly cv: OpenCVModule,
+  ) {
     const canvas = document.createElement('canvas')
     canvas.width = img.width
     canvas.height = img.height
     const ctx = canvas.getContext('2d')!
     ctx.drawImage(img, 0, 0)
 
-    this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    this.pixeldata = imageData.data
     // Initialize mat lazily when needed
-    this.mat = cv.matFromImageData({
-      data: this.pixeldata,
-      width: canvas.width,
-      height: canvas.height,
-    })
+    this.mat = cv.matFromImageData(imageData)
+  }
+
+  private updatePixeldata(mat: Mat = this.mat) {
+    const type = mat.type()
+    if (type !== this.cv.CV_8UC4) {
+      throw new Error(`Expected CV_8UC4 mat for ImageData, got type ${type}`)
+    }
+    this.pixeldata = new Uint8ClampedArray(mat.data)
   }
 
   get width() {
@@ -112,7 +134,7 @@ export class ImageData {
 
   clone(): ImageData {
     // Create the cloned ImageData instance
-    const cloned = Object.create(ImageData.prototype)
+    const cloned = Object.create(ImageData.prototype) as ImageData
 
     const clonedImg = new globalThis.Image()
     clonedImg.width = this.width
@@ -121,7 +143,7 @@ export class ImageData {
 
     cloned.pixeldata = new Uint8ClampedArray(this.pixeldata)
 
-    cloned.mat = cv.matFromImageData({
+    cloned.mat = this.cv.matFromImageData({
       data: cloned.pixeldata,
       width: this.width,
       height: this.height,
@@ -152,15 +174,15 @@ export class ImageData {
   get(p: Vector<2>, p2: Vector<2>): Uint8ClampedArray[]
   get(
     x: number | Vector<2>,
-    y?: number | Vector<2>,
+    _y?: number | Vector<2>,
     x2?: number,
     y2?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
     if (x instanceof Vector) {
-      if (y instanceof Vector) return this.get(x.x, x.y, y.x, y.y)
+      if (_y instanceof Vector) return this.get(x.x, x.y, _y.x, _y.y)
       return this.get(x.x, x.y)
     }
-    y = y as number
+    const y = _y as number
 
     if (x < 0 || x >= this.width) {
       throw Error(`x '${x}' is out of bounds`)
@@ -191,7 +213,7 @@ export class ImageData {
       }
 
       const width = this.width * 4
-      const r = new Array(maxY - minY)
+      const r = new Array(maxY - minY) as Uint8ClampedArray[]
       let i = 0
 
       for (let o = minY * width; o <= maxY * width; o += width) {
@@ -227,7 +249,8 @@ export class ImageData {
           resolve()
         } else {
           this.img.onload = () => resolve()
-          this.img.onerror = (e) => reject(e)
+          this.img.onerror = (e) =>
+            reject(new Error(`Failed to update image: ${errorMessage(e)}`))
           this.img.src = dataUrl
         }
       })
@@ -279,7 +302,7 @@ export class ImageData {
   scale(
     factor: number,
     height?: number,
-    interpolation: number = cv.INTER_LINEAR,
+    interpolation: number = this.cv.INTER_LINEAR as number,
   ): ImageData {
     let newWidth: number
     let newHeight: number
@@ -298,11 +321,11 @@ export class ImageData {
     newWidth = Math.max(1, newWidth)
     newHeight = Math.max(1, newHeight)
 
-    const dsize = new cv.Size(newWidth, newHeight)
-    const resized = new cv.Mat()
+    const dsize = new this.cv.Size(newWidth, newHeight)
+    const resized = new this.cv.Mat()
 
     try {
-      cv.resize(this.mat, resized, dsize, 0, 0, interpolation)
+      this.cv.resize(this.mat, resized, dsize, 0, 0, interpolation)
 
       // Update internal mat
       this.mat.delete()
@@ -314,7 +337,7 @@ export class ImageData {
       })
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(resized.data)
+      this.updatePixeldata(resized)
 
       // Update img dimensions
       this.img.width = newWidth
@@ -339,7 +362,7 @@ export class ImageData {
     this.mat.convertTo(this.mat, -1, percentage, 0)
 
     // Update pixeldata
-    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    this.updatePixeldata()
 
     return this
   }
@@ -354,7 +377,7 @@ export class ImageData {
     endPercentage: number,
   ): ImageData {
     // Create a gradient mask using OpenCV
-    const gradient = new cv.Mat(this.height, this.width, cv.CV_32FC1)
+    const gradient = new this.cv.Mat(this.height, this.width, this.cv.CV_32FC1)
 
     try {
       // Fill gradient values
@@ -363,32 +386,32 @@ export class ImageData {
           startPercentage +
           ((endPercentage - startPercentage) * y) / this.height
         for (let x = 0; x < this.width; x++) {
-          gradient.floatPtr(y, x)[0] = factor
+          ;(gradient.floatPtr(y, x) as Float32Array)[0] = factor
         }
       }
 
       // Convert mat to float for multiplication
-      const floatMat = new cv.Mat()
-      this.mat.convertTo(floatMat, cv.CV_32F)
+      const floatMat = new this.cv.Mat()
+      this.mat.convertTo(floatMat, this.cv.CV_32F as number)
 
       // Split into channels
-      const channels = new cv.MatVector()
-      cv.split(floatMat, channels)
+      const channels = new this.cv.MatVector()
+      this.cv.split(floatMat, channels)
 
       // Apply gradient to RGB channels only
       for (let i = 0; i < 3; i++) {
         const channel = channels.get(i)
-        cv.multiply(channel, gradient, channel)
+        this.cv.multiply(channel, gradient, channel)
       }
 
       // Merge back
-      cv.merge(channels, floatMat)
+      this.cv.merge(channels, floatMat)
 
       // Convert back to 8-bit
-      floatMat.convertTo(this.mat, cv.CV_8U)
+      floatMat.convertTo(this.mat, this.cv.CV_8U as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
 
       // Cleanup
       channels.delete()
@@ -401,16 +424,16 @@ export class ImageData {
   }
 
   greyscale(): ImageData {
-    const grayMat = new cv.Mat()
+    const grayMat = new this.cv.Mat()
 
     try {
-      cv.cvtColor(this.mat, grayMat, cv.COLOR_RGBA2GRAY)
+      this.cv.cvtColor(this.mat, grayMat, this.cv.COLOR_RGBA2GRAY as number)
 
       // Convert back to RGBA format for consistency (gray value in all channels)
-      cv.cvtColor(grayMat, this.mat, cv.COLOR_GRAY2RGBA)
+      this.cv.cvtColor(grayMat, this.mat, this.cv.COLOR_GRAY2RGBA as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       grayMat.delete()
     }
@@ -435,7 +458,7 @@ export class ImageData {
     this.mat.convertTo(this.mat, -1, factor, beta)
 
     // Update pixeldata
-    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    this.updatePixeldata()
 
     return this
   }
@@ -445,30 +468,30 @@ export class ImageData {
    * Each RGB channel is inverted: newValue = 255 - oldValue
    */
   invert(): ImageData {
-    const temp = new cv.Mat()
+    const temp = new this.cv.Mat()
 
     try {
       // Use OpenCV's bitwise_not for inversion
       // This inverts all channels including alpha, so we need to handle alpha separately
-      cv.bitwise_not(this.mat, temp)
+      this.cv.bitwise_not(this.mat, temp)
 
       // Restore original alpha channel
-      const channels = new cv.MatVector()
-      cv.split(temp, channels)
-      const alphaChannel = new cv.MatVector()
-      cv.split(this.mat, alphaChannel)
+      const channels = new this.cv.MatVector()
+      this.cv.split(temp, channels)
+      const alphaChannel = new this.cv.MatVector()
+      this.cv.split(this.mat, alphaChannel)
 
       // Replace inverted alpha with original alpha
-      const mergedChannels = new cv.MatVector()
+      const mergedChannels = new this.cv.MatVector()
       mergedChannels.push_back(channels.get(0)) // Inverted R
       mergedChannels.push_back(channels.get(1)) // Inverted G
       mergedChannels.push_back(channels.get(2)) // Inverted B
       mergedChannels.push_back(alphaChannel.get(3)) // Original A
 
-      cv.merge(mergedChannels, this.mat)
+      this.cv.merge(mergedChannels, this.mat)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
 
       // Cleanup
       channels.delete()
@@ -489,15 +512,15 @@ export class ImageData {
   blur(kernelSize: number = 5, sigma: number = 0): ImageData {
     kernelSize = kernelSize % 2 === 0 ? kernelSize + 1 : kernelSize
 
-    cv.GaussianBlur(
+    this.cv.GaussianBlur(
       this.mat,
       this.mat,
-      new cv.Size(kernelSize, kernelSize),
+      new this.cv.Size(kernelSize, kernelSize),
       sigma,
     )
 
     // Update pixeldata
-    this.pixeldata = new Uint8ClampedArray(this.mat.data)
+    this.updatePixeldata()
 
     return this
   }
@@ -524,43 +547,43 @@ export class ImageData {
       dy = 1
     }
 
-    const gray = new cv.Mat()
-    const gradX = new cv.Mat()
-    const gradY = new cv.Mat()
-    const absGradX = new cv.Mat()
-    const absGradY = new cv.Mat()
-    const grad = new cv.Mat()
+    const gray = new this.cv.Mat()
+    const gradX = new this.cv.Mat()
+    const gradY = new this.cv.Mat()
+    const absGradX = new this.cv.Mat()
+    const absGradY = new this.cv.Mat()
+    const grad = new this.cv.Mat()
 
     try {
       // Convert to grayscale first
-      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+      this.cv.cvtColor(this.mat, gray, this.cv.COLOR_RGBA2GRAY as number)
 
       if (dx > 0 && dy > 0) {
         // Compute gradients in both directions
-        cv.Sobel(gray, gradX, cv.CV_16S, dx, 0, kernelSize)
-        cv.Sobel(gray, gradY, cv.CV_16S, 0, dy, kernelSize)
+        this.cv.Sobel(gray, gradX, this.cv.CV_16S as number, dx, 0, kernelSize)
+        this.cv.Sobel(gray, gradY, this.cv.CV_16S as number, 0, dy, kernelSize)
 
         // Convert to absolute values
-        cv.convertScaleAbs(gradX, absGradX)
-        cv.convertScaleAbs(gradY, absGradY)
+        this.cv.convertScaleAbs(gradX, absGradX)
+        this.cv.convertScaleAbs(gradY, absGradY)
 
         // Combine gradients: |G| = |Gx| + |Gy| (approximation of sqrt(Gx^2 + Gy^2))
-        cv.addWeighted(absGradX, 0.5, absGradY, 0.5, 0, grad)
+        this.cv.addWeighted(absGradX, 0.5, absGradY, 0.5, 0, grad)
       } else if (dx > 0) {
         // Only x direction
-        cv.Sobel(gray, gradX, cv.CV_16S, dx, 0, kernelSize)
-        cv.convertScaleAbs(gradX, grad)
+        this.cv.Sobel(gray, gradX, this.cv.CV_16S as number, dx, 0, kernelSize)
+        this.cv.convertScaleAbs(gradX, grad)
       } else {
         // Only y direction
-        cv.Sobel(gray, gradY, cv.CV_16S, 0, dy, kernelSize)
-        cv.convertScaleAbs(gradY, grad)
+        this.cv.Sobel(gray, gradY, this.cv.CV_16S as number, 0, dy, kernelSize)
+        this.cv.convertScaleAbs(gradY, grad)
       }
 
       // Convert back to RGBA
-      cv.cvtColor(grad, this.mat, cv.COLOR_GRAY2RGBA)
+      this.cv.cvtColor(grad, this.mat, this.cv.COLOR_GRAY2RGBA as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       gray.delete()
       gradX.delete()
@@ -582,20 +605,20 @@ export class ImageData {
     threshold: number = 127,
     type: ThresholdType = ThresholdType.BINARY,
   ): ImageData {
-    const gray = new cv.Mat()
+    const gray = new this.cv.Mat()
 
     try {
       // Convert to grayscale first
-      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+      this.cv.cvtColor(this.mat, gray, this.cv.COLOR_RGBA2GRAY as number)
 
       // Apply threshold (reuse gray as both src and dst)
-      cv.threshold(gray, gray, threshold, 255, type)
+      this.cv.threshold(gray, gray, threshold, 255, type)
 
       // Convert back to RGBA directly to this.mat
-      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+      this.cv.cvtColor(gray, this.mat, this.cv.COLOR_GRAY2RGBA as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       gray.delete()
     }
@@ -609,20 +632,20 @@ export class ImageData {
    * @param highThreshold Upper threshold for edge detection (min: 0, max: 255, typical: 100-200, default: 150, should be 2-3x lowThreshold)
    */
   canny(lowThreshold: number = 50, highThreshold: number = 150): ImageData {
-    const gray = new cv.Mat()
+    const gray = new this.cv.Mat()
 
     try {
       // Convert to grayscale
-      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+      this.cv.cvtColor(this.mat, gray, this.cv.COLOR_RGBA2GRAY as number)
 
       // Apply Canny edge detection (reuse gray as both src and dst)
-      cv.Canny(gray, gray, lowThreshold, highThreshold)
+      this.cv.Canny(gray, gray, lowThreshold, highThreshold)
 
       // Convert back to RGBA directly to this.mat
-      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+      this.cv.cvtColor(gray, this.mat, this.cv.COLOR_GRAY2RGBA as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       gray.delete()
     }
@@ -641,16 +664,16 @@ export class ImageData {
     kernelSize: number = 5,
     shape: MorphologyShape = MorphologyShape.ELLIPSE,
   ): ImageData {
-    const kernel = cv.getStructuringElement(
+    const kernel = this.cv.getStructuringElement(
       shape,
-      new cv.Size(kernelSize, kernelSize),
+      new this.cv.Size(kernelSize, kernelSize),
     )
 
     try {
-      cv.morphologyEx(this.mat, this.mat, operation, kernel)
+      this.cv.morphologyEx(this.mat, this.mat, operation, kernel)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       kernel.delete()
     }
@@ -663,21 +686,21 @@ export class ImageData {
    * @param amount Amount of sharpening (min: 0, typical: 0.5-2.5, default: 1.5, higher = more sharpening)
    */
   sharpen(amount: number = 1.5): ImageData {
-    const blurred = new cv.Mat()
-    const temp = new cv.Mat()
+    const blurred = new this.cv.Mat()
+    const temp = new this.cv.Mat()
 
     try {
       // Blur the image
-      cv.GaussianBlur(this.mat, blurred, new cv.Size(5, 5), 0)
+      this.cv.GaussianBlur(this.mat, blurred, new this.cv.Size(5, 5), 0)
 
       // Subtract blurred from original to get high-frequency details
-      cv.subtract(this.mat, blurred, temp)
+      this.cv.subtract(this.mat, blurred, temp)
 
       // Add the high-frequency details back with weight
-      cv.addWeighted(this.mat, 1.0, temp, amount, 0, this.mat)
+      this.cv.addWeighted(this.mat, 1.0, temp, amount, 0, this.mat)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       blurred.delete()
       temp.delete()
@@ -694,28 +717,28 @@ export class ImageData {
   adaptiveThreshold(blockSize: number = 11, C: number = 2): ImageData {
     blockSize = blockSize % 2 === 0 ? blockSize + 1 : blockSize
 
-    const gray = new cv.Mat()
+    const gray = new this.cv.Mat()
 
     try {
       // Convert to grayscale
-      cv.cvtColor(this.mat, gray, cv.COLOR_RGBA2GRAY)
+      this.cv.cvtColor(this.mat, gray, this.cv.COLOR_RGBA2GRAY as number)
 
       // Apply adaptive threshold (reuse gray as both src and dst)
-      cv.adaptiveThreshold(
+      this.cv.adaptiveThreshold(
         gray,
         gray,
         255,
-        cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv.THRESH_BINARY,
+        this.cv.ADAPTIVE_THRESH_GAUSSIAN_C as number,
+        this.cv.THRESH_BINARY as number,
         blockSize,
         C,
       )
 
       // Convert back to RGBA directly to this.mat
-      cv.cvtColor(gray, this.mat, cv.COLOR_GRAY2RGBA)
+      this.cv.cvtColor(gray, this.mat, this.cv.COLOR_GRAY2RGBA as number)
 
       // Update pixeldata
-      this.pixeldata = new Uint8ClampedArray(this.mat.data)
+      this.updatePixeldata()
     } finally {
       gray.delete()
     }
@@ -736,39 +759,50 @@ export class ImageData {
     epsilon: number = 0.5,
     threshold: number = 120,
   ): Vector<2>[][] {
-    const temp = new cv.Mat()
+    const temp = new this.cv.Mat()
 
-    cv.cvtColor(this.mat, temp, cv.COLOR_RGBA2GRAY)
+    this.cv.cvtColor(this.mat, temp, this.cv.COLOR_RGBA2GRAY as number)
 
     // 1. Pre-smooth with Gaussian blur
     if (blurSize > 0) {
       const kernelSize = blurSize % 2 === 0 ? blurSize + 1 : blurSize
-      cv.GaussianBlur(temp, temp, new cv.Size(kernelSize, kernelSize), 0)
+      this.cv.GaussianBlur(
+        temp,
+        temp,
+        new this.cv.Size(kernelSize, kernelSize),
+        0,
+      )
     }
 
-    cv.threshold(temp, temp, threshold, 255, cv.THRESH_BINARY)
+    this.cv.threshold(
+      temp,
+      temp,
+      threshold,
+      255,
+      this.cv.THRESH_BINARY as number,
+    )
 
     // 2. Morphological operations to reduce noise
     if (morphSize > 0) {
-      const kernel = cv.getStructuringElement(
+      const kernel = this.cv.getStructuringElement(
         MorphologyShape.ELLIPSE,
-        new cv.Size(morphSize, morphSize),
+        new this.cv.Size(morphSize, morphSize),
       )
       // Close small gaps
-      cv.morphologyEx(temp, temp, MorphologyOperation.CLOSE, kernel)
+      this.cv.morphologyEx(temp, temp, MorphologyOperation.CLOSE, kernel)
       // Remove small noise
-      cv.morphologyEx(temp, temp, MorphologyOperation.OPEN, kernel)
+      this.cv.morphologyEx(temp, temp, MorphologyOperation.OPEN, kernel)
       kernel.delete()
     }
 
-    const contours = new cv.MatVector()
-    const hierarchy = new cv.Mat()
-    cv.findContours(
+    const contours = new this.cv.MatVector()
+    const hierarchy = new this.cv.Mat()
+    this.cv.findContours(
       temp,
       contours,
       hierarchy,
-      cv.RETR_LIST,
-      cv.CHAIN_APPROX_SIMPLE,
+      this.cv.RETR_LIST as number,
+      this.cv.CHAIN_APPROX_SIMPLE as number,
     )
 
     const lines: Vector<2>[][] = []
@@ -776,10 +810,10 @@ export class ImageData {
       const contour = contours.get(i)
 
       // 3. Approximate contour to reduce points
-      const approx = new cv.Mat()
+      const approx = new this.cv.Mat()
       if (epsilon > 0) {
         // Use epsilon directly as pixel tolerance
-        cv.approxPolyDP(contour, approx, epsilon, true)
+        this.cv.approxPolyDP(contour, approx, epsilon, true)
       } else {
         contour.copyTo(approx)
       }

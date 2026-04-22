@@ -1,10 +1,11 @@
 import { perlin } from './perlin'
+import type {
+  RandomFn,
+  UnitRandomFn} from './RandomNumberGenerator';
 import {
   beta as betaFn,
   boxMuller,
-  RandomFn,
   RandomNumberGenerator,
-  UnitRandomFn,
   xorshift,
 } from './RandomNumberGenerator'
 import { simplex } from './simplex'

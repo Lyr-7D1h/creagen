@@ -1,7 +1,7 @@
 // import RBush from 'rbush'
 // import { kdTree } from 'kd-tree-javascript'
 import KdBush from 'kdbush'
-import { Vector } from './Vector'
+import type { Vector } from './Vector'
 
 // function distance(a, b) {
 //   return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)

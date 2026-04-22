@@ -1,6 +1,13 @@
-let a0, a1, a2, a3, b1, b2, left_corner, right_corner
+let a0 = 0
+let a1 = 0
+let a2 = 0
+let a3 = 0
+let b1 = 0
+let b2 = 0
+let left_corner = 0
+let right_corner = 0
 
-function gaussCoef(sigma) {
+function gaussCoef(sigma: number): Float32Array {
   if (sigma < 0.5) {
     sigma = 0.5
   }
@@ -23,18 +30,40 @@ function gaussCoef(sigma) {
   return new Float32Array([a0, a1, a2, a3, b1, b2, left_corner, right_corner])
 }
 
-function convolveRGBA(src, out, line, coeff, width, height) {
+function convolveRGBA(
+  src: Uint32Array,
+  out: Uint32Array,
+  line: Float32Array,
+  coeff: Float32Array,
+  width: number,
+  height: number,
+): void {
   // takes src image and writes the blurred and transposed result into out
 
-  let rgba
-  let prev_src_r, prev_src_g, prev_src_b, prev_src_a
-  let curr_src_r, curr_src_g, curr_src_b, curr_src_a
-  let curr_out_r, curr_out_g, curr_out_b, curr_out_a
-  let prev_out_r, prev_out_g, prev_out_b, prev_out_a
-  let prev_prev_out_r, prev_prev_out_g, prev_prev_out_b, prev_prev_out_a
+  let rgba: number
+  let prev_src_r: number,
+    prev_src_g: number,
+    prev_src_b: number,
+    prev_src_a: number
+  let curr_src_r: number,
+    curr_src_g: number,
+    curr_src_b: number,
+    curr_src_a: number
+  let curr_out_r: number,
+    curr_out_g: number,
+    curr_out_b: number,
+    curr_out_a: number
+  let prev_out_r: number,
+    prev_out_g: number,
+    prev_out_b: number,
+    prev_out_a: number
+  let prev_prev_out_r: number,
+    prev_prev_out_g: number,
+    prev_prev_out_b: number,
+    prev_prev_out_a: number
 
-  let src_index, out_index, line_index
-  let i, j
+  let src_index: number, out_index: number, line_index: number
+  let i: number, j: number
   let coeff_a0, coeff_a1, coeff_b1, coeff_b2
 
   for (i = 0; i < height; i++) {

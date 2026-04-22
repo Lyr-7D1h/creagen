@@ -1,4 +1,5 @@
-import { vec, Vector } from './Vector'
+import type { Vector } from './Vector';
+import { vec } from './Vector'
 
 // TEST SCRIPT
 // import { SpatialMap, svg, vec } from 'creagen'

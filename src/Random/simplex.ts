@@ -119,10 +119,14 @@ type NoiseFunction2D = (x: number, y: number) => number
  * @returns {NoiseFunction2D}
  */
 function createNoise2D(random: UnitRandomFn = Math.random): NoiseFunction2D {
-  const perm = buildPermutationTable(random)
+  const perm: Uint8Array = buildPermutationTable(random)
   // precalculating this yields a little ~3% performance improvement.
-  const permGrad2x = new Float64Array(perm).map((v) => grad2[(v % 12) * 2])
-  const permGrad2y = new Float64Array(perm).map((v) => grad2[(v % 12) * 2 + 1])
+  const permGrad2x: Float64Array = new Float64Array(perm).map(
+    (v) => grad2[(v % 12) * 2],
+  )
+  const permGrad2y: Float64Array = new Float64Array(perm).map(
+    (v) => grad2[(v % 12) * 2 + 1],
+  )
   return function noise2D(x: number, y: number): number {
     // if(!isFinite(x) || !isFinite(y)) return 0;
     let n0 = 0 // Noise contributions from the three corners
@@ -139,7 +143,7 @@ function createNoise2D(random: UnitRandomFn = Math.random): NoiseFunction2D {
     const y0 = y - Y0
     // For the 2D case, the simplex shape is an equilateral triangle.
     // Determine which simplex we are in.
-    let i1, j1 // Offsets for second (middle) corner of simplex in (i,j) coords
+    let i1: number, j1: number // Offsets for second (middle) corner of simplex in (i,j) coords
     if (x0 > y0) {
       i1 = 1
       j1 = 0
@@ -230,8 +234,8 @@ function createNoise3D(random: UnitRandomFn = Math.random): NoiseFunction3D {
     const z0 = z - Z0
     // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
     // Determine which simplex we are in.
-    let i1, j1, k1 // Offsets for second corner of simplex in (i,j,k) coords
-    let i2, j2, k2 // Offsets for third corner of simplex in (i,j,k) coords
+    let i1: number, j1: number, k1: number // Offsets for second corner of simplex in (i,j,k) coords
+    let i2: number, j2: number, k2: number // Offsets for third corner of simplex in (i,j,k) coords
     if (x0 >= y0) {
       if (y0 >= z0) {
         i1 = 1

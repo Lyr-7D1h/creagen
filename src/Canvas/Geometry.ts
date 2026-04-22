@@ -1,4 +1,4 @@
-import { Color } from '../Color'
+import type { Color } from '../Color'
 import { Renderable } from './Renderable'
 
 export interface GeometricOptions {

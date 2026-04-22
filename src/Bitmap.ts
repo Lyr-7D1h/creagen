@@ -1,10 +1,12 @@
-import { vec, Vector } from './Vector'
+import type { Vector } from './Vector';
+import { vec } from './Vector'
 import { toSkeleton } from './Bitmap/toSkeleton'
 import { zhangSuenThinning } from './Bitmap/zhangSuenThinning'
-import { ContourExtractor, ContourExtractorOpts } from './ContourExtractor'
+import type { ContourExtractorOpts } from './ContourExtractor';
+import { ContourExtractor } from './ContourExtractor'
 
 export class Bitmap {
-  static create(width: number, height: number) {
+  static create(width: number, height: number): Bitmap {
     return new Bitmap(
       width,
       height,
@@ -12,7 +14,7 @@ export class Bitmap {
     )
   }
 
-  static fromBooleanMatrix(matrix: boolean[][]) {
+  static fromBooleanMatrix(matrix: boolean[][]): Bitmap {
     const width = matrix[0].length
     const height = matrix.length
     const map = Bitmap.create(width, height)
@@ -24,18 +26,18 @@ export class Bitmap {
     return map
   }
 
-  static fromUnit8array(width, height, data: Uint8Array) {
+  static fromUnit8array(width: number, height: number, data: Uint8Array): Bitmap {
     return new Bitmap(width, height, data)
   }
 
   constructor(
-    public readonly width,
-    public readonly height,
+    public readonly width: number,
+    public readonly height: number,
     private readonly data: Uint8Array,
   ) {}
 
   // Compute bit index for (x, y)
-  coordsToIndex(x, y) {
+  coordsToIndex(x: number, y: number): number {
     if (!this.bounds(x, y)) {
       throw new RangeError(`Coordinates (${x}, ${y}) out of bounds`)
     }

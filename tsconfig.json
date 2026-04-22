@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "vite.config.ts"],
 
   "compilerOptions": {
     "sourceMap": true,
