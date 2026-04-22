@@ -25,10 +25,11 @@ export default defineConfig(({ mode }) => {
             return
           }
 
+          // Fix the conflicting namespace issues
           return {
             content: content.replace(
               /export declare namespace Math_2 \{/g,
-              'export declare namespace Math {'
+              'export declare namespace Math {',
             ),
           }
         },

@@ -1,5 +1,5 @@
 import type { FixedArray, FixedNumberArray, FlatBounds } from './types'
-import { vec, Vector } from './Vector'
+import { isVector, vec, Vector, type VectorLike } from './Vector'
 
 /**
  * Static utility class for converting between different array formats
@@ -44,8 +44,8 @@ export class Conversion {
   static isVector<N extends number>(
     v: ArrayLike<number>,
     dimension: N,
-  ): v is Vector<N> {
-    return v instanceof Vector && v.length === dimension
+  ): v is VectorLike<N> {
+    return isVector(v) && v.length === dimension
   }
 
   // ========== CORE CONVERSIONS ==========
@@ -184,7 +184,7 @@ export class Conversion {
 
     // Handle nested array: each sub-array becomes a vector
     if (Conversion.isNestedNumberArray(array)) {
-      if (this.isVector(array[0], dimension)) {
+      if (this.isVector(array[0], dimension) && array[0] instanceof Vector) {
         return array as Vector<N>[]
       }
       const result: Vector<N>[] = []

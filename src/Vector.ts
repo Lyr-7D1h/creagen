@@ -1,5 +1,5 @@
 import * as Math from './math'
-import type { FixedArray, FlatBounds, GrowToSize } from './types'
+import type { FixedArray, FlatBounds } from './types'
 
 type Y<N extends number> = N extends 3
   ? number
@@ -8,545 +8,738 @@ type Y<N extends number> = N extends 3
     : undefined
 type Z<N extends number> = N extends 3 ? number : undefined
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
-export class Vector<N extends number> extends Array<number> {
-  constructor(...items: [number[] & { length: N }])
-  constructor(...items: number[] & { length: N })
-  constructor(...items: number[])
-  constructor(
-    ...items: [number[] & { length: N }] | (number[] & { length: N })
-  ) {
-    if (typeof items[0] === 'undefined') {
-      throw Error("can't create empty vector")
-    }
-    if (typeof items[0] === 'number') {
-      super(...(items as number[]))
-    } else {
-      super(...(items[0] as number[]))
-    }
+type NumberArrayLike<N extends number = number> = ArrayLike<number> & {
+  length: N
+}
+type MutableNumberArrayLike<N extends number = number> = NumberArrayLike<N> & {
+  [index: number]: number
+}
+type VectorArrayConstructor<TArray extends MutableNumberArrayLike<number>> = {
+  new (length: number): TArray
+  readonly prototype: TArray
+}
+type VectorItems<N extends number> =
+  | [NumberArrayLike<N>]
+  | (number[] & { length: N })
+  | number[]
+const VECTOR_BRAND = Symbol('creagen.vector')
+
+export type VectorStorage<N extends number = number> = MutableNumberArrayLike<N>
+export type VectorInput<N extends number = number> = NumberArrayLike<N>
+export type VectorLike<N extends number = number> = VectorStorage<N> &
+  Iterable<number> & {
+    readonly x: number
+    readonly y: Y<N>
+    readonly z: Z<N>
   }
 
-  /** Generate a evenly spaced vector */
-  static linSpace(start: number, end: number, count: number) {
-    return new Vector<1>(
-      ...Array.from(
-        { length: count },
-        (_, i) => start + (end - start) * (i / (count - 1)),
-      ),
-    )
-  }
+function vectorFrom<TVector extends object>(
+  vector: TVector,
+  values: ArrayLike<number>,
+): TVector {
+  const Constructor = vector.constructor as new (
+    items: ArrayLike<number>,
+  ) => TVector
+  return new Constructor(values)
+}
 
-  static empty<N extends number>(length: N) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return new Vector<N>(...Array(length).fill(0))
-  }
+export function isVector<N extends number = number>(
+  value: unknown,
+): value is VectorLike<N> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as Record<PropertyKey, unknown>)[VECTOR_BRAND] === true
+  )
+}
 
-  /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
-  static polar(radius: number, angle: number) {
-    return new Vector<2>(radius * Math.cos(angle), radius * Math.sin(angle))
-  }
+/** Factory function for creating a vector type with a given base class. */
+export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
+  Base: VectorArrayConstructor<TArray>,
+) {
+  const VectorBaseClass = Base as unknown as VectorArrayConstructor<
+    MutableNumberArrayLike<number>
+  >
 
-  static create<N extends number>(
-    ...items: [number[] & { length: N }] | (number[] & { length: N })
-  ) {
-    return new Vector<N>(...(items as number[]))
-  }
+  return class VectorBase<N extends number> extends VectorBaseClass {
+    [index: number]: number
 
-  /**
-   * Return the dimension of the Vector
-   *
-   * NOTE: use `.mag()` to get the magnitude of the vector
-   * */
-  override get length(): N {
-    return super.length as N
-  }
-
-  get x(): number {
-    return this[0]
-  }
-
-  set x(v: number) {
-    this[0] = v
-  }
-
-  get y(): Y<N> {
-    return this[1] as Y<N>
-  }
-
-  set y(v: number) {
-    this[1] = v
-  }
-
-  get z(): Z<N> {
-    return this[2] as Z<N>
-  }
-
-  set z(v: number) {
-    this[1] = v
-  }
-
-  override push(): number {
-    throw new Error('Cannot add items to FixedSizeArray')
-  }
-
-  override pop(): number | undefined {
-    throw new Error('Cannot remove items from FixedSizeArray')
-  }
-
-  clone() {
-    return new Vector<N>(
-      ...([...this] as GrowToSize<number, N, [], 0> & {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        [Symbol.iterator]: () => any
-      }),
-    )
-  }
-
-  /** Squared euclidean distance to another vector */
-  dist2(v: Vector<N>) {
-    let dist = 0
-    for (let i = 0; i < this.length; i++) {
-      dist += (this[i] - v[i]) ** 2
-    }
-    return dist
-  }
-
-  dist(v: Vector<N>) {
-    return Math.sqrt(this.dist2(v))
-  }
-
-  /** mutable mapping oftor values */
-  mutmap(
-    callbackfn: (value: number, index: number, array: number[]) => number,
-  ) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = callbackfn(this[i], i, this)
-    }
-    return this
-  }
-
-  add(v: Vector<N>) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] += v[i]
-    }
-    return this
-  }
-
-  /** normalize */
-  norm() {
-    const mag2 = this.mag2()
-    if (mag2 === 0) return this
-    // TODO: use https://en.wikipedia.org/wiki/Fast_inverse_square_root
-    const a = 1 / Math.sqrt(mag2)
-    if (a === 0) return this
-    for (let i = 0; i < this.length; i++) {
-      this[i] *= a
-    }
-    return this
-  }
-
-  sub(v: Vector<N>) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] -= v[i]
-    }
-    return this
-  }
-
-  roundToDec(dec?: number) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = Math.roundToDec(this[i], dec)
-    }
-    return this
-  }
-
-  /** Linear interpolation towards `target` in steps of `alpha`% */
-  lerp(target: Vector<N>, alpha: number) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = (1 - alpha) * this[i] + alpha * target[i]
-    }
-    return this
-  }
-
-  /** Randomize the order of the elements inside of the vector  */
-  randomSort(): this {
-    const current = this.clone()
-    const visited = new Array(this.length).fill(false)
-    let i = 0
-    while (i < this.length) {
-      const r = Math.floor(Math.random() * length)
-      if (visited[r]) continue
-      visited[r] = true
-      this[i] = current[r]
-      i++
-    }
-    return this
-  }
-
-  /** Compare two vectors for equality */
-  equals(v: Vector<N>) {
-    for (let i = 0; i < this.length; i++) {
-      if (this[i] !== v[i]) {
-        return false
+    constructor(...items: VectorItems<N>) {
+      const first = items[0]
+      if (first === undefined) {
+        throw Error("can't create empty vector")
+      }
+      if (typeof first === 'number') {
+        // Spread-numbers path: items is already the right shape, use it directly.
+        super(items.length)
+        Object.defineProperty(this, VECTOR_BRAND, {
+          value: true,
+          enumerable: false,
+          configurable: false,
+        })
+        for (let i = 0; i < items.length; i++) {
+          this[i] = items[i] as number
+        }
+      } else if ((Base as unknown) === Array) {
+        // Array base: allocate by length and copy directly from the source —
+        // no Array.from() intermediate allocation.
+        super(first.length)
+        Object.defineProperty(this, VECTOR_BRAND, {
+          value: true,
+          enumerable: false,
+          configurable: false,
+        })
+        for (let i = 0; i < first.length; i++) {
+          this[i] = first[i]
+        }
+      } else {
+        // TypedArray base: pass the ArrayLike directly to super() so the native
+        // constructor handles the copy - no intermediate array or manual loop needed.
+        super(first as unknown as number)
+        Object.defineProperty(this, VECTOR_BRAND, {
+          value: true,
+          enumerable: false,
+          configurable: false,
+        })
       }
     }
-    return true
-  }
 
-  dot(v: Vector<N>) {
-    let a = 0
-    for (let i = 0; i < this.length; i++) {
-      a += this[i] * v[i]
+    /** Generate a evenly spaced vector */
+    static linSpace<TVector>(
+      this: new (items: ArrayLike<number>) => TVector,
+      start: number,
+      end: number,
+      count: number,
+    ): TVector {
+      return new this(
+        Array.from(
+          { length: count },
+          (_, i) => start + (end - start) * (i / (count - 1)),
+        ),
+      )
     }
-    return a
-  }
 
-  /**
-   * Treat two vectors as a 2d matrix and get the [determinant](https://en.wikipedia.org/wiki/Determinant) between them
-   *
-   * Useful for determining the orientation between two vectors.
-   * 1. Postive determinant: `vector` is counter-clockwise oriented compared to `this`
-   *
-   * 2. Negative determinant: `vector` is clockwise oriented compared to `this`
-   *
-   * 3. Zero determinant: The determinant is singular. Both vectors are pointing in the same direction. They are scalar multiples of eachother.
-   */
-  det(vector: Vector<2>) {
-    if (this.length != 2) throw new Error('Only 2d vectors are supported')
-
-    // ad - bc
-    return this[0] * vector[1] - this[1] * vector[0]
-  }
-
-  /** Apply modulo to each value */
-  mod(mod: number) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] %= mod
+    static empty<TVector, N extends number>(
+      this: new (items: ArrayLike<number>) => TVector,
+      length: N,
+    ): TVector {
+      return new this(Array(length).fill(0))
     }
-    return this
-  }
 
-  round() {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = Math.round(this[i])
+    /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
+    static polar<TVector>(
+      this: new (items: ArrayLike<number>) => TVector,
+      radius: number,
+      angle: number,
+    ): TVector {
+      return new this([radius * Math.cos(angle), radius * Math.sin(angle)])
     }
-    return this
-  }
 
-  /** Divide vector */
-  div(s: number)
-  /** Divide each value */
-  div(x: number, y: number)
-  /** Divide each value */
-  div(...divisors: FixedArray<number, N>)
-  /** Divide/scale vector */
-  div(...divisors: number[]) {
-    if (divisors.length === 1) {
-      const s = divisors[0]
+    /**
+     * Return the dimension of the Vector
+     *
+     * NOTE: use `.mag()` to get the magnitude of the vector
+     * */
+    override get length(): N {
+      return super.length as N
+    }
+
+    get x(): number {
+      return this[0]
+    }
+
+    set x(v: number) {
+      this[0] = v
+    }
+
+    get y(): Y<N> {
+      return this[1] as Y<N>
+    }
+
+    set y(v: number) {
+      this[1] = v
+    }
+
+    get z(): Z<N> {
+      return this[2] as Z<N>
+    }
+
+    set z(v: number) {
+      this[1] = v
+    }
+
+    push(): number {
+      throw new Error('Cannot add items to FixedSizeArray')
+    }
+
+    pop(): number | undefined {
+      throw new Error('Cannot remove items from FixedSizeArray')
+    }
+
+    clone(): this {
+      return vectorFrom(this, this)
+    }
+
+    /** Squared euclidean distance to another vector */
+    dist2(v: VectorInput<N>) {
+      let dist = 0
       for (let i = 0; i < this.length; i++) {
-        this[i] /= s
+        dist += (this[i] - v[i]) ** 2
+      }
+      return dist
+    }
+
+    dist(v: VectorInput<N>) {
+      return Math.sqrt(this.dist2(v))
+    }
+
+    /** mutable mapping oftor values */
+    mutmap(
+      callbackfn: (
+        value: number,
+        index: number,
+        array: VectorStorage<N>,
+      ) => number,
+    ) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = callbackfn(this[i], i, this)
       }
       return this
     }
 
-    for (let i = 0; i < this.length; i++) {
-      if (divisors[i] === undefined) break
-      this[i] /= divisors[i]
+    add(v: VectorInput<N>) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] += v[i]
+      }
+      return this
     }
 
-    return this
-  }
+    /** normalize */
+    norm() {
+      const mag2 = this.mag2()
+      if (mag2 === 0) return this
+      const a = 1 / Math.sqrt(mag2)
+      if (a === 0) return this
+      for (let i = 0; i < this.length; i++) {
+        this[i] *= a
+      }
+      return this
+    }
 
-  /** Scale vector */
-  mul(s: number): this
-  /** Multiply each value */
-  mul(x: number, y: number): this
-  /** Multiply each value */
-  mul(...multipliers: FixedArray<number, N>): this
-  /** Multiple/scale vector */
-  mul(...multipliers: number[]): this {
-    if (multipliers.length === 1) {
-      const s = multipliers[0]
+    sub(v: VectorInput<N>) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] -= v[i]
+      }
+      return this
+    }
+
+    roundToDec(dec?: number) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = Math.roundToDec(this[i], dec)
+      }
+      return this
+    }
+
+    /** Linear interpolation towards `target` in steps of `alpha`% */
+    lerp(target: VectorInput<N>, alpha: number) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = (1 - alpha) * this[i] + alpha * target[i]
+      }
+      return this
+    }
+
+    /** Randomize the order of the elements inside of the vector  */
+    randomSort(): this {
+      const current = this.clone()
+      const visited = new Array(this.length).fill(false)
+      let i = 0
+      while (i < this.length) {
+        const r = Math.floor(Math.random() * this.length)
+        if (visited[r]) continue
+        visited[r] = true
+        this[i] = current[r]
+        i++
+      }
+      return this
+    }
+
+    /** Compare two vectors for equality */
+    equals(v: VectorInput<N>) {
+      for (let i = 0; i < this.length; i++) {
+        if (this[i] !== v[i]) {
+          return false
+        }
+      }
+      return true
+    }
+
+    dot(v: VectorInput<N>) {
+      let a = 0
+      for (let i = 0; i < this.length; i++) {
+        a += this[i] * v[i]
+      }
+      return a
+    }
+
+    /**
+     * Treat two vectors as a 2d matrix and get the [determinant](https://en.wikipedia.org/wiki/Determinant) between them
+     *
+     * Useful for determining the orientation between two vectors.
+     * 1. Postive determinant: `vector` is counter-clockwise oriented compared to `this`
+     *
+     * 2. Negative determinant: `vector` is clockwise oriented compared to `this`
+     *
+     * 3. Zero determinant: The determinant is singular. Both vectors are pointing in the same direction. They are scalar multiples of eachother.
+     */
+    det(vector: VectorInput<2>) {
+      if (this.length != 2) throw new Error('Only 2d vectors are supported')
+
+      return this[0] * vector[1] - this[1] * vector[0]
+    }
+
+    /** Apply modulo to each value */
+    mod(mod: number) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] %= mod
+      }
+      return this
+    }
+
+    round() {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = Math.round(this[i])
+      }
+      return this
+    }
+
+    /** Divide vector */
+    div(s: number): this
+    /** Divide each value */
+    div(x: number, y: number): this
+    /** Divide each value */
+    div(...divisors: FixedArray<number, N>): this
+    /** Divide/scale vector */
+    div(...divisors: number[]) {
+      if (divisors.length === 1) {
+        const s = divisors[0]
+        for (let i = 0; i < this.length; i++) {
+          this[i] /= s
+        }
+        return this
+      }
+
+      for (let i = 0; i < this.length; i++) {
+        if (divisors[i] === undefined) break
+        this[i] /= divisors[i]
+      }
+
+      return this
+    }
+
+    /** Scale vector */
+    mul(s: number): this
+    /** Multiply each value */
+    mul(x: number, y: number): this
+    /** Multiply each value */
+    mul(...multipliers: FixedArray<number, N>): this
+    /** Multiple/scale vector */
+    mul(...multipliers: number[]): this {
+      if (multipliers.length === 1) {
+        const s = multipliers[0]
+        for (let i = 0; i < this.length; i++) {
+          this[i] *= s
+        }
+        return this
+      }
+
+      for (let i = 0; i < this.length; i++) {
+        if (multipliers[i] === undefined) break
+        this[i] *= multipliers[i]
+      }
+
+      return this
+    }
+
+    floor() {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = Math.floor(this[i])
+      }
+      return this
+    }
+
+    scale(s: number) {
       for (let i = 0; i < this.length; i++) {
         this[i] *= s
       }
       return this
     }
 
-    for (let i = 0; i < this.length; i++) {
-      if (multipliers[i] === undefined) break
-      this[i] *= multipliers[i]
+    /** airthmetic mean */
+    mean(): number {
+      return this.average()
     }
 
-    return this
-  }
-
-  floor() {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = Math.floor(this[i])
-    }
-    return this
-  }
-
-  scale(s: number) {
-    for (let i = 0; i < this.length; i++) {
-      this[i] *= s
-    }
-    return this
-  }
-
-  /** airthmetic mean */
-  mean(): number {
-    return this.average()
-  }
-
-  /** airthmetic average */
-  average(): number {
-    return this.sum() / this.length
-  }
-
-  /** magnitude squared */
-  mag(): number {
-    return Math.sqrt(this.mag2())
-  }
-
-  /** magnitude squared */
-  mag2(): number {
-    let m = 0
-    for (let i = 0; i < this.length; i++) {
-      m += this[i] ** 2
-    }
-    return m
-  }
-
-  /** Calculate the average difference from the average */
-  spread() {
-    return Math.sqrt(this.spread2())
-  }
-
-  /** Calculate the average difference from the average squared */
-  spread2() {
-    const average = this.average()
-    let spread = 0
-    for (let i = 0; i < this.length; i++) {
-      spread += Math.pow(this[i] - average, 2)
+    /** airthmetic average */
+    average(): number {
+      return this.sum() / this.length
     }
 
-    return spread / this.length
-  }
-
-  chunk<N extends number>(size: N): Vector<N>[] {
-    if (size < 0 || !Number.isFinite(size)) {
-      throw Error('size must be a positive number')
+    /** magnitude squared */
+    mag(): number {
+      return Math.sqrt(this.mag2())
     }
-    let index = 0,
-      resIndex = 0
-    const result = Array<Vector<N>>(Math.ceil(this.length / size))
 
-    while (index < this.length) {
-      result[resIndex++] = new Vector(
-        this.slice(index, (index += size)),
-      ) as Vector<N>
-    }
-    return result
-  }
-
-  /** Check if a number is within `limits` */
-  within(bounds: FlatBounds<N>): boolean {
-    let d = 0
-    for (let i = 0; i < this.length; i++) {
-      const start = bounds[d] as number
-      d++
-      const stop = bounds[d] as number
-      d++
-      if (this[i] < start || this[i] > stop) {
-        return false
+    /** magnitude squared */
+    mag2(): number {
+      let m = 0
+      for (let i = 0; i < this.length; i++) {
+        m += this[i] ** 2
       }
+      return m
     }
-    return true
-  }
 
-  /**
-   * Angle between x-axis and ray from origin to [x,y] from -pi to pi
-   *
-   * https://en.wikipedia.org/wiki/Atan2
-   */
-  atan2(): number {
-    if (this.length != 2) throw new Error('Only 2d atan is supported')
-    return Math.atan2(this[1], this[0])
-  }
-
-  /**
-   * Positive atan2
-   *
-   * Angle between x-axis and ray from origin to [x,y] from 0 to 2pi
-   *
-   * https://en.wikipedia.org/wiki/Atan2
-   */
-  atan2p(): number {
-    if (this.length != 2) throw new Error('Only 2d atan is supported')
-    const a = Math.atan2(this[1], this[0])
-    return a >= 0 ? a : a + 2 * Math.PI
-  }
-
-  /**
-   * Rotate the vector around its zero point
-   * @param theta - the angle to rotate in radians
-   * */
-  rotate(theta: number) {
-    if (this.length != 2) throw new Error('Only 2d rotation are supported')
-    if (theta === -Math.PI / 2) {
-      this.rotateLeft()
-    } else if (theta === Math.PI / 2) {
-      this.rotateRight()
-    } else {
-      this[0] *= Math.cos(theta) + this[1] * Math.sin(theta)
-      this[1] *= -Math.sin(theta) + this[0] * Math.cos(theta)
+    /** Calculate the average difference from the average */
+    spread() {
+      return Math.sqrt(this.spread2())
     }
-    return this
-  }
 
-  rotateLeft() {
-    if (this.length != 2) throw new Error('Only 2d rotation are supported')
-    const x = this[0]
-    this[0] = -this[1]
-    this[1] = x
-    return this
-  }
-
-  rotateRight() {
-    if (this.length != 2) throw new Error('Only 2d rotation are supported')
-    const x = this[0]
-    this[0] = this[1]
-    this[1] = -x
-    return this
-  }
-
-  /** if a number is above or below a limit it correct it so it is within the boundary limits */
-  wrapAround(bounds: FlatBounds<N>) {
-    let d = 0
-    for (let i = 0; i < this.length; i++) {
-      const start = bounds[d] as number
-      d++
-      const stop = bounds[d] as number
-      d++
-
-      const v = this[i]
-      if (v < start) {
-        const diff = stop - start
-        this[i] = stop - ((start - v) % diff)
-      } else if (v > stop) {
-        const diff = stop - start
-        this[i] = start + ((v - stop) % diff)
+    /** Calculate the average difference from the average squared */
+    spread2() {
+      const average = this.average()
+      let spread = 0
+      for (let i = 0; i < this.length; i++) {
+        spread += Math.pow(this[i] - average, 2)
       }
+
+      return spread / this.length
     }
-    return this
-  }
 
-  /** Clamp each dimension to stay within bounds */
-  clamp(bounds: FlatBounds<N>): this {
-    let d = 0
-    for (let i = 0; i < this.length; i++) {
-      const min = bounds[d] as number
-      d++
-      const max = bounds[d] as number
-      d++
-      this[i] = Math.max(min, Math.min(max, this[i]))
-    }
-    return this
-  }
-
-  /** Clamp each dimension to stay within min/max values */
-  clampRange(min: number, max: number): this {
-    for (let i = 0; i < this.length; i++) {
-      this[i] = Math.max(min, Math.min(max, this[i]))
-    }
-    return this
-  }
-
-  /** Reflect off bounds when hitting them (bouncing behavior) */
-  reflect(bounds: FlatBounds<N>): this {
-    let d = 0
-    for (let i = 0; i < this.length; i++) {
-      const min = bounds[d] as number
-      d++
-      const max = bounds[d] as number
-      d++
-      const v = this[i]
-
-      if (v < min) {
-        this[i] = min + (min - v) // Reflect below minimum
-      } else if (v > max) {
-        this[i] = max - (v - max) // Reflect above maximum
+    chunk<M extends number>(size: M): VectorLike<M>[] {
+      if (size < 0 || !Number.isFinite(size)) {
+        throw Error('size must be a positive number')
       }
-    }
-    return this
-  }
+      let index = 0,
+        resIndex = 0
+      const result = Array<VectorLike<M>>(Math.ceil(this.length / size))
 
-  /** Scale vector to fit within bounds while maintaining proportions */
-  fitToBounds(bounds: FlatBounds<N>): this {
-    // Find the scale factor needed for each dimension
-    let minScale = Infinity
-
-    let d = 0
-    for (let i = 0; i < this.length; i++) {
-      const min = bounds[d] as number
-      d++
-      const max = bounds[d] as number
-      d++
-
-      const v = this[i]
-      const range = max - min
-
-      if (v !== 0) {
-        const scale = range / Math.abs(v)
-        minScale = Math.min(minScale, scale)
+      while (index < this.length) {
+        result[resIndex++] = vectorFrom(
+          this,
+          (
+            this as unknown as {
+              slice(start?: number, end?: number): ArrayLike<number>
+            }
+          ).slice(index, (index += size)),
+        ) as unknown as VectorLike<M>
       }
+      return result
     }
 
-    // Apply the minimum scale to maintain proportions
-    if (minScale !== Infinity) {
-      this.scale(minScale)
+    /** Check if a number is within `limits` */
+    within(bounds: FlatBounds<N>): boolean {
+      let d = 0
+      for (let i = 0; i < this.length; i++) {
+        const start = bounds[d] as number
+        d++
+        const stop = bounds[d] as number
+        d++
+        if (this[i] < start || this[i] > stop) {
+          return false
+        }
+      }
+      return true
     }
 
-    return this
-  }
-
-  sum(): number {
-    let a = 0
-    for (let i = 0; i < this.length; i++) {
-      a += this[i]
+    /**
+     * Angle between x-axis and ray from origin to [x,y] from -pi to pi
+     *
+     * https://en.wikipedia.org/wiki/Atan2
+     */
+    atan2(): number {
+      if (this.length != 2) throw new Error('Only 2d atan is supported')
+      return Math.atan2(this[1], this[0])
     }
-    return a
-  }
 
-  compare(vector: Vector<N>) {
-    for (let i = 0; i < this.length; i++) {
-      if (this[i] !== vector[i]) return false
+    /**
+     * Positive atan2
+     *
+     * Angle between x-axis and ray from origin to [x,y] from 0 to 2pi
+     *
+     * https://en.wikipedia.org/wiki/Atan2
+     */
+    atan2p(): number {
+      if (this.length != 2) throw new Error('Only 2d atan is supported')
+      const a = Math.atan2(this[1], this[0])
+      return a >= 0 ? a : a + 2 * Math.PI
     }
-    return true
+
+    /**
+     * Rotate the vector around its zero point
+     * @param theta - the angle to rotate in radians
+     * */
+    rotate(theta: number) {
+      if (this.length != 2) throw new Error('Only 2d rotation are supported')
+      if (theta === -Math.PI / 2) {
+        this.rotateLeft()
+      } else if (theta === Math.PI / 2) {
+        this.rotateRight()
+      } else {
+        this[0] *= Math.cos(theta) + this[1] * Math.sin(theta)
+        this[1] *= -Math.sin(theta) + this[0] * Math.cos(theta)
+      }
+      return this
+    }
+
+    rotateLeft() {
+      if (this.length != 2) throw new Error('Only 2d rotation are supported')
+      const x = this[0]
+      this[0] = -this[1]
+      this[1] = x
+      return this
+    }
+
+    rotateRight() {
+      if (this.length != 2) throw new Error('Only 2d rotation are supported')
+      const x = this[0]
+      this[0] = this[1]
+      this[1] = -x
+      return this
+    }
+
+    /** if a number is above or below a limit it correct it so it is within the boundary limits */
+    wrapAround(bounds: FlatBounds<N>) {
+      let d = 0
+      for (let i = 0; i < this.length; i++) {
+        const start = bounds[d] as number
+        d++
+        const stop = bounds[d] as number
+        d++
+
+        const v = this[i]
+        if (v < start) {
+          const diff = stop - start
+          this[i] = stop - ((start - v) % diff)
+        } else if (v > stop) {
+          const diff = stop - start
+          this[i] = start + ((v - stop) % diff)
+        }
+      }
+      return this
+    }
+
+    /** Clamp each dimension to stay within bounds */
+    clamp(bounds: FlatBounds<N>): this {
+      let d = 0
+      for (let i = 0; i < this.length; i++) {
+        const min = bounds[d] as number
+        d++
+        const max = bounds[d] as number
+        d++
+        this[i] = Math.max(min, Math.min(max, this[i]))
+      }
+      return this
+    }
+
+    /** Clamp each dimension to stay within min/max values */
+    clampRange(min: number, max: number): this {
+      for (let i = 0; i < this.length; i++) {
+        this[i] = Math.max(min, Math.min(max, this[i]))
+      }
+      return this
+    }
+
+    /** Reflect off bounds when hitting them (bouncing behavior) */
+    reflect(bounds: FlatBounds<N>): this {
+      let d = 0
+      for (let i = 0; i < this.length; i++) {
+        const min = bounds[d] as number
+        d++
+        const max = bounds[d] as number
+        d++
+        const v = this[i]
+
+        if (v < min) {
+          this[i] = min + (min - v)
+        } else if (v > max) {
+          this[i] = max - (v - max)
+        }
+      }
+      return this
+    }
+
+    /** Scale vector to fit within bounds while maintaining proportions */
+    fitToBounds(bounds: FlatBounds<N>): this {
+      let minScale = Infinity
+
+      let d = 0
+      for (let i = 0; i < this.length; i++) {
+        const min = bounds[d] as number
+        d++
+        const max = bounds[d] as number
+        d++
+
+        const v = this[i]
+        const range = max - min
+
+        if (v !== 0) {
+          const scale = range / Math.abs(v)
+          minScale = Math.min(minScale, scale)
+        }
+      }
+
+      if (minScale !== Infinity) {
+        this.scale(minScale)
+      }
+
+      return this
+    }
+
+    sum(): number {
+      let a = 0
+      for (let i = 0; i < this.length; i++) {
+        a += this[i]
+      }
+      return a
+    }
+
+    compare(vector: VectorInput<N>) {
+      for (let i = 0; i < this.length; i++) {
+        if (this[i] !== vector[i]) return false
+      }
+      return true
+    }
   }
 }
 
-export interface Vector<N extends number> {
-  create(...items: [number[] & { length: N }]): Vector<N>
-  create(...items: number[] & { length: N }): Vector<N>
-  create(...items: number[]): Vector<N>
-  create(...items: [number[] & { length: N }]): Vector<N>
+const ArrayVectorBase = createVectorType(
+  Array as unknown as VectorArrayConstructor<number[]>,
+)
+const Float32VectorBase = createVectorType(Float32Array)
+const Float64VectorBase = createVectorType(Float64Array)
+const Int8VectorBase = createVectorType(Int8Array)
+const Int16VectorBase = createVectorType(Int16Array)
+const Int32VectorBase = createVectorType(Int32Array)
+const Uint8VectorBase = createVectorType(Uint8Array)
+const Uint8ClampedVectorBase = createVectorType(Uint8ClampedArray)
+const Uint16VectorBase = createVectorType(Uint16Array)
+const Uint32VectorBase = createVectorType(Uint32Array)
+
+/* eslint-disable
+  @typescript-eslint/no-unsafe-declaration-merging,
+  @typescript-eslint/no-empty-object-type,
+  @typescript-eslint/no-unused-vars
+*/
+export class Vector<N extends number> extends ArrayVectorBase<N> {}
+export interface Vector<N extends number> extends Omit<
+  Array<number>,
+  'length' | 'push'
+> {}
+export class Float32Vector<N extends number> extends Float32VectorBase<N> {}
+export interface Float32Vector<N extends number> extends Omit<
+  Float32Array,
+  'length'
+> {}
+export class Float64Vector<N extends number> extends Float64VectorBase<N> {}
+export interface Float64Vector<N extends number> extends Omit<
+  Float64Array,
+  'length'
+> {}
+export class Int8Vector<N extends number> extends Int8VectorBase<N> {}
+export interface Int8Vector<N extends number> extends Omit<
+  Int8Array,
+  'length'
+> {}
+export class Int16Vector<N extends number> extends Int16VectorBase<N> {}
+export interface Int16Vector<N extends number> extends Omit<
+  Int16Array,
+  'length'
+> {}
+export class Int32Vector<N extends number> extends Int32VectorBase<N> {}
+export interface Int32Vector<N extends number> extends Omit<
+  Int32Array,
+  'length'
+> {}
+export class Uint8Vector<N extends number> extends Uint8VectorBase<N> {}
+export interface Uint8Vector<N extends number> extends Omit<
+  Uint8Array,
+  'length'
+> {}
+export class Uint8ClampedVector<
+  N extends number,
+> extends Uint8ClampedVectorBase<N> {}
+export interface Uint8ClampedVector<N extends number> extends Omit<
+  Uint8ClampedArray,
+  'length'
+> {}
+export class Uint16Vector<N extends number> extends Uint16VectorBase<N> {}
+export interface Uint16Vector<N extends number> extends Omit<
+  Uint16Array,
+  'length'
+> {}
+export class Uint32Vector<N extends number> extends Uint32VectorBase<N> {}
+export interface Uint32Vector<N extends number> extends Omit<
+  Uint32Array,
+  'length'
+> {}
+/* eslint-enable
+  @typescript-eslint/no-unsafe-declaration-merging,
+  @typescript-eslint/no-empty-object-type,
+  @typescript-eslint/no-unused-vars
+*/
+
+function getVectorConstructor(
+  value: unknown,
+): new <N extends number>(...items: VectorItems<N>) => VectorLike<N> {
+  if (value instanceof Float32Array) return Float32Vector
+  if (value instanceof Float64Array) return Float64Vector
+  if (value instanceof Int8Array) return Int8Vector
+  if (value instanceof Int16Array) return Int16Vector
+  if (value instanceof Int32Array) return Int32Vector
+  if (value instanceof Uint8Array) return Uint8Vector
+  if (value instanceof Uint8ClampedArray) return Uint8ClampedVector
+  if (value instanceof Uint16Array) return Uint16Vector
+  if (value instanceof Uint32Array) return Uint32Vector
+  return Vector
 }
 
-/** Short hand for `Vector.create()` */
+/** Create a vector, preserving typed array type when passed */
 export function vec<N extends number>(
-  ...items: [number[] & { length: N }]
-): Vector<N>
+  ...items: [Float32Array & { length: N }]
+): Float32Vector<N>
+export function vec<N extends number>(
+  ...items: [Float64Array & { length: N }]
+): Float64Vector<N>
+export function vec<N extends number>(
+  ...items: [Int8Array & { length: N }]
+): Int8Vector<N>
+export function vec<N extends number>(
+  ...items: [Int16Array & { length: N }]
+): Int16Vector<N>
+export function vec<N extends number>(
+  ...items: [Int32Array & { length: N }]
+): Int32Vector<N>
+export function vec<N extends number>(
+  ...items: [Uint8Array & { length: N }]
+): Uint8Vector<N>
+export function vec<N extends number>(
+  ...items: [Uint8ClampedArray & { length: N }]
+): Uint8ClampedVector<N>
+export function vec<N extends number>(
+  ...items: [Uint16Array & { length: N }]
+): Uint16Vector<N>
+export function vec<N extends number>(
+  ...items: [Uint32Array & { length: N }]
+): Uint32Vector<N>
+export function vec<N extends number>(...items: [NumberArrayLike<N>]): Vector<N>
 export function vec<N extends number>(
   ...items: [...number[]] & { length: N }
 ): Vector<N>
 export function vec<N extends number>(...items: [...number[]]): Vector<N>
 export function vec<N extends number>(
-  ...items: [number[] & { length: N }] | (number[] & { length: N })
-): Vector<N> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-  return Vector.create<N>(...(items as any))
+  ...items: [NumberArrayLike<N>] | (number[] & { length: N })
+): VectorLike<N> {
+  const Constructor = getVectorConstructor(items[0])
+  return new Constructor<N>(...(items as VectorItems<N>))
 }
 
 /** Array of direction vectors East, South, West, North */

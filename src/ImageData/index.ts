@@ -1,5 +1,5 @@
 import { Color } from '../Color'
-import { Vector } from '../Vector'
+import { isVector, Vector } from '../Vector'
 import { Bitmap } from '../Bitmap'
 import type { CV, Mat } from '@techstark/opencv-js'
 import loadCV from '@techstark/opencv-js'
@@ -178,11 +178,14 @@ export class ImageData {
     x2?: number,
     y2?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
-    if (x instanceof Vector) {
-      if (_y instanceof Vector) return this.get(x.x, x.y, _y.x, _y.y)
+    if (isVector<2>(x)) {
+      if (isVector<2>(_y)) return this.get(x.x, x.y, _y.x, _y.y)
       return this.get(x.x, x.y)
     }
-    const y = _y as number
+    if (typeof x !== 'number' || typeof _y !== 'number') {
+      throw Error('Expected numeric coordinates')
+    }
+    const y = _y
 
     if (x < 0 || x >= this.width) {
       throw Error(`x '${x}' is out of bounds`)

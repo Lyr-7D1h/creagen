@@ -1,9 +1,9 @@
 import * as Math from './math'
 import { Random } from './Random'
 import type { FlatBounds } from './types'
-import { Vector } from './Vector'
+import { Uint8Vector } from './Vector'
 
-export class Color extends Vector<4> {
+export class Color extends Uint8Vector<4> {
   static fromHex(hex: string) {
     const v = hex
       .replace(
@@ -74,10 +74,10 @@ export class Color extends Vector<4> {
     return this
   }
 
-  static override create(grey: number, a?: number): Color
-  static override create(r: number, g: number, b: number, a?: number): Color
-  static override create(color: number[] | Uint8ClampedArray | number): Color
-  static override create(
+  static create(grey: number, a?: number): Color
+  static create(r: number, g: number, b: number, a?: number): Color
+  static create(color: number[] | Uint8ClampedArray | number): Color
+  static create(
     r: number | number[] | Uint8ClampedArray,
     g?: number,
     b?: number,
@@ -120,7 +120,7 @@ export class Color extends Vector<4> {
       typeof b === 'undefined' &&
       typeof g === 'undefined'
     ) {
-      super([r, r, r, a ?? 255])
+      super(r, r, r, a ?? 255)
       return
     }
 
@@ -138,7 +138,7 @@ export class Color extends Vector<4> {
     if (typeof g === 'undefined' || typeof b === 'undefined') {
       throw Error('Color has to have 3 or 4 elements')
     }
-    super([r, g, b, a ?? 255])
+    super(r, g, b, a ?? 255)
     this.withinBoundsCheck()
   }
 
@@ -193,8 +193,8 @@ export class Color extends Vector<4> {
     )
   }
 
-  override clone(): Color {
-    return new Color(this.r, this.g, this.b)
+  override clone(): this {
+    return new Color(this.r, this.g, this.b) as this
   }
 
   override scale(s: number) {
@@ -205,10 +205,10 @@ export class Color extends Vector<4> {
   }
 
   normalize() {
-    this.r = Math.floor(this.r)
-    this.g = Math.floor(this.g)
-    this.b = Math.floor(this.b)
-    this.a = Math.floor(this.a)
+    this.r = Math.min(255, Math.max(0, Math.floor(this.r)))
+    this.g = Math.min(255, Math.max(0, Math.floor(this.g)))
+    this.b = Math.min(255, Math.max(0, Math.floor(this.b)))
+    this.a = Math.min(255, Math.max(0, Math.floor(this.a)))
     return this
   }
 
@@ -227,11 +227,12 @@ export class Color extends Vector<4> {
   }
 
   gradient(color: Color, percentage: number) {
-    this.r += (color.r - this.r) * percentage
-    this.g += (color.g - this.g) * percentage
-    this.b += (color.b - this.b) * percentage
-    this.a += (color.a - this.a) * percentage
-    return this.normalize()
+    this.lerp(color, percentage)
+    this.r = Math.round(this.r)
+    this.g = Math.round(this.g)
+    this.b = Math.round(this.b)
+    this.a = Math.round(this.a)
+    return this
   }
 
   /**

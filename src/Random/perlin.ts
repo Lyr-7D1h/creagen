@@ -1,3 +1,5 @@
+import * as Math from '../math'
+
 // PERLIN NOISE: https://www.vincentbruijn.nl/articles/perlin-noise-js/
 const p = new Array<number>(512)
 const permutation: number[] = [
@@ -24,9 +26,7 @@ for (let i = 0; i < 256; i++) {
 const fade = (t: number) => {
   return t * t * t * (t * (t * 6 - 15) + 10)
 }
-const lerp = (t: number, a: number, b: number) => {
-  return a + t * (b - a)
-}
+
 const grad = (hash: number, x: number, y: number, z: number) => {
   const h = hash & 15
   const u = h < 8 ? x : y
@@ -51,21 +51,25 @@ export function perlin(x: number, y: number, z: number) {
   const BA = p[B] + Z
   const BB = p[B + 1] + Z
 
-  return lerp(
-    w,
-    lerp(
+  return Math.lerp(
+    Math.lerp(
+      Math.lerp(grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z), u),
+      Math.lerp(grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z), u),
       v,
-      lerp(u, grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z)),
-      lerp(u, grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z)),
     ),
-    lerp(
-      v,
-      lerp(u, grad(p[AA + 1], x, y, z - 1), grad(p[BA + 1], x - 1, y, z - 1)),
-      lerp(
+    Math.lerp(
+      Math.lerp(
+        grad(p[AA + 1], x, y, z - 1),
+        grad(p[BA + 1], x - 1, y, z - 1),
         u,
+      ),
+      Math.lerp(
         grad(p[AB + 1], x, y - 1, z - 1),
         grad(p[BB + 1], x - 1, y - 1, z - 1),
+        u,
       ),
+      v,
     ),
+    w,
   )
 }

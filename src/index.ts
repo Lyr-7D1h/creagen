@@ -25,7 +25,24 @@ export { color, Color } from './Color'
 export { PointCloud } from './PointCloud'
 export { Conversion } from './Conversion'
 // export { Motion } from './Motion'
-export { vec, Vector, ALL_DIRECTIONS, DIRECTIONS, DIAGONALS } from './Vector'
+export {
+  createVectorType,
+  Float32Vector,
+  Float64Vector,
+  Int8Vector,
+  Int16Vector,
+  Int32Vector,
+  Uint8Vector,
+  Uint8ClampedVector,
+  Uint16Vector,
+  Uint32Vector,
+  isVector,
+  vec,
+  Vector,
+  ALL_DIRECTIONS,
+  DIRECTIONS,
+  DIAGONALS,
+} from './Vector'
 export { matrix, Matrix } from './Matrix'
 export { KMeans } from './SignalProcessing/KMeans'
 export { Audio, type Feature, type FeatureResult } from './Audio'

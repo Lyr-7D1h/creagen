@@ -2,6 +2,11 @@
 
 import { CREAGEN_PRECISION } from './constants'
 
+/** Linear interpolation between two values, given a factor `t` between 0 and 1 */
+export function lerp(a: number, b: number, t: number) {
+  return a + t * (b - a)
+}
+
 /**
  * Return the greatest common divisor
  */
