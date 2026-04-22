@@ -36,6 +36,19 @@ export class Iter<T> implements Iterable<T> {
   }
 
   // ========== CHAINABLE METHODS ==========
+  enumerate(): Iter<[number, T]> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    return new Iter(
+      (function* () {
+        let i = 0
+        for (const t of self) {
+          yield [i, t] as [number, T]
+          i++
+        }
+      })(),
+    )
+  }
 
   /** Split the iterable into chunks of specified size */
   chunk(chunkSize: number): Iter<T[]> {

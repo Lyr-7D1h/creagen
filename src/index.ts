@@ -35,6 +35,11 @@ export {
   type ContourExtractorOpts,
 } from './ContourExtractor'
 
-export type { FixedNumberArray, FixedArray, FlatBounds } from './types'
+export type {
+  FixedNumberArray,
+  FixedFloat64Array,
+  FixedArray,
+  FlatBounds,
+} from './types'
 
 export { Tree, type NodeId } from './Tree'

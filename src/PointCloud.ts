@@ -3,7 +3,12 @@ import {
   type Delaunay,
   type Voronoi,
 } from 'd3-delaunay'
-import type { FixedArray, FlatBounds } from './types'
+import type {
+  FixedArray,
+  FixedFloat64Array,
+  FixedNumberArray,
+  FlatBounds,
+} from './types'
 import { Conversion } from './Conversion'
 import { poissonDiscSampler } from './PointCloud/PoissonDiscSampler'
 import { lloydsAlgorithm } from './PointCloud/Lloyd'
@@ -124,6 +129,59 @@ export class PointCloud<N extends number> {
     return new PointCloud<N>(points, dimension)
   }
 
+  static grid<N extends number = 2>(
+    /** Number of points per dimension */
+    counts: number | FixedNumberArray<N>,
+    /** [min1, max1, min2, max2, ...] */
+    bounds: FlatBounds<N>,
+    dimension: N = 2 as N,
+  ) {
+    const perDimensionCounts = new Array(dimension) as FixedArray<number, N>
+    for (let d = 0; d < dimension; d++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const count: number = typeof counts === 'number' ? counts : counts[d]
+      if (!Number.isFinite(count) || count < 1) {
+        throw new Error('Grid counts must be finite numbers >= 1')
+      }
+      perDimensionCounts[d] = Math.floor(count)
+    }
+
+    const steps = new Array(dimension) as FixedArray<number, N>
+    let totalPoints = 1
+    for (let d = 0; d < dimension; d++) {
+      const min = bounds[d * 2] as number
+      const max = bounds[d * 2 + 1] as number
+      if (max < min) {
+        throw new Error('Grid bounds must have max >= min for each dimension')
+      }
+
+      const count = perDimensionCounts[d] as number
+      steps[d] = count > 1 ? (max - min) / (count - 1) : 0
+      totalPoints *= count
+    }
+
+    const points = new Float64Array(totalPoints * dimension)
+    const indices = new Array(dimension).fill(0)
+
+    for (let i = 0; i < totalPoints; i++) {
+      for (let d = 0; d < dimension; d++) {
+        const min = bounds[d * 2] as number
+        const max = bounds[d * 2 + 1] as number
+        const count = perDimensionCounts[d] as number
+        points[i * dimension + d] =
+          count > 1 ? min + indices[d] * steps[d] : (min + max) / 2
+      }
+
+      for (let d = dimension - 1; d >= 0; d--) {
+        indices[d] += 1
+        if (indices[d] < perDimensionCounts[d]) break
+        indices[d] = 0
+      }
+    }
+
+    return new PointCloud<N>(points, dimension)
+  }
+
   // TODO: add method overloading FixedNumberArray<N>[], FLoat64Array
   static create<N extends number = 2>(
     points: ArrayLike<number> | ArrayLike<ArrayLike<number>> | Float64Array,
@@ -133,13 +191,25 @@ export class PointCloud<N extends number> {
     return new PointCloud<N>(points as Float64Array, dimension)
   }
 
+  /** Returns the amount of points in the point cloud */
+  readonly size: number
   private constructor(
     private points: Float64Array,
     private readonly dimensions: N,
-  ) {}
+  ) {
+    this.size = this.points.length / this.dimensions
+  }
 
-  get size() {
-    return this.points.length / this.dimensions
+  /**
+   * Iterator implementation - allows for...of loops over points
+   */
+  *[Symbol.iterator](): Iterator<FixedFloat64Array<N>> {
+    for (let i = 0; i < this.size; i++) {
+      const start = i * this.dimensions
+      const p = new Float64Array(this.dimensions) as FixedFloat64Array<N>
+      p.set(this.points.subarray(start, start + this.dimensions))
+      yield p
+    }
   }
 
   private clearCache() {
@@ -170,18 +240,9 @@ export class PointCloud<N extends number> {
   }
 
   /**
-   * Iterator implementation - allows for...of loops over points
-   */
-  *[Symbol.iterator](): Iterator<FixedArray<number, N>> {
-    for (let i = 0; i < this.size; i++) {
-      yield this.getPoint(i)
-    }
-  }
-
-  /**
    * Returns an array of all points
    */
-  toArray(): FixedArray<number, N>[] {
+  toArray(): FixedFloat64Array<N>[] {
     return Array.from(this)
   }
 

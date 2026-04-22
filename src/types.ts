@@ -22,4 +22,7 @@ export type GrowToSize<
 > = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
 
 export type FixedNumberArray<N extends number> = GrowToSize<number, N, [], 0>
+export type FixedFloat64Array<N extends number> = Float64Array & {
+  length: N
+}
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
