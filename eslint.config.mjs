@@ -19,7 +19,9 @@ export default defineConfig(
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['vite.config.ts'],
+        },
         // @ts-ignore
         tsconfigRootDir: import.meta.dirname,
       },

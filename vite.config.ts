@@ -20,6 +20,18 @@ export default defineConfig(({ mode }) => {
         insertTypesEntry: true,
         rollupTypes: true,
         include: ['src/**/*'],
+        beforeWriteFile(filePath, content) {
+          if (!filePath.endsWith('creagen.d.ts')) {
+            return
+          }
+
+          return {
+            content: content.replace(
+              /export declare namespace Math_2 \{/g,
+              'export declare namespace Math {'
+            ),
+          }
+        },
       }),
     ],
     build: {
