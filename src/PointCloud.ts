@@ -227,15 +227,14 @@ export class PointCloud<N extends number> {
   }
 
   /** Get a specific point by index */
-  getPoint(index: number): FixedArray<number, N> {
+  at(index: number): FixedFloat64Array<N> {
     if (index < 0 || index >= this.size) {
       throw new Error(`Point index ${index} out of bounds (0-${this.size - 1})`)
     }
 
-    const point = new Array(this.dimensions) as FixedArray<number, N>
-    for (let d = 0; d < this.dimensions; d++) {
-      point[d] = this.points[index * this.dimensions + d]
-    }
+    const start = index * this.dimensions
+    const point = new Float64Array(this.dimensions) as FixedFloat64Array<N>
+    point.set(this.points.subarray(start, start + this.dimensions))
     return point
   }
 
@@ -250,12 +249,12 @@ export class PointCloud<N extends number> {
    * Filters points based on a predicate function and returns a new PointCloud
    */
   filter(
-    predicate: (point: FixedArray<number, N>, index: number) => boolean,
+    predicate: (point: FixedFloat64Array<N>, index: number) => boolean,
   ): PointCloud<N> {
-    const filteredPoints: FixedArray<number, N>[] = []
+    const filteredPoints: FixedFloat64Array<N>[] = []
 
     for (let i = 0; i < this.size; i++) {
-      const point = this.getPoint(i)
+      const point = this.at(i)
       if (predicate(point, i)) {
         filteredPoints.push(point)
       }
@@ -270,12 +269,12 @@ export class PointCloud<N extends number> {
    */
   transform(
     callback: (
-      point: FixedArray<number, N>,
+      point: FixedFloat64Array<N>,
       index: number,
     ) => FixedArray<number, N>,
   ): this {
     for (let i = 0; i < this.size; i++) {
-      const originalPoint = this.getPoint(i)
+      const originalPoint = this.at(i)
       const newPoint = callback(originalPoint, i)
 
       for (let d = 0; d < this.dimensions; d++) {
