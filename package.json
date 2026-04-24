@@ -1,6 +1,6 @@
 {
   "name": "creagen",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "",
   "type": "module",
   "browser": "./dist/creagen.js",
