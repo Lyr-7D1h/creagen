@@ -164,22 +164,22 @@ export interface VectorMethods<N extends number> {
 type VectorBaseConstructor = {
   new <N extends number>(...items: VectorItems<N>): VectorMethods<N>
   /** Generate an evenly spaced vector */
-  linSpace<TVector>(
+  linSpace<TVector, N extends number>(
     this: new (items: ArrayLike<number>) => TVector,
     start: number,
     end: number,
-    count: number,
-  ): TVector
+    count: N,
+  ): TVector & VectorMethods<N>
   empty<TVector, N extends number>(
     this: new (items: ArrayLike<number>) => TVector,
     length: N,
-  ): TVector
+  ): TVector & VectorMethods<N>
   /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
   polar<TVector>(
     this: new (items: ArrayLike<number>) => TVector,
     radius: number,
     angle: number,
-  ): TVector
+  ): TVector & VectorMethods<2>
 }
 
 /** Factory function for creating a vector type with a given base class. */
@@ -234,25 +234,26 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** Generate a evenly spaced vector */
-    static linSpace<TVector>(
+    static linSpace<TVector, N extends number>(
       this: new (items: ArrayLike<number>) => TVector,
       start: number,
       end: number,
-      count: number,
-    ): TVector {
+      count: N,
+    ): TVector & VectorMethods<N> {
       return new this(
         Array.from(
           { length: count },
           (_, i) => start + (end - start) * (i / (count - 1)),
         ),
-      )
+      ) as unknown as TVector & VectorMethods<N>
     }
 
     static empty<TVector, N extends number>(
       this: new (items: ArrayLike<number>) => TVector,
       length: N,
-    ): TVector {
-      return new this(Array(length).fill(0))
+    ): TVector & VectorMethods<N> {
+      return new this(Array(length).fill(0)) as unknown as TVector &
+        VectorMethods<N>
     }
 
     /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
@@ -260,8 +261,11 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       this: new (items: ArrayLike<number>) => TVector,
       radius: number,
       angle: number,
-    ): TVector {
-      return new this([radius * Math.cos(angle), radius * Math.sin(angle)])
+    ): TVector & VectorMethods<2> {
+      return new this([
+        radius * Math.cos(angle),
+        radius * Math.sin(angle),
+      ]) as unknown as TVector & VectorMethods<2>
     }
 
     /**
@@ -613,8 +617,10 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       } else if (theta === Math.PI / 2) {
         this.rotateRight()
       } else {
-        this[0] *= Math.cos(theta) + this[1] * Math.sin(theta)
-        this[1] *= -Math.sin(theta) + this[0] * Math.cos(theta)
+        const x = this[0]
+        const y = this[1]
+        this[0] = x * Math.cos(theta) - y * Math.sin(theta)
+        this[1] = x * Math.sin(theta) + y * Math.cos(theta)
       }
       return this
     }
