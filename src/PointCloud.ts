@@ -3,15 +3,15 @@ import {
   type Delaunay,
   type Voronoi,
 } from 'd3-delaunay'
+import { Conversion } from './Conversion'
+import { lloydsAlgorithm } from './PointCloud/Lloyd'
+import { poissonDiscSampler } from './PointCloud/PoissonDiscSampler'
 import type {
   FixedArray,
   FixedFloat64Array,
   FixedNumberArray,
   FlatBounds,
 } from './types'
-import { Conversion } from './Conversion'
-import { poissonDiscSampler } from './PointCloud/PoissonDiscSampler'
-import { lloydsAlgorithm } from './PointCloud/Lloyd'
 
 const MAX_SAMPLING_ITERATION_LIMIT = 1_000_000
 
@@ -54,8 +54,8 @@ export class PointCloud<N extends number> {
     if (typeof samplingDistribution === 'undefined') {
       for (let i = 0; i < amount * dimension; i += dimension) {
         for (let d = 0; d < dimension; d++) {
-          const min = bounds[d * 2] as number
-          const max = bounds[d * 2 + 1] as number
+          const min = bounds[d * 2]
+          const max = bounds[d * 2 + 1]
           points[i + d] = min + Math.random() * (max - min)
         }
       }
@@ -65,8 +65,8 @@ export class PointCloud<N extends number> {
         while (j < MAX_SAMPLING_ITERATION_LIMIT) {
           const p = new Array(dimension) as FixedArray<number, N>
           for (let d = 0; d < dimension; d++) {
-            const min = bounds[d * 2] as number
-            const max = bounds[d * 2 + 1] as number
+            const min = bounds[d * 2]
+            const max = bounds[d * 2 + 1]
             p[d] = min + Math.random() * (max - min)
           }
 
@@ -97,8 +97,8 @@ export class PointCloud<N extends number> {
     if (typeof samplingDistribution === 'undefined') {
       for (let i = 0; i < amount * dimension; i += dimension) {
         for (let d = 0; d < dimension; d++) {
-          const min = Math.ceil(bounds[d * 2] as number)
-          const max = Math.floor(bounds[d * 2 + 1] as number)
+          const min = Math.ceil(bounds[d * 2])
+          const max = Math.floor(bounds[d * 2 + 1])
           // Generate random integer between min and max (inclusive)
           points[i + d] = Math.floor(Math.random() * (max - min)) + min
         }
@@ -109,8 +109,8 @@ export class PointCloud<N extends number> {
         while (j < MAX_SAMPLING_ITERATION_LIMIT) {
           const p = new Array(dimension) as FixedArray<number, N>
           for (let d = 0; d < dimension; d++) {
-            const min = Math.ceil(bounds[d * 2] as number)
-            const max = Math.floor(bounds[d * 2 + 1] as number)
+            const min = Math.ceil(bounds[d * 2])
+            const max = Math.floor(bounds[d * 2 + 1])
             // Generate random integer between min and max (inclusive)
             p[d] = Math.floor(Math.random() * (max - min)) + min
           }
@@ -138,7 +138,6 @@ export class PointCloud<N extends number> {
   ) {
     const perDimensionCounts = new Array(dimension) as FixedArray<number, N>
     for (let d = 0; d < dimension; d++) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const count: number = typeof counts === 'number' ? counts : counts[d]
       if (!Number.isFinite(count) || count < 1) {
         throw new Error('Grid counts must be finite numbers >= 1')
@@ -149,13 +148,13 @@ export class PointCloud<N extends number> {
     const steps = new Array(dimension) as FixedArray<number, N>
     let totalPoints = 1
     for (let d = 0; d < dimension; d++) {
-      const min = bounds[d * 2] as number
-      const max = bounds[d * 2 + 1] as number
+      const min = bounds[d * 2]
+      const max = bounds[d * 2 + 1]
       if (max < min) {
         throw new Error('Grid bounds must have max >= min for each dimension')
       }
 
-      const count = perDimensionCounts[d] as number
+      const count = perDimensionCounts[d]
       steps[d] = count > 1 ? (max - min) / (count - 1) : 0
       totalPoints *= count
     }
@@ -165,9 +164,9 @@ export class PointCloud<N extends number> {
 
     for (let i = 0; i < totalPoints; i++) {
       for (let d = 0; d < dimension; d++) {
-        const min = bounds[d * 2] as number
-        const max = bounds[d * 2 + 1] as number
-        const count = perDimensionCounts[d] as number
+        const min = bounds[d * 2]
+        const max = bounds[d * 2 + 1]
+        const count = perDimensionCounts[d]
         points[i * dimension + d] =
           count > 1 ? min + indices[d] * steps[d] : (min + max) / 2
       }
@@ -278,7 +277,6 @@ export class PointCloud<N extends number> {
       const newPoint = callback(originalPoint, i)
 
       for (let d = 0; d < this.dimensions; d++) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         this.points[i * this.dimensions + d] = newPoint[d]
       }
     }

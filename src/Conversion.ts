@@ -120,11 +120,11 @@ export class Conversion {
 
     const result: FixedArray<number, N>[] = []
     for (let i = 0; i < array.length; i += dimension) {
-      const row = new Array(dimension) as FixedArray<number, N>
+      const row = new Array(dimension)
       for (let d = 0; d < dimension; d++) {
         row[d] = array[i + d]
       }
-      result.push(row)
+      result.push(row as FixedArray<number, N>)
     }
     return result
   }
@@ -140,11 +140,11 @@ export class Conversion {
       )
     }
 
-    const result = new Array(dimension) as FixedNumberArray<N>
+    const result = new Array(dimension)
     for (let i = 0; i < dimension; i++) {
       result[i] = array[i]
     }
-    return result
+    return result as FixedNumberArray<N>
   }
 
   /**

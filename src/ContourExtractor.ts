@@ -162,7 +162,7 @@ export class ContourExtractor {
           // not background-foreground
           if (current !== 0 || prev < 1) {
             // skip if not a start of a boundary
-            prev = current
+            prev = current!
             // set last neighborhood boundary if it has any flags
             if (prev & MASK8_FLAGS) {
               this.lnbd[0] = x
@@ -350,7 +350,7 @@ export class ContourExtractor {
     const point = [start[0] + this.offsetX, start[1] + this.offsetY] as Point
     // translated bounding box
     const rect: FixedNumberArray<4> = [point[0], point[1], point[0], point[1]]
-    const points = []
+    const points = [] as Point[]
     this.makeContourTrace(start, isHole, point, rect, points)
 
     // translate rect back

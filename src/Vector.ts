@@ -200,14 +200,14 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
         index: number,
         array: VectorStorage<N>,
       ) => number,
-    ) {
+    ): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = callbackfn(this[i], i, this)
       }
       return this
     }
 
-    add(v: VectorInput<N>) {
+    add(v: VectorInput<N>): this {
       for (let i = 0; i < this.length; i++) {
         this[i] += v[i]
       }
@@ -439,9 +439,9 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     within(bounds: FlatBounds<N>): boolean {
       let d = 0
       for (let i = 0; i < this.length; i++) {
-        const start = bounds[d] as number
+        const start = bounds[d]
         d++
-        const stop = bounds[d] as number
+        const stop = bounds[d]
         d++
         if (this[i] < start || this[i] > stop) {
           return false
@@ -510,9 +510,9 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     wrapAround(bounds: FlatBounds<N>) {
       let d = 0
       for (let i = 0; i < this.length; i++) {
-        const start = bounds[d] as number
+        const start = bounds[d]
         d++
-        const stop = bounds[d] as number
+        const stop = bounds[d]
         d++
 
         const v = this[i]
@@ -531,9 +531,9 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     clamp(bounds: FlatBounds<N>): this {
       let d = 0
       for (let i = 0; i < this.length; i++) {
-        const min = bounds[d] as number
+        const min = bounds[d]
         d++
-        const max = bounds[d] as number
+        const max = bounds[d]
         d++
         this[i] = Math.max(min, Math.min(max, this[i]))
       }
@@ -552,9 +552,9 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     reflect(bounds: FlatBounds<N>): this {
       let d = 0
       for (let i = 0; i < this.length; i++) {
-        const min = bounds[d] as number
+        const min = bounds[d]
         d++
-        const max = bounds[d] as number
+        const max = bounds[d]
         d++
         const v = this[i]
 
@@ -573,9 +573,9 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
 
       let d = 0
       for (let i = 0; i < this.length; i++) {
-        const min = bounds[d] as number
+        const min = bounds[d]
         d++
-        const max = bounds[d] as number
+        const max = bounds[d]
         d++
 
         const v = this[i]
