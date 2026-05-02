@@ -53,10 +53,139 @@ export function isVector<N extends number = number>(
   )
 }
 
+/**
+ * Full interface of all vector instance methods.
+ * Declared explicitly so the `this` return types survive TypeScript's
+ * declaration emit (anonymous structural types cannot express `this`).
+ */
+export interface VectorMethods<N extends number> {
+  [index: number]: number
+  readonly length: N
+  get x(): number
+  set x(v: number)
+  get y(): Y<N>
+  set y(v: number)
+  get z(): Z<N>
+  set z(v: number)
+  push(): number
+  pop(): number | undefined
+  clone(): this
+  /** Squared euclidean distance to another vector */
+  dist2(v: VectorInput<N>): number
+  dist(v: VectorInput<N>): number
+  /** mutable mapping of vector values */
+  mutmap(
+    callbackfn: (
+      value: number,
+      index: number,
+      array: VectorStorage<N>,
+    ) => number,
+  ): this
+  add(v: VectorInput<N>): this
+  /** normalize */
+  norm(): this
+  sub(v: VectorInput<N>): this
+  roundToDec(dec?: number): this
+  /** Linear interpolation towards `target` in steps of `alpha`% */
+  lerp(target: VectorInput<N>, alpha: number): this
+  /** Randomize the order of the elements inside of the vector */
+  randomSort(): this
+  /** Compare two vectors for equality */
+  equals(v: VectorInput<N>): boolean
+  dot(v: VectorInput<N>): number
+  /**
+   * Treat two vectors as a 2d matrix and get the
+   * [determinant](https://en.wikipedia.org/wiki/Determinant) between them.
+   */
+  det(vector: VectorInput<2>): number
+  /** Apply modulo to each value */
+  mod(mod: number): this
+  round(): this
+  /** Divide vector */
+  div(s: number): this
+  /** Divide each value */
+  div(x: number, y: number): this
+  /** Divide each value */
+  div(...divisors: FixedArray<number, N>): this
+  /** Scale vector */
+  mul(s: number): this
+  /** Multiply each value */
+  mul(x: number, y: number): this
+  /** Multiply each value */
+  mul(...multipliers: FixedArray<number, N>): this
+  floor(): this
+  scale(s: number): this
+  /** arithmetic mean */
+  mean(): number
+  /** arithmetic average */
+  average(): number
+  /** magnitude */
+  mag(): number
+  /** magnitude squared */
+  mag2(): number
+  /** Calculate the average difference from the average */
+  spread(): number
+  /** Calculate the average difference from the average squared */
+  spread2(): number
+  chunk<M extends number>(size: M): VectorLike<M>[]
+  /** Check if a number is within `limits` */
+  within(bounds: FlatBounds<N>): boolean
+  /**
+   * Angle between x-axis and ray from origin to [x,y] from -pi to pi
+   * https://en.wikipedia.org/wiki/Atan2
+   */
+  atan2(): number
+  /**
+   * Positive atan2 — from 0 to 2pi
+   * https://en.wikipedia.org/wiki/Atan2
+   */
+  atan2p(): number
+  /**
+   * Rotate the vector around its zero point
+   * @param theta - the angle to rotate in radians
+   */
+  rotate(theta: number): this
+  rotateLeft(): this
+  rotateRight(): this
+  /** if a number is above or below a limit it corrects it so it is within the boundary limits */
+  wrapAround(bounds: FlatBounds<N>): this
+  /** Clamp each dimension to stay within bounds */
+  clamp(bounds: FlatBounds<N>): this
+  /** Clamp each dimension to stay within min/max values */
+  clampRange(min: number, max: number): this
+  /** Reflect off bounds when hitting them (bouncing behavior) */
+  reflect(bounds: FlatBounds<N>): this
+  /** Scale vector to fit within bounds while maintaining proportions */
+  fitToBounds(bounds: FlatBounds<N>): this
+  sum(): number
+  compare(vector: VectorInput<N>): boolean
+}
+
+type VectorBaseConstructor = {
+  new <N extends number>(...items: VectorItems<N>): VectorMethods<N>
+  /** Generate an evenly spaced vector */
+  linSpace<TVector>(
+    this: new (items: ArrayLike<number>) => TVector,
+    start: number,
+    end: number,
+    count: number,
+  ): TVector
+  empty<TVector, N extends number>(
+    this: new (items: ArrayLike<number>) => TVector,
+    length: N,
+  ): TVector
+  /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
+  polar<TVector>(
+    this: new (items: ArrayLike<number>) => TVector,
+    radius: number,
+    angle: number,
+  ): TVector
+}
+
 /** Factory function for creating a vector type with a given base class. */
 export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
   Base: VectorArrayConstructor<TArray>,
-) {
+): VectorBaseConstructor {
   const VectorBaseClass = Base as unknown as VectorArrayConstructor<
     MutableNumberArrayLike<number>
   >
@@ -215,7 +344,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** normalize */
-    norm() {
+    norm(): this {
       const mag2 = this.mag2()
       if (mag2 === 0) return this
       const a = 1 / Math.sqrt(mag2)
@@ -226,14 +355,14 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
-    sub(v: VectorInput<N>) {
+    sub(v: VectorInput<N>): this {
       for (let i = 0; i < this.length; i++) {
         this[i] -= v[i]
       }
       return this
     }
 
-    roundToDec(dec?: number) {
+    roundToDec(dec?: number): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = Math.roundToDec(this[i], dec)
       }
@@ -241,7 +370,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** Linear interpolation towards `target` in steps of `alpha`% */
-    lerp(target: VectorInput<N>, alpha: number) {
+    lerp(target: VectorInput<N>, alpha: number): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = (1 - alpha) * this[i] + alpha * target[i]
       }
@@ -298,14 +427,14 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** Apply modulo to each value */
-    mod(mod: number) {
+    mod(mod: number): this {
       for (let i = 0; i < this.length; i++) {
         this[i] %= mod
       }
       return this
     }
 
-    round() {
+    round(): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = Math.round(this[i])
       }
@@ -319,7 +448,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     /** Divide each value */
     div(...divisors: FixedArray<number, N>): this
     /** Divide/scale vector */
-    div(...divisors: number[]) {
+    div(...divisors: number[]): this {
       if (divisors.length === 1) {
         const s = divisors[0]
         for (let i = 0; i < this.length; i++) {
@@ -360,14 +489,14 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
-    floor() {
+    floor(): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = Math.floor(this[i])
       }
       return this
     }
 
-    scale(s: number) {
+    scale(s: number): this {
       for (let i = 0; i < this.length; i++) {
         this[i] *= s
       }
@@ -477,7 +606,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
      * Rotate the vector around its zero point
      * @param theta - the angle to rotate in radians
      * */
-    rotate(theta: number) {
+    rotate(theta: number): this {
       if (this.length != 2) throw new Error('Only 2d rotation are supported')
       if (theta === -Math.PI / 2) {
         this.rotateLeft()
@@ -490,7 +619,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
-    rotateLeft() {
+    rotateLeft(): this {
       if (this.length != 2) throw new Error('Only 2d rotation are supported')
       const x = this[0]
       this[0] = -this[1]
@@ -498,7 +627,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
-    rotateRight() {
+    rotateRight(): this {
       if (this.length != 2) throw new Error('Only 2d rotation are supported')
       const x = this[0]
       this[0] = this[1]
@@ -507,7 +636,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** if a number is above or below a limit it correct it so it is within the boundary limits */
-    wrapAround(bounds: FlatBounds<N>) {
+    wrapAround(bounds: FlatBounds<N>): this {
       let d = 0
       for (let i = 0; i < this.length; i++) {
         const start = bounds[d]
