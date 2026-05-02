@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import dts from 'unplugin-dts/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import dts from 'vite-plugin-dts'
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development'
@@ -16,21 +18,32 @@ export default defineConfig(({ mode }) => {
       nodePolyfills(),
       dts({
         entryRoot: './src',
-        outDir: './dist',
+        outDirs: './dist',
         insertTypesEntry: true,
-        rollupTypes: true,
+        bundleTypes: true,
         include: ['src/**/*'],
         beforeWriteFile(filePath, content) {
           if (!filePath.endsWith('creagen.d.ts')) {
             return
           }
 
-          // Fix the conflicting namespace issues
+          // include custom type declarations
+          const ambientTypes = [
+            './src/types/d3-quadtree.d.ts',
+            './src/types/d3-delaunay.d.ts',
+          ]
+            .map((p) => readFileSync(resolve(p), 'utf-8'))
+            .join('\n')
+
+          // Fix the conflicting namespace issues, and prepend ambient module declarations
           return {
-            content: content.replace(
-              /export declare namespace Math_2 \{/g,
-              'export declare namespace Math {',
-            ),
+            content:
+              ambientTypes +
+              '\n' +
+              content.replace(
+                /export declare namespace Math_2 \{/g,
+                'export declare namespace Math {',
+              ),
           }
         },
       }),

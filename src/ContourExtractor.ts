@@ -1,7 +1,6 @@
 // TODO: still need to test and fix linting bugs
 /* eslint-disable no-self-assign */
 /* eslint-disable no-empty */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { Bitmap } from './Bitmap'
 import type { NodeId } from './Tree'

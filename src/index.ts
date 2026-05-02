@@ -1,61 +1,61 @@
-export * as Math from './math'
-export { load, type LoadableObject } from './load'
 export { draw, type DrawFn } from './draw'
 export { Iter } from './iter'
+export { load, type LoadableObject } from './load'
+export * as Math from './math'
 
-export { type CircleOptions } from './Canvas/Circle'
+export { Canvas, getHeight, getWidth, RenderMode } from './Canvas'
 export { type ArcOptions } from './Canvas/Arc'
+export { type CircleOptions } from './Canvas/Circle'
 export { type ImageOptions } from './Canvas/Image'
 export { type PathOptions } from './Canvas/Path'
 export { type RectangleOptions } from './Canvas/Rectangle'
 export { type TextOptions } from './Canvas/Text'
-export { Canvas, getWidth, getHeight, RenderMode } from './Canvas'
 
-export { Random } from './Random/index'
-export { SpatialMap } from './spatialmap'
-export { KDTree } from './kdtree'
-export { QuadTree } from './quadtree'
+export { color, Color } from './Color'
+export { Conversion } from './Conversion'
 export {
   ImageData,
   MorphologyOperation,
   MorphologyShape,
   ThresholdType,
 } from './ImageData'
-export { color, Color } from './Color'
+export { KDTree } from './kdtree'
 export { PointCloud } from './PointCloud'
-export { Conversion } from './Conversion'
+export { QuadTree } from './quadtree'
+export { Random } from './Random/index'
+export { SpatialMap } from './spatialmap'
 // export { Motion } from './Motion'
-export {
-  createVectorType,
-  Float32Vector,
-  Float64Vector,
-  Int8Vector,
-  Int16Vector,
-  Int32Vector,
-  Uint8Vector,
-  Uint8ClampedVector,
-  Uint16Vector,
-  Uint32Vector,
-  isVector,
-  vec,
-  Vector,
-  ALL_DIRECTIONS,
-  DIRECTIONS,
-  DIAGONALS,
-} from './Vector'
-export { matrix, Matrix } from './Matrix'
-export { KMeans } from './SignalProcessing/KMeans'
 export { Audio, type Feature, type FeatureResult } from './Audio'
 export { Bitmap } from './Bitmap'
 export {
   ContourApproximation,
   type ContourExtractorOpts,
 } from './ContourExtractor'
+export { matrix, Matrix } from './Matrix'
+export { KMeans } from './SignalProcessing/KMeans'
+export {
+  ALL_DIRECTIONS,
+  createVectorType,
+  DIAGONALS,
+  DIRECTIONS,
+  Float32Vector,
+  Float64Vector,
+  Int16Vector,
+  Int32Vector,
+  Int8Vector,
+  isVector,
+  Uint16Vector,
+  Uint32Vector,
+  Uint8ClampedVector,
+  Uint8Vector,
+  vec,
+  Vector,
+} from './Vector'
 
 export type {
-  FixedNumberArray,
-  FixedFloat64Array,
   FixedArray,
+  FixedFloat64Array,
+  FixedNumberArray,
   FlatBounds,
 } from './types'
 
