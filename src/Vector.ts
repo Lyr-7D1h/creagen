@@ -369,7 +369,7 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
-    /** Linear interpolation towards `target` in steps of `alpha`% */
+    /** Linear interpolation towards `target` in steps of `alpha`% where alpha is a number between [0-1] */
     lerp(target: VectorInput<N>, alpha: number): this {
       for (let i = 0; i < this.length; i++) {
         this[i] = (1 - alpha) * this[i] + alpha * target[i]
