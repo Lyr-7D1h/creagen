@@ -1,22 +1,22 @@
 import { describe, expect, test } from 'vitest'
 import { Conversion } from './Conversion'
 import {
+  ALL_DIRECTIONS,
   createVectorType,
+  DIAGONALS,
+  DIRECTIONS,
   Float32Vector,
   Float64Vector,
-  Int8Vector,
   Int16Vector,
   Int32Vector,
-  Uint8Vector,
-  Uint8ClampedVector,
+  Int8Vector,
+  isVector,
   Uint16Vector,
   Uint32Vector,
-  isVector,
+  Uint8ClampedVector,
+  Uint8Vector,
   vec,
   Vector,
-  DIRECTIONS,
-  DIAGONALS,
-  ALL_DIRECTIONS,
 } from './Vector'
 
 // ─── Existing baseline tests ──────────────────────────────────────────────────
@@ -742,6 +742,17 @@ describe('typed array clone', () => {
     const cloned = v.clone()
     v.x = 99
     expect(cloned[0]).toBe(3)
+  })
+
+  test('Float64Vector clone twice produces independent copies', () => {
+    const v = new Float64Vector<3>(1.1, 2.2, 3.3)
+    const cloned = v.clone().clone()
+    expect(cloned).instanceOf(Float64Vector)
+    expect(cloned).not.toBe(v)
+    cloned.x = 99
+    expect(v[0]).toBeCloseTo(1.1)
+    expect(cloned[1]).toEqual(v[1])
+    expect(cloned[2]).toEqual(v[2])
   })
 
   test('Int32Vector clone returns Int32Vector', () => {

@@ -101,6 +101,10 @@ export interface VectorMethods<N extends number> {
   /** Apply modulo to each value */
   mod(mod: number): this
   round(): this
+
+  /** Divide vector by vector */
+  divVector(v: VectorInput<N>): this
+
   /** Divide vector */
   div(s: number): this
   /** Divide each value */
@@ -123,6 +127,8 @@ export interface VectorMethods<N extends number> {
   mag(): number
   /** magnitude squared */
   mag2(): number
+  /** Apply a power to all elements */
+  pow(power: number): this
   /** Calculate the average difference from the average */
   spread(): number
   /** Calculate the average difference from the average squared */
@@ -445,6 +451,13 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
       return this
     }
 
+    divVector(v: VectorInput<N>) {
+      for (let i = 0; i < this.length; i++) {
+        this[i] /= v[i]
+      }
+      return this
+    }
+
     /** Divide vector */
     div(s: number): this
     /** Divide each value */
@@ -529,6 +542,14 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
         m += this[i] ** 2
       }
       return m
+    }
+
+    /** Apply a power to all elements */
+    pow(power: number): this {
+      for (let i = 0; i < this.length; i++) {
+        this[i] **= power
+      }
+      return this
     }
 
     /** Calculate the average difference from the average */
