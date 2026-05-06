@@ -51,6 +51,7 @@ export {
   vec,
   Vector,
 } from './Vector'
+export type { AnyVector } from './Vector'
 
 export type {
   FixedArray,

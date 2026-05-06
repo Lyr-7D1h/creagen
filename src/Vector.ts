@@ -866,6 +866,18 @@ export interface Uint32Vector<N extends number> extends Omit<
   @typescript-eslint/no-unused-vars
 */
 
+export type AnyVector<N extends number = number> =
+  | Vector<N>
+  | Float32Vector<N>
+  | Float64Vector<N>
+  | Int8Vector<N>
+  | Int16Vector<N>
+  | Int32Vector<N>
+  | Uint8Vector<N>
+  | Uint8ClampedVector<N>
+  | Uint16Vector<N>
+  | Uint32Vector<N>
+
 function getVectorConstructor(
   value: unknown,
 ): new <N extends number>(...items: VectorItems<N>) => VectorLike<N> {
