@@ -21,6 +21,34 @@ import {
 
 // ─── Existing baseline tests ──────────────────────────────────────────────────
 
+test('static methods preserve vector types', () => {
+  // polar returns 2D vectors with correct type
+  const polar1: Vector<2> = Vector.polar(1, 0)
+  const polar2: Float32Vector<2> = Float32Vector.polar(1, 0)
+  const polar3: Float64Vector<2> = Float64Vector.polar(1, 0)
+
+  // linSpace returns vectors with specified dimension
+  const linSpace1: Vector<5> = Vector.linSpace(0, 10, 5)
+  const linSpace2: Float32Vector<3> = Float32Vector.linSpace(0, 1, 3)
+  const linSpace3: Int32Vector<4> = Int32Vector.linSpace(-5, 5, 4)
+
+  // empty returns vectors with specified dimension
+  const empty1: Vector<3> = Vector.empty(3)
+  const empty2: Uint8Vector<10> = Uint8Vector.empty(10)
+  const empty3: Float64Vector<2> = Float64Vector.empty(2)
+
+  // Verify they are the correct instances
+  expect(polar1).instanceOf(Vector)
+  expect(polar2).instanceOf(Float32Vector)
+  expect(polar3).instanceOf(Float64Vector)
+  expect(linSpace1).instanceOf(Vector)
+  expect(linSpace2).instanceOf(Float32Vector)
+  expect(linSpace3).instanceOf(Int32Vector)
+  expect(empty1).instanceOf(Vector)
+  expect(empty2).instanceOf(Uint8Vector)
+  expect(empty3).instanceOf(Float64Vector)
+})
+
 test('typed array vectors share the vector api', () => {
   const point = new Float32Vector<2>(1, 2).add(vec(3, 4))
 

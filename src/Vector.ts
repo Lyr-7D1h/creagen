@@ -8,6 +8,27 @@ type Y<N extends number> = N extends 3
     : undefined
 type Z<N extends number> = N extends 3 ? number : undefined
 
+/**
+ * Helper type for static vector factory methods.
+ * Strips the dimension-dependent VectorMethods interface and re-applies it with the correct dimension.
+ * This preserves the base vector type (Vector, Float32Vector, etc.) while fixing the dimension.
+ *
+ * @example
+ * ```ts
+ * // polar returns 2D vectors
+ * const v1: StaticVectorResult<Vector<number>, 2> = Vector.polar(1, 0)
+ * // Equivalent to: Vector<2>
+ *
+ * // linSpace returns vectors with the specified dimension
+ * const v2: StaticVectorResult<Float32Vector<number>, 5> = Float32Vector.linSpace(0, 10, 5)
+ * // Equivalent to: Float32Vector<5>
+ * ```
+ */
+export type StaticVectorResult<
+  TVector extends VectorMethods<number>,
+  N extends number,
+> = Omit<TVector, keyof VectorMethods<number>> & VectorMethods<N>
+
 type NumberArrayLike<N extends number = number> = ArrayLike<number> & {
   length: N
 }
@@ -170,22 +191,22 @@ export interface VectorMethods<N extends number> {
 type VectorBaseConstructor = {
   new <N extends number>(...items: VectorItems<N>): VectorMethods<N>
   /** Generate an evenly spaced vector */
-  linSpace<TVector, N extends number>(
+  linSpace<TVector extends VectorMethods<number>, N extends number>(
     this: new (items: ArrayLike<number>) => TVector,
     start: number,
     end: number,
     count: N,
-  ): TVector & VectorMethods<N>
-  empty<TVector, N extends number>(
+  ): StaticVectorResult<TVector, N>
+  empty<TVector extends VectorMethods<number>, N extends number>(
     this: new (items: ArrayLike<number>) => TVector,
     length: N,
-  ): TVector & VectorMethods<N>
+  ): StaticVectorResult<TVector, N>
   /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
-  polar<TVector>(
+  polar<TVector extends VectorMethods<number>>(
     this: new (items: ArrayLike<number>) => TVector,
     radius: number,
     angle: number,
-  ): TVector & VectorMethods<2>
+  ): StaticVectorResult<TVector, 2>
 }
 
 /** Factory function for creating a vector type with a given base class. */
@@ -240,38 +261,40 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     }
 
     /** Generate a evenly spaced vector */
-    static linSpace<TVector, N extends number>(
+    static linSpace<TVector extends VectorMethods<number>, N extends number>(
       this: new (items: ArrayLike<number>) => TVector,
       start: number,
       end: number,
       count: N,
-    ): TVector & VectorMethods<N> {
+    ): StaticVectorResult<TVector, N> {
       return new this(
         Array.from(
           { length: count },
           (_, i) => start + (end - start) * (i / (count - 1)),
         ),
-      ) as unknown as TVector & VectorMethods<N>
+      ) as unknown as StaticVectorResult<TVector, N>
     }
 
-    static empty<TVector, N extends number>(
+    static empty<TVector extends VectorMethods<number>, N extends number>(
       this: new (items: ArrayLike<number>) => TVector,
       length: N,
-    ): TVector & VectorMethods<N> {
-      return new this(Array(length).fill(0)) as unknown as TVector &
-        VectorMethods<N>
+    ): StaticVectorResult<TVector, N> {
+      return new this(Array(length).fill(0)) as unknown as StaticVectorResult<
+        TVector,
+        N
+      >
     }
 
     /** https://en.wikipedia.org/wiki/Polar_coordinate_system */
-    static polar<TVector>(
+    static polar<TVector extends VectorMethods<number>>(
       this: new (items: ArrayLike<number>) => TVector,
       radius: number,
       angle: number,
-    ): TVector & VectorMethods<2> {
+    ): StaticVectorResult<TVector, 2> {
       return new this([
         radius * Math.cos(angle),
         radius * Math.sin(angle),
-      ]) as unknown as TVector & VectorMethods<2>
+      ]) as unknown as StaticVectorResult<TVector, 2>
     }
 
     /**
