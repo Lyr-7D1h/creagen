@@ -1,6 +1,3 @@
-import type { Vector } from './Vector';
-import { vec } from './Vector'
-
 // TEST SCRIPT
 // import { SpatialMap, svg, vec } from 'creagen'
 
@@ -43,7 +40,7 @@ export class SpatialMap {
   private readonly spacing: number
 
   private positionsSize: number
-  private readonly positions: Vector<2>[]
+  private readonly positions: number[][]
 
   private readonly width: number
   private readonly height: number
@@ -55,8 +52,11 @@ export class SpatialMap {
     width: number,
     height: number,
     spacing: number,
-    positions: Vector<2>[],
-    opts?: { wrap: boolean },
+    positions: number[][],
+    opts?: {
+      /** Make the space [toroidal](https://en.wikipedia.org/wiki/Torus). Left wraps around to the right and top wraps around to the bottom */
+      wrap: boolean
+    },
   ) {
     this.wrap = typeof opts?.wrap === 'undefined' ? false : opts.wrap
     this.width = width
@@ -68,7 +68,7 @@ export class SpatialMap {
 
     const size = this.rowLength * this.columnLength
 
-    this.cellStart = new Int32Array(size)
+    this.cellStart = new Int32Array(size + 1)
     this.cellEntries = new Int32Array()
     this.queryIds = new Int32Array()
     this.querySize = 0
@@ -108,7 +108,7 @@ export class SpatialMap {
   }
 
   /** get the index of a tile from normal cartesian coordiantes */
-  getIndex({ x, y }: Vector<2>) {
+  getIndex([x, y]: number[]) {
     if (this.wrap) {
       // wrap coords
       if (x < 0) x = this.width + x
@@ -165,15 +165,14 @@ export class SpatialMap {
    * returns an iterator with [index of position, direction, distance^2]
    * */
   nearestNeighbors(
-    i: number | Vector<2>,
+    i: number | number[],
     distance: number,
-  ): Iterator<[number, Vector<2>, number]> {
+  ): Iterator<[number, [number, number], number]> {
     const positions = this.positions
     const p = typeof i === 'number' ? this.positions[i] : i
 
     // can at maximum be in the top right corner which is (distance + start of block) * 2*sqrt(2) (~2.82)
     const distanceSquared = distance ** 2
-    const maxDistance = ((distance + this.spacing) * 2.83) ** 2
 
     const neigbors = this.nearestNeighborsFromGrid(i, distance)
     const wrap = this.wrap
@@ -190,7 +189,7 @@ export class SpatialMap {
           i++
           if (i >= this.size) {
             return {
-              value: undefined as unknown as [number, Vector<2>, number],
+              value: undefined as unknown as [number, [number, number], number],
               done: true,
             }
           }
@@ -198,19 +197,31 @@ export class SpatialMap {
           const cn = positions[ni]
           const pn = cn
 
-          let dir = pn.clone().sub(p)
-          // update direction of attraction if direction to neighbor is wrapped around in space
-          if (wrap && dir.mag2() > maxDistance) {
-            const qc = quadrant(w, h, p)
-            const qn = quadrant(w, h, cn)
-            // correct neighbor position to mirror the location
-            dir = pn
-              .clone()
-              .add(getWrapCorrection(w, h, qc, qn))
-              .sub(p)
-          }
+          let dir: number[] = [pn[0] - p[0], pn[1] - p[1]]
+          let dirMag2 = dir[0] * dir[0] + dir[1] * dir[1]
 
-          const dirMag2 = dir.mag2()
+          // update direction of attraction if direction to neighbor is wrapped around in space
+          if (wrap) {
+            // Calculate wrapped distance by considering toroidal space
+            let dx = pn[0] - p[0]
+            let dy = pn[1] - p[1]
+
+            // Find shortest distance accounting for wrap
+            if (Math.abs(dx) > w / 2) {
+              dx = dx > 0 ? dx - w : dx + w
+            }
+            if (Math.abs(dy) > h / 2) {
+              dy = dy > 0 ? dy - h : dy + h
+            }
+
+            const wrappedMag2 = dx * dx + dy * dy
+
+            // Use wrapped distance if it's shorter
+            if (wrappedMag2 < dirMag2) {
+              dir = [dx, dy]
+              dirMag2 = wrappedMag2
+            }
+          }
 
           // if distance is bigger than range skip
           if (dirMag2 > distanceSquared) {
@@ -218,7 +229,11 @@ export class SpatialMap {
           }
 
           return {
-            value: [this.ids[i], dir, dirMag2] as [number, Vector<2>, number],
+            value: [this.ids[i], dir, dirMag2] as [
+              number,
+              [number, number],
+              number,
+            ],
             done: false,
           }
         }
@@ -236,23 +251,23 @@ export class SpatialMap {
    * returns an iterator with all the ids
    * */
   nearestNeighborsFromGrid(
-    i: number | Vector<2>,
+    i: number | number[],
     distance: number,
   ): Iterator<number> {
-    const { x, y } = typeof i === 'number' ? this.positions[i] : i
+    const [x, y] = typeof i === 'number' ? this.positions[i] : i
     this.querySize = 0
 
     let x0 = Math.floor((x - distance) / this.spacing)
     let y0 = Math.floor((y - distance) / this.spacing)
 
-    const x1 = Math.floor((x + distance) / this.spacing)
+    let x1 = Math.floor((x + distance) / this.spacing)
     let y1 = Math.floor((y + distance) / this.spacing)
 
     if (!this.wrap) {
       if (x0 < 0) x0 = 0
       if (y0 < 0) y0 = 0
-      if (x1 > this.rowLength) x0 = this.rowLength
-      if (y1 > this.columnLength) y1 = this.columnLength
+      if (x1 >= this.rowLength) x1 = this.rowLength - 1
+      if (y1 >= this.columnLength) y1 = this.columnLength - 1
     }
 
     for (let yi = y0; yi <= y1; yi++) {
@@ -307,74 +322,4 @@ interface Iterator<V> {
       done: boolean
     }
   }
-}
-
-function getWrapCorrection(w: number, h: number, qc: number, qn: number) {
-  switch (qc) {
-    case 0:
-      switch (qn) {
-        case 1:
-          return vec(-w, 0)
-        case 2:
-          return vec(0, -h)
-        case 3:
-          return vec(-w, -h)
-      }
-      throw Error(
-        "neighbor can't be in the same quadrant if direction is above distance check",
-      )
-    case 1:
-      switch (qn) {
-        case 0:
-          return vec(w, 0)
-        case 2:
-          return vec(w, -h)
-        case 3:
-          return vec(0, -h)
-      }
-      throw Error(
-        "neighbor can't be in the same quadrant if direction is above distance check",
-      )
-    case 2:
-      switch (qn) {
-        case 0:
-          return vec(0, h)
-        case 1:
-          return vec(-w, h)
-        case 3:
-          return vec(-w, 0)
-      }
-      throw Error(
-        "neighbor can't be in the same quadrant if direction is above distance check",
-      )
-    case 3:
-      switch (qn) {
-        case 0:
-          return vec(w, h)
-        case 1:
-          return vec(0, h)
-        case 2:
-          return vec(w, 0)
-      }
-      throw Error(
-        "neighbor can't be in the same quadrant if direction is above distance check",
-      )
-  }
-  throw Error(
-    "neighbor can't be in the same quadrant if direction is above distance check",
-  )
-}
-
-/** get which quadrant a coord is returns 0 to 3 */
-function quadrant(width: number, height: number, p: Vector<2>) {
-  const { x, y } = p
-  let q = 0
-  if (x > width / 2) {
-    q += 1
-  }
-  if (y > height / 2) {
-    q += 2
-  }
-
-  return q
 }
