@@ -1,6 +1,8 @@
 // TEST SCRIPT
 // import { SpatialMap, svg, vec } from 'creagen'
 
+import type { NumberArray, PositionArray } from './types'
+
 // const width = 1000
 // const height = 1000
 // const spacing = 50
@@ -40,7 +42,7 @@ export class SpatialMap {
   private readonly spacing: number
 
   private positionsSize: number
-  private readonly positions: number[][]
+  private readonly positions: PositionArray
 
   private readonly width: number
   private readonly height: number
@@ -52,7 +54,7 @@ export class SpatialMap {
     width: number,
     height: number,
     spacing: number,
-    positions: number[][],
+    positions: PositionArray,
     opts?: {
       /** Make the space [toroidal](https://en.wikipedia.org/wiki/Torus). Left wraps around to the right and top wraps around to the bottom */
       wrap: boolean
@@ -108,7 +110,8 @@ export class SpatialMap {
   }
 
   /** get the index of a tile from normal cartesian coordiantes */
-  getIndex([x, y]: number[]) {
+  getIndex(pos: NumberArray) {
+    let [x, y] = pos
     if (this.wrap) {
       // wrap coords
       if (x < 0) x = this.width + x
@@ -165,11 +168,11 @@ export class SpatialMap {
    * returns an iterator with [index of position, direction, distance^2]
    * */
   nearestNeighbors(
-    i: number | number[],
+    i: number | NumberArray,
     distance: number,
   ): Iterator<[number, [number, number], number]> {
     const positions = this.positions
-    const p = typeof i === 'number' ? this.positions[i] : i
+    const p: NumberArray = typeof i === 'number' ? this.positions[i] : i
 
     // can at maximum be in the top right corner which is (distance + start of block) * 2*sqrt(2) (~2.82)
     const distanceSquared = distance ** 2
@@ -251,10 +254,13 @@ export class SpatialMap {
    * returns an iterator with all the ids
    * */
   nearestNeighborsFromGrid(
-    i: number | number[],
+    i: number | NumberArray,
     distance: number,
   ): Iterator<number> {
-    const [x, y] = typeof i === 'number' ? this.positions[i] : i
+    const [x, y]: [number, number] =
+      typeof i === 'number'
+        ? [this.positions[i][0], this.positions[i][1]]
+        : [i[0], i[1]]
     this.querySize = 0
 
     let x0 = Math.floor((x - distance) / this.spacing)

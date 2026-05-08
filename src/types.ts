@@ -28,3 +28,9 @@ export type FixedFloat64Array<N extends number> = Float64Array & {
   length: N
 }
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0> & T[]
+
+/** Any array-like numeric sequence (regular arrays and typed arrays) */
+export type NumberArray = ArrayLike<number> & Iterable<number>
+
+/** Any array-like iterable collection of {@link NumberArray} elements */
+export type PositionArray = ArrayLike<NumberArray> & Iterable<NumberArray>
