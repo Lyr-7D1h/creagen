@@ -202,7 +202,7 @@ export class ContourExtractor {
         }
 
         const start = [x - (isHole ? 1 : 0), y] as Point
-        // set the last visisted
+        // set the last visited
         this.lnbd[0] = start[0]
         const id = this.makeContour(isHole, start)
         if (CREAGEN_ASSERTS) assert(id > 0)
