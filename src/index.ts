@@ -3,7 +3,7 @@ export { Iter } from './iter'
 export { load, type LoadableObject } from './load'
 export * as Math from './math'
 
-export { Canvas, getHeight, getWidth, RenderMode } from './Canvas'
+export { Canvas, getHeight, getWidth, type RenderMode } from './Canvas'
 export { type ArcOptions } from './Canvas/Arc'
 export { type CircleOptions } from './Canvas/Circle'
 export { type ImageOptions } from './Canvas/Image'

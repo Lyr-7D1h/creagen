@@ -48,16 +48,15 @@ export function getHeight() {
 export type GeometryChild = Rectangle | Circle | Image | Text
 
 /** How the code renders in the browser  */
-export enum RenderMode {
+export type RenderMode =
   /** Default 2d rendering format */
-  C2D = 'c2d',
-  /** WebGL rendering format */
-  // TODO: implement webgl
-  // WebGL = 'webgl',
+  | 'c2d'
   /** Svg rendering format */
-  Svg = 'svg',
-}
-export interface CanvasOptions<R extends RenderMode = RenderMode.C2D> {
+  | 'svg'
+// TODO: implement webgl
+// | 'webgl'
+
+export interface CanvasOptions<R extends RenderMode> {
   width?: number
   height?: number
   renderMode?: R
@@ -70,20 +69,46 @@ export class Canvas<R extends RenderMode> {
   element: HTMLCanvasElement | SVGElement
   ctx?: CanvasRenderingContext2D
 
-  width: number
-  height: number
+  static create<R extends RenderMode>(
+    width: number,
+    height?: number,
+    renderMode?: RenderMode,
+  ): Canvas<R>
+  static create<R extends RenderMode>(renderMode: RenderMode): Canvas<R>
+  static create(): Canvas<'c2d'>
+  static create<R extends RenderMode>(
+    width?: number | R,
+    height?: number,
+    renderMode?: R,
+  ) {
+    switch (typeof width) {
+      case 'string': {
+        renderMode = width
+        width = getWidth()
+        height = getHeight()
+        break
+      }
+      case 'number': {
+        height = height ?? getHeight()
+        renderMode = renderMode ?? ('c2d' as R)
+        break
+      }
+      default: {
+        width = getWidth()
+        height = getHeight()
+        renderMode = renderMode ?? ('c2d' as R)
+      }
+    }
 
-  static create<R extends RenderMode>(opts?: CanvasOptions<R>) {
-    return new Canvas<R>(opts)
+    return new Canvas<R>(width, height, renderMode)
   }
 
-  private constructor(opts?: CanvasOptions<R>) {
-    const renderMode = opts?.renderMode ?? RenderMode.C2D
-    this.width = opts?.width ?? getWidth()
-    this.height = opts?.height ?? getHeight()
-
-    if (renderMode === RenderMode.Svg) {
-      if (opts?.canvas) throw Error('Canvas cannot be passed to SVG mode')
+  private constructor(
+    readonly width: number,
+    readonly height: number,
+    readonly renderMode: R,
+  ) {
+    if (renderMode === 'svg') {
       this.element = document.createElementNS(
         'http://www.w3.org/2000/svg',
         'svg',
@@ -91,14 +116,25 @@ export class Canvas<R extends RenderMode> {
       this.element.setAttribute('width', this.width.toString())
       this.element.setAttribute('height', this.height.toString())
     } else {
-      this.element = opts?.canvas ?? document.createElement('canvas')
-      this.element.setAttribute('width', this.width.toString())
-      this.element.setAttribute('height', this.height.toString())
-      const ctx = this.element.getContext('2d') // TODO(perf): turn off transparancy backdrop https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#turn_off_transparency
-      if (ctx === null) throw Error('No 2d context supported')
-      this.ctx = ctx!
+      const element = document.createElement('canvas')
+      this.element = element
+      this.setupCanvas(element)
     }
     this.children = []
+  }
+
+  private setupCanvas(element: HTMLCanvasElement) {
+    element.setAttribute('width', this.width.toString())
+    element.setAttribute('height', this.height.toString())
+    // TODO(perf): turn off transparancy backdrop https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas#turn_off_transparency
+    const ctx = element.getContext('2d')
+    if (ctx === null) throw Error('No 2d context supported')
+    this.ctx = ctx!
+  }
+
+  setCanvas(this: Canvas<'c2d'>, element: HTMLCanvasElement) {
+    this.element = element
+    this.setupCanvas(element)
   }
 
   clear() {
@@ -312,6 +348,7 @@ export class Canvas<R extends RenderMode> {
 
     const text = new Text(xPosition, yPosition, value, {
       ...defaultGeometricOptions,
+      fill: Color.BLACK,
       fontFamily: 'sans-serif',
       fontSize: 16,
       fontStyle: 'normal',

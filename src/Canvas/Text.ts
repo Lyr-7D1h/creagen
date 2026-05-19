@@ -1,5 +1,5 @@
 import { CREAGEN_PRECISION } from '../constants'
-import type { GeometricOptions} from './Geometry';
+import type { GeometricOptions } from './Geometry'
 import { Geometry } from './Geometry'
 
 export interface TextOptions extends GeometricOptions {
@@ -105,6 +105,62 @@ export class Text extends Geometry<TextOptions> {
     if (this.value === value) return this
     this._dirty = true
     this.value = value
+    return this
+  }
+
+  fontFamily(value: string): this {
+    if (this.options.fontFamily === value) return this
+    this._dirty = true
+    this.options.fontFamily = value
+    return this
+  }
+
+  fontSize(value: number): this {
+    if (this.options.fontSize === value) return this
+    this._dirty = true
+    this.options.fontSize = value
+    return this
+  }
+
+  fontStyle(value: string): this {
+    if (this.options.fontStyle === value) return this
+    this._dirty = true
+    this.options.fontStyle = value
+    return this
+  }
+
+  fontWeight(value: string): this {
+    if (this.options.fontWeight === value) return this
+    this._dirty = true
+    this.options.fontWeight = value
+    return this
+  }
+
+  textAlign(value: CanvasTextAlign): this {
+    if (this.options.textAlign === value) return this
+    this._dirty = true
+    this.options.textAlign = value
+    return this
+  }
+
+  textBaseline(value: CanvasTextBaseline): this {
+    if (this.options.textBaseline === value) return this
+    this._dirty = true
+    this.options.textBaseline = value
+    return this
+  }
+
+  maxWidth(value: number | null): this {
+    if (this.options.maxWidth === value) return this
+    this._dirty = true
+    this.options.maxWidth = value
+    return this
+  }
+
+  lineHeight(value: number): this {
+    if (this.options.lineHeight === value) return this
+    this._dirty = true
+    this.options.lineHeight = value
     return this
   }
 
