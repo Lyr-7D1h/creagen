@@ -1,12 +1,12 @@
-import * as Math from '../math'
-import type { GeometricOptions } from './Geometry'
-import { Geometry } from './Geometry'
+import type { Color } from '../Color'
+import { Conversion } from '../Conversion'
 import type { Vector } from '../Vector'
 import { vec } from '../Vector'
 import { solveTriadiagonalMatrix } from '../lin'
+import * as Math from '../math'
 import type { FlatBounds } from '../types'
-import { Conversion } from '../Conversion'
-import type { Color } from '../Color'
+import type { GeometricOptions } from './Geometry'
+import { Geometry } from './Geometry'
 
 export interface PathOptions extends GeometricOptions {
   /** Connect the first point with the last point */
@@ -168,7 +168,7 @@ export class Path extends Geometry<PathOptions> {
     this._dirty = true
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.currentPoints.push(vec(x1, x2))
-    } else if (Array.isArray(x1)) {
+    } else if (Conversion.isArrayLike(x1)) {
       const vectors = Conversion.toVectorArray(x1, 2)
       if (vectors.length === 1) {
         this.currentPoints.push(vectors[0])
