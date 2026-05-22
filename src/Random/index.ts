@@ -1,7 +1,5 @@
 import { perlin } from './perlin'
-import type {
-  RandomFn,
-  UnitRandomFn} from './RandomNumberGenerator';
+import type { RandomFn, UnitRandomFn } from './RandomNumberGenerator'
 import {
   beta as betaFn,
   boxMuller,
@@ -10,9 +8,9 @@ import {
 } from './RandomNumberGenerator'
 import { simplex } from './simplex'
 
-export * from './RandomNumberGenerator'
-export * from './pmf'
 export * from './cdf'
+export * from './pmf'
+export * from './RandomNumberGenerator'
 
 const defaultRng = new RandomNumberGenerator(Math.random)
 
@@ -24,6 +22,11 @@ const defaultRng = new RandomNumberGenerator(Math.random)
  * Random number generating functions with a range between 0 and 1 will return their own random number generator
  */
 export class Random {
+  /** Make your own random number generator given a random function */
+  static rng(unitRandomFn: UnitRandomFn) {
+    return new RandomNumberGenerator(unitRandomFn)
+  }
+
   /** generate a random number until and including `stop` */
   static integer(stop: number): number
   static integer(start: number, stop: number): number
