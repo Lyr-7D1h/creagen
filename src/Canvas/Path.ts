@@ -169,7 +169,9 @@ export class Path extends Geometry<PathOptions> {
     if (typeof x1 === 'number' && typeof x2 === 'number') {
       this.currentPoints.push(vec(x1, x2))
     } else if (Conversion.isArrayLike(x1)) {
-      const vectors = Conversion.toVectorArray(x1, 2)
+      const vectors = Conversion.isFlatNumberArray(x1)
+        ? Conversion.toVectorArray(x1, 2)
+        : Conversion.toVectorArray(x1, 2)
       if (vectors.length === 1) {
         this.currentPoints.push(vectors[0])
       } else {

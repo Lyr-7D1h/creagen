@@ -6,8 +6,13 @@ export type DrawFn = (
 ) => void
 
 let handle: number | undefined
-/** Run a draw loop that runs `fn` every 1/60 seconds */
-// TODO: add framerate
+/**
+ * Run a draw loop that runs `fn` every 1/60 seconds
+ *
+ * Where `DrawFn` is `(t: DOMHighResTimeStamp, dt: number) => void`
+ *  - `t` being a number (double) representing the time since drawing in milliseconds. https://developer.mozilla.org/en-US/docs/Web/API/DOMHighResTimeStamp
+ * - `dt` time between frames
+ */
 export function draw(fn: DrawFn) {
   if (handle) cancelAnimationFrame(handle)
   const now = document.timeline?.currentTime
