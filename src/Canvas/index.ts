@@ -70,9 +70,7 @@ export class Canvas<R extends RenderMode> {
   ctx?: CanvasRenderingContext2D
   /** Wrapping <g> used in SVG mode; transforms and children are applied to this, not the root <svg> See https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform#elements */
   private svgGroup?: SVGGElement
-  private transformMatrix: [number, number, number, number, number, number] = [
-    1, 0, 0, 1, 0, 0,
-  ] // [a, b, c, d, e, f] for identity matrix
+  private transformMatrix: DOMMatrix = new DOMMatrix()
 
   static create<R extends RenderMode>(
     width: number,
@@ -414,68 +412,30 @@ export class Canvas<R extends RenderMode> {
 
   /** Reset the transformation matrix to the identity matrix */
   resetTransform(): this {
-    this.transformMatrix = [1, 0, 0, 1, 0, 0]
-
-    if (this.ctx) {
-      this.ctx.resetTransform()
-    } else if (this.svgGroup) {
-      this.svgGroup.removeAttribute('transform')
-    }
-
+    this.transformMatrix = new DOMMatrix()
+    this.applyTransform()
     return this
   }
 
   /** Translate the coordinate system by `(x, y)` */
   translate(x: number, y: number): this {
-    const [a, b, c, d, e, f] = this.transformMatrix
-    this.transformMatrix = [a, b, c, d, a * x + c * y + e, b * x + d * y + f]
-
-    if (this.ctx) {
-      this.ctx.translate(x, y)
-    } else if (this.svgGroup) {
-      this.applyTransformToSvg(this.svgGroup)
-    }
-
+    this.transformMatrix = this.transformMatrix.translate(x, y)
+    this.applyTransform()
     return this
   }
 
   /** Scale the coordinate system. `y` defaults to `x` for uniform scaling */
   scale(x: number, y?: number): this {
     const sy = y ?? x
-
-    const [a, b, c, d, e, f] = this.transformMatrix
-    this.transformMatrix = [a * x, b * x, c * sy, d * sy, e, f]
-
-    if (this.ctx) {
-      this.ctx.scale(x, sy)
-    } else if (this.svgGroup) {
-      this.applyTransformToSvg(this.svgGroup)
-    }
-
+    this.transformMatrix = this.transformMatrix.scale(x, sy)
+    this.applyTransform()
     return this
   }
 
-  /** Rotate the coordinate system by `angle` radians around the origin */
+  /** Rotate the coordinate system by `angle` degrees around the origin */
   rotate(angle: number): this {
-    const cos = Math.cos(angle)
-    const sin = Math.sin(angle)
-
-    const [a, b, c, d, e, f] = this.transformMatrix
-    this.transformMatrix = [
-      a * cos + c * sin,
-      b * cos + d * sin,
-      c * cos - a * sin,
-      d * cos - b * sin,
-      e,
-      f,
-    ]
-
-    if (this.ctx) {
-      this.ctx.rotate(angle)
-    } else if (this.svgGroup) {
-      this.applyTransformToSvg(this.svgGroup)
-    }
-
+    this.transformMatrix = this.transformMatrix.rotate(angle)
+    this.applyTransform()
     return this
   }
 
@@ -488,22 +448,10 @@ export class Canvas<R extends RenderMode> {
     e: number,
     f: number,
   ): this {
-    const [ma, mb, mc, md, me, mf] = this.transformMatrix
-    this.transformMatrix = [
-      ma * a + mc * b,
-      mb * a + md * b,
-      ma * c + mc * d,
-      mb * c + md * d,
-      ma * e + mc * f + me,
-      mb * e + md * f + mf,
-    ]
-
-    if (this.ctx) {
-      this.ctx.transform(a, b, c, d, e, f)
-    } else if (this.svgGroup) {
-      this.applyTransformToSvg(this.svgGroup)
-    }
-
+    this.transformMatrix = this.transformMatrix.multiply(
+      new DOMMatrix([a, b, c, d, e, f]),
+    )
+    this.applyTransform()
     return this
   }
 
@@ -516,27 +464,25 @@ export class Canvas<R extends RenderMode> {
     e: number,
     f: number,
   ): this {
-    this.transformMatrix = [a, b, c, d, e, f]
-
-    if (this.ctx) {
-      this.ctx.setTransform(a, b, c, d, e, f)
-    } else if (this.svgGroup) {
-      this.applyTransformToSvg(this.svgGroup)
-    }
-
+    this.transformMatrix = new DOMMatrix([a, b, c, d, e, f])
+    this.applyTransform()
     return this
   }
 
-  /** Return the current transformation matrix as `[a, b, c, d, e, f]` */
-  getTransform(): readonly [number, number, number, number, number, number] {
-    return [...this.transformMatrix]
+  private applyTransform() {
+    if (this.ctx) {
+      this.ctx.setTransform(this.transformMatrix)
+    } else if (this.svgGroup) {
+      const { a, b, c, d, e, f } = this.transformMatrix
+      this.svgGroup.setAttribute(
+        'transform',
+        `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
+      )
+    }
   }
 
-  private applyTransformToSvg(svgGroup: SVGGElement): void {
-    const [a, b, c, d, e, f] = this.transformMatrix
-    svgGroup.setAttribute(
-      'transform',
-      `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-    )
+  /** Return the current transformation matrix as `[a, b, c, d, e, f]` */
+  getTransform(): DOMMatrixReadOnly {
+    return this.transformMatrix
   }
 }
