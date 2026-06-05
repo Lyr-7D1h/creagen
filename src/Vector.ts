@@ -113,6 +113,10 @@ export interface VectorMethods<N extends number> {
   randomSort(): this
   /** Compare two vectors for equality */
   equals(v: VectorInput<N>): boolean
+  /** Check if any component is NaN using [`Number.isNaN()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isNaN) */
+  isNaN(): boolean
+  /** Check if all components are finite numbers using [`Number.isFinite()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isFinite) */
+  isFinite(): boolean
   dot(v: VectorInput<N>): number
   /**
    * Treat two vectors as a 2d matrix and get the
@@ -185,6 +189,7 @@ export interface VectorMethods<N extends number> {
   /** Scale vector to fit within bounds while maintaining proportions */
   fitToBounds(bounds: FlatBounds<N>): this
   sum(): number
+  max(): number
   compare(vector: VectorInput<N>): boolean
 }
 
@@ -378,8 +383,13 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
 
     /** normalize */
     norm(): this {
-      const mag2 = this.mag2()
+      let mag2 = this.mag2()
       if (mag2 === 0) return this
+      if (!Number.isFinite(mag2)) {
+        const max = this.max()
+        this.div(max)
+        mag2 = this.mag2()
+      }
       const a = 1 / Math.sqrt(mag2)
       if (a === 0) return this
       for (let i = 0; i < this.length; i++) {
@@ -429,6 +439,26 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
     equals(v: VectorInput<N>) {
       for (let i = 0; i < this.length; i++) {
         if (this[i] !== v[i]) {
+          return false
+        }
+      }
+      return true
+    }
+
+    /** Check if any component is NaN */
+    isNaN(): boolean {
+      for (let i = 0; i < this.length; i++) {
+        if (Number.isNaN(this[i])) {
+          return true
+        }
+      }
+      return false
+    }
+
+    /** Check if all components are finite numbers */
+    isFinite(): boolean {
+      for (let i = 0; i < this.length; i++) {
+        if (!Number.isFinite(this[i])) {
           return false
         }
       }
@@ -779,6 +809,15 @@ export function createVectorType<TArray extends MutableNumberArrayLike<number>>(
         a += this[i]
       }
       return a
+    }
+
+    max(): number {
+      if (this.length === 0) return -Infinity
+      let max = this[0]
+      for (let i = 1; i < this.length; i++) {
+        if (this[i] > max) max = this[i]
+      }
+      return max
     }
 
     compare(vector: VectorInput<N>) {

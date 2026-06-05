@@ -503,6 +503,11 @@ describe('typed array sum/mean/spread', () => {
     expect(v.sum()).toBe(10)
   })
 
+  test('max returns the largest element', () => {
+    const v = new Int32Vector<5>(-8, 2, 10, 3, 9)
+    expect(v.max()).toBe(10)
+  })
+
   test('mean returns arithmetic average', () => {
     const v = new Float64Vector<4>(2, 4, 6, 8)
     expect(v.mean()).toBe(5)
@@ -765,6 +770,28 @@ describe('typed array clone', () => {
     expect(Array.from(cloned)).toEqual([1, 2])
   })
 
+  test('Float64Vector clone from Float64Array preserves values', () => {
+    const source = new Float64Array([Math.PI, -2.5]) as Float64Array & {
+      length: 2
+    }
+    const v = new Float64Vector<2>(source)
+    const cloned = v.clone()
+
+    expect(cloned).instanceOf(Float64Vector)
+    expect(cloned).instanceOf(Float64Array)
+    expect(cloned).not.toBe(v)
+    expect(Array.from(cloned)).toEqual(Array.from(source))
+  })
+
+  test('Float64Vector clone does not share storage with original', () => {
+    const v = new Float64Vector<3>(1.25, 2.5, 3.75)
+    const cloned = v.clone()
+
+    v[1] = 999
+    expect(cloned[1]).toBeCloseTo(2.5)
+    expect(cloned.buffer).not.toBe(v.buffer)
+  })
+
   test('clone is independent of original', () => {
     const v = new Float64Vector<2>(3, 4)
     const cloned = v.clone()
@@ -802,6 +829,36 @@ describe('typed array equals', () => {
     const a = new Float64Vector<3>(1, 2, 3)
     const b = new Float64Vector<3>(1, 2, 4)
     expect(a.equals(b)).toBe(false)
+  })
+
+  test('isNaN returns true when any element is NaN', () => {
+    const v = new Float64Vector<3>(1, Number.NaN, 3)
+    expect(v.isNaN()).toBe(true)
+  })
+
+  test('isNaN returns false when no element is NaN', () => {
+    const v = new Float64Vector<3>(1, 2, 3)
+    expect(v.isNaN()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is Infinity', () => {
+    const v = new Float64Vector<3>(1, Infinity, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is -Infinity', () => {
+    const v = new Float64Vector<3>(1, -Infinity, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is NaN', () => {
+    const v = new Float64Vector<3>(1, Number.NaN, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns true when all elements are finite', () => {
+    const v = new Float64Vector<3>(1, 2, 3)
+    expect(v.isFinite()).toBe(true)
   })
 })
 
@@ -1074,6 +1131,15 @@ describe('Vector norm', () => {
     expect(v[1]).toBeCloseTo(0.8)
   })
 
+  test('normalizes vectors when `mag2` overflows to infinity', () => {
+    const v = new Vector<2>(1e308, 1e308)
+    v.norm()
+
+    expect(v.mag()).toBeCloseTo(1)
+    expect(v[0]).toBeCloseTo(Math.SQRT1_2)
+    expect(v[1]).toBeCloseTo(Math.SQRT1_2)
+  })
+
   test('leaves zero vector unchanged', () => {
     const v = new Vector<3>(0, 0, 0)
     v.norm()
@@ -1181,6 +1247,11 @@ describe('Vector statistical operations', () => {
     expect(v.sum()).toBe(10)
   })
 
+  test('max returns the largest element', () => {
+    const v = new Vector<5>(-5, 0, 4, 12, 11)
+    expect(v.max()).toBe(12)
+  })
+
   test('mean is arithmetic average', () => {
     const v = new Vector<4>(1, 2, 3, 4)
     expect(v.mean()).toBe(2.5)
@@ -1223,6 +1294,36 @@ describe('Vector equals and compare', () => {
     const a = new Vector<3>(1, 2, 3)
     const b = new Vector<3>(1, 2, 4)
     expect(a.equals(b)).toBe(false)
+  })
+
+  test('isNaN returns true when any element is NaN', () => {
+    const v = new Vector<3>(1, Number.NaN, 3)
+    expect(v.isNaN()).toBe(true)
+  })
+
+  test('isNaN returns false when no element is NaN', () => {
+    const v = new Vector<3>(1, 2, 3)
+    expect(v.isNaN()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is Infinity', () => {
+    const v = new Vector<3>(1, Infinity, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is -Infinity', () => {
+    const v = new Vector<3>(1, -Infinity, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns false when any element is NaN', () => {
+    const v = new Vector<3>(1, Number.NaN, 3)
+    expect(v.isFinite()).toBe(false)
+  })
+
+  test('isFinite returns true when all elements are finite', () => {
+    const v = new Vector<3>(1, 2, 3)
+    expect(v.isFinite()).toBe(true)
   })
 
   test('compare behaves identically to equals', () => {
