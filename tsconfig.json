@@ -45,6 +45,6 @@
 
     "allowJs": false,
     "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-  },
+    "allowUnusedLabels": false
+  }
 }

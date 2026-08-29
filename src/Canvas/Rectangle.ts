@@ -1,4 +1,4 @@
-import type { GeometricOptions} from './Geometry';
+import type { GeometricOptions } from './Geometry'
 import { Geometry } from './Geometry'
 
 export type RectangleOptions = GeometricOptions

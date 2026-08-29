@@ -1,9 +1,9 @@
-import type { Vector } from './Vector';
-import { vec } from './Vector'
 import { toSkeleton } from './Bitmap/toSkeleton'
 import { zhangSuenThinning } from './Bitmap/zhangSuenThinning'
-import type { ContourExtractorOpts } from './ContourExtractor';
+import type { ContourExtractorOpts } from './ContourExtractor'
 import { ContourExtractor } from './ContourExtractor'
+import type { Vector } from './Vector'
+import { vec } from './Vector'
 
 export class Bitmap {
   static create(width: number, height: number): Bitmap {
@@ -26,7 +26,11 @@ export class Bitmap {
     return map
   }
 
-  static fromUnit8array(width: number, height: number, data: Uint8Array): Bitmap {
+  static fromUnit8array(
+    width: number,
+    height: number,
+    data: Uint8Array,
+  ): Bitmap {
     return new Bitmap(width, height, data)
   }
 

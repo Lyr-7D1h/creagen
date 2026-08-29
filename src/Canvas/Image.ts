@@ -1,4 +1,4 @@
-import type { ImageData as ImageData } from '../ImageData'
+import type { ImageData } from '../ImageData'
 import { Renderable } from './Renderable'
 
 export type ImageOptions = object

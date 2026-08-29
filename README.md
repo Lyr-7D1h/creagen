@@ -12,21 +12,25 @@ This library tailors more to experienced programmers with a focus on good functi
 ## Features
 
 ### Geometric Operations
+
 - **Vector operations** - 2D and 3D vector math
 - **Point clouds** - Processing and analysis of point sets
 
 ### Graphics & Rendering
+
 - **Bitmap manipulation** - Pixel-level image operations
 - **Color handling** - Color space conversions and operations
 - **Image Processing** - Wrapping opencv.js with an easy to use interface for image processing
 - **Canvas operations** - Drawing primitives and path manipulation
 
 ### Data & Analysis
+
 - **Audio processing** - Generation and analysis capabilities
 
 ## Philosophy
 
 Creagen embraces:
+
 - **Experimentation** - A sandbox for trying new ideas and techniques
 - **Education** - Learning through implementation
 - **Reusability** - Clean consistent abstractions that compose well

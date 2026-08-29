@@ -20,7 +20,9 @@ export default defineConfig(({ mode }) => {
         entryRoot: './src',
         outDirs: './dist',
         insertTypesEntry: true,
-        bundleTypes: true,
+        bundleTypes: {
+          bundledPackages: ['kdbush', 'meyda'],
+        },
         include: ['src/**/*'],
         beforeWriteFile(filePath, content) {
           if (!filePath.endsWith('creagen.d.ts')) {

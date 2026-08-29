@@ -1,6 +1,6 @@
 {
   "name": "creagen",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "",
   "type": "module",
   "browser": "./dist/creagen.js",
@@ -13,6 +13,7 @@
     "build:dev": "vite build --mode development",
     "build:watch": "vite build --mode development --watch",
     "watch:prod": "vite build --mode production --watch",
+    "fmt": "prettier -c .",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "bench": "vitest bench",
@@ -24,24 +25,26 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@microsoft/api-extractor": "^7.58.7",
+    "@microsoft/api-extractor": "^7.59.0",
     "@types/meyda": "5.3.0",
-    "@types/node": "^25.6.0",
-    "eslint": "10.3.0",
-    "terser": "5.46.2",
-    "typescript": "6.0.3",
-    "typescript-eslint": "8.59.1",
-    "unplugin-dts": "^1.0.0",
-    "vite": "8.0.10",
-    "vite-plugin-node-polyfills": "0.26.0",
-    "vitest": "4.1.5"
+    "@types/node": "^26.4.0",
+    "@typescript/typescript6": "^6.0.2",
+    "eslint": "10.9.1",
+    "prettier": "^3.9.6",
+    "terser": "5.51.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0",
+    "unplugin-dts": "^1.0.3",
+    "vite": "8.2.2",
+    "vite-plugin-node-polyfills": "^0.28.0",
+    "vitest": "4.1.11"
   },
   "dependencies": {
-    "@techstark/opencv-js": "4.12.0-release.1",
+    "@techstark/opencv-js": "5.0.0-release.1",
     "d3-delaunay": "^6.0.4",
     "d3-quadtree": "^3.0.1",
-    "kdbush": "^4.0.2",
+    "kdbush": "^4.1.0",
     "meyda": "^5.6.3",
-    "ml-kmeans": "7.0.0"
+    "ml-kmeans": "7.0.1"
   }
 }

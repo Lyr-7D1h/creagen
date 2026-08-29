@@ -1,4 +1,4 @@
-import type { MeydaAudioFeature, MeydaFeaturesObject } from 'meyda';
+import type { MeydaAudioFeature, MeydaFeaturesObject } from 'meyda'
 import Meyda from 'meyda'
 
 export type Feature = MeydaAudioFeature | 'bpm'

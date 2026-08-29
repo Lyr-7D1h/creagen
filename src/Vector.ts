@@ -40,9 +40,7 @@ type VectorArrayConstructor<TArray extends MutableNumberArrayLike<number>> = {
   readonly prototype: TArray
 }
 type VectorItems<N extends number> =
-  | [NumberArrayLike<N>]
-  | (number[] & { length: N })
-  | number[]
+  [NumberArrayLike<N>] | (number[] & { length: N }) | number[]
 const VECTOR_BRAND = Symbol('creagen.vector')
 
 export type VectorStorage<N extends number = number> = MutableNumberArrayLike<N>
